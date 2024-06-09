@@ -1,0 +1,68 @@
+version: "3.3"
+services:
+
+#  frontend:
+#    stdin_open: true
+#    build:
+#      context: frontend/
+#    ports:
+#      - "${FRONTEND_PORT_ON_HOST}:${FRONTEND_PORT}"
+#    restart: on-failure
+
+  db:
+    image: postgres:13-alpine
+    hostname: db
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT_ON_HOST}:${POSTGRES_PORT}"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+    restart: on-failure
+
+  backend:
+    build:
+      context: backend/
+    hostname: backend
+    command: bash -c "poetry run python main/run_server.py"
+    volumes:
+      - ./backend/src:/code/src
+      - ./common:/code/common
+      - ./backend/main:/code/main
+      - ./backend/alembic:/code/alembic
+      - ./backend/data_samples:/code/data_samples
+      - ./backend/scripts:/code/scripts
+      - .env:/code/.env
+      - backend-media:/code/media
+      - ./backend/templates:/code/templates
+      - ./backend/settings.py:/code/settings.py
+    ports:
+      - "${BACKEND_PORT_ON_HOST}:${BACKEND_PORT}"
+    restart: on-failure
+    depends_on:
+      - db
+#      - rabbit
+
+  rabbit:
+    image: rabbitmq:3.10.7-management
+    hostname: rabbitmq
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBIT_LOGIN}
+      - RABBITMQ_DEFAULT_PASS=${RABBIT_PASSWORD}
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit disk_free_limit 2147483648
+    volumes:
+      - ./rabbitmq:/var/lib/rabbitmq
+    ports:
+      - "${RABBIT_PORT_ON_HOST}:${RABBIT_PORT}"
+      - "${RABBIT_UI_PORT_ON_HOST}:${RABBIT_UI_PORT}"
+
+volumes:
+  backend-media:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: './media'

@@ -1,0 +1,47 @@
+repos:
+#-   repo: https://github.com/pycqa/isort
+#    rev: 5.12.0
+#    hooks:
+#      - id: isort
+#        files: 'src/.*'
+#        stages:
+#        - commit
+#        - push
+-   repo: https://github.com/hadialqattan/pycln
+    rev: v2.1.3
+    hooks:
+      - id: pycln
+        files: 'src/.*'
+        args: [--all]
+        stages:
+        - commit
+        - push
+#      - id: pycln
+#        files: 'tests/.*'
+#        args: [--all]
+#        stages:
+#        - commit
+#        - push
+-   repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+        files: 'src/.*'
+        stages:
+          - commit
+          - push
+      - id: black
+        files: 'settings.py'
+        stages:
+          - commit
+          - push
+#      - id: black
+#        files: 'main/.*'
+#        stages:
+#          - commit
+#          - push
+#      - id: black
+#        files: 'tests/.*'
+#        stages:
+#          - commit
+#          - push
