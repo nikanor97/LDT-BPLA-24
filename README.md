@@ -1,0 +1,1 @@
+Repo for Leaders of Digital Transformation hackathon. Track from company "Samolet"
