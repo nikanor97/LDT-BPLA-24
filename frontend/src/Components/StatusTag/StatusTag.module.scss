@@ -1,0 +1,20 @@
+.tagWrapper {
+    display: flex;
+    .tag {
+        font-weight: 700;
+        font-size: 12px;
+        line-height: 16px;
+        padding: 4px 8px;
+        border-radius: 3px;
+    }
+    .success {
+        background: #EAFBE7;
+        border: 1px solid #C6F0C2;
+        color: #328048;
+    }
+    .default {
+        background: #F2F4F7;
+        border: 1px solid #D0D5DD;
+        color: #344054;
+    }
+}

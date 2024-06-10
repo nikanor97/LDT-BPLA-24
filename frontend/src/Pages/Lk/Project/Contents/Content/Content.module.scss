@@ -1,0 +1,13 @@
+.tabs {
+    :global {
+        .ant-tabs-nav {
+            .ant-tabs-tab {
+                text-transform: uppercase;
+                font-weight: 500;
+                font-size: 14px;
+                line-height: 16px;
+                padding: 8px;
+            }
+        }
+    }
+}

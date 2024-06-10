@@ -1,0 +1,43 @@
+@import '/src/variables';
+
+.radio {
+    background: #F2F4F7;
+    border: 1px solid #E4E7EC;
+    border-radius: 8px;
+    padding: 4px;
+    :global {
+        .ant-radio-button-wrapper {
+            background: transparent;
+            border: unset;
+            color: #667085;
+            font-weight: 500;
+            &::before {
+                display: none;
+            }
+            .ant-radio-button-checked {
+                background: #fff;
+                border: 1px solid #E4E7EC;
+                border-radius: 8px;
+            }
+        }
+        .ant-radio-button-wrapper-checked {
+            color: $primaryColor;
+        }
+    }
+}
+
+.filtersForm {
+    :global {
+        .ant-form-item-label {
+            label {
+                font-weight: 400;
+                font-size: 14px;
+                height: 100%;
+                color: #667085;
+            }
+        }
+    }
+    .select {
+        min-width: 120px;
+    }
+}

@@ -1,0 +1,31 @@
+.collapse {
+    &:global {
+        &.ant-collapse {
+            border: none;
+            margin-bottom: 6px;
+            .ant-collapse-item {
+                .ant-collapse-header {
+                    border-radius: 8px;
+                    border: unset;
+                    background: #f3f8ff;
+                    padding: 9px 16px;
+                }
+            }
+        }
+    }
+    :global {
+        .ant-collapse-item {
+            border-radius: 0;
+            border: unset;
+        }
+        .ant-collapse-content {
+            border: unset;
+            .ant-collapse-content-box {
+                padding-right: 0;
+                padding-top: 6px;
+                padding-bottom: 0px;
+            }
+        }
+        
+    }
+}

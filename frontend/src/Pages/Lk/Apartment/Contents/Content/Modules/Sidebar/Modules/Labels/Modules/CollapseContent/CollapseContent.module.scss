@@ -1,0 +1,16 @@
+@import '/src/variables';
+
+.tag {
+    margin-right: 8px;
+    margin-bottom: 8px;
+    &Active {
+        color: $primaryColor;
+        border-color: $primaryColor;
+        background: #ebf5ff;
+    }
+    &:hover {
+        cursor: pointer;
+        color: $primaryColor;
+
+    }
+}

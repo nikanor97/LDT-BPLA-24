@@ -1,0 +1,19 @@
+{
+    "rules": {
+        "react-hooks/exhaustive-deps": "off",
+        "@typescript-eslint/no-useless-constructor": "off",
+        
+        "indent": [
+            "warn",
+            4,
+            {
+                "SwitchCase": 1,
+                "MemberExpression": 1
+            }
+        ],
+        "import/no-anonymous-default-export": "off"
+    },
+    "plugins": [
+        "@jambit/typed-redux-saga"
+    ]
+}

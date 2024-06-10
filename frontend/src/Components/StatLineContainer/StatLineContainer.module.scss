@@ -1,0 +1,81 @@
+.wrapper {
+    padding: 16px;
+    background: #FFFFFF;
+    border: 1px solid #ECECEE;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 90px;
+    justify-content: space-between;
+}
+
+.title {
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 18px;
+    color: #23272B;
+}
+
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.lines {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 12px;
+    position: relative;
+}
+
+.lineLeft {
+    background-color: #F3AF3D;
+    border-radius: 4px 0 0 4px;
+    left: 0;
+    position: absolute;
+    height: 100%;
+}
+
+.lineRight {
+    background-color: #43AED1;
+    border-radius: 0 4px 4px 0;
+    right: 0;
+    position: absolute;
+    height: 100%;
+}
+
+.firstDot {
+    width: 8px;
+    height: 8px;
+    background-color: #F3AF3D;
+    border-radius: 50%;
+}
+
+.secondDot {
+    width: 8px;
+    height: 8px;
+    background-color: #43AED1;
+    border-radius: 50%;
+}
+
+.names {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.nameBlock {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.name {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 18px;
+}

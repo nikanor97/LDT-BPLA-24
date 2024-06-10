@@ -1,0 +1,15 @@
+.buttonHint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--hint-icon-bg);
+    cursor: pointer;
+}
+
+.hintTooltip {
+    :global {
+        .ant-tooltip-content .ant-tooltip-inner{
+            text-align: start;
+        }
+    }
+}

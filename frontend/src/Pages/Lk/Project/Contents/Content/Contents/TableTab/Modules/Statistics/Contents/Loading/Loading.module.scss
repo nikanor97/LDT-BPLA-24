@@ -1,0 +1,14 @@
+.loader {
+    &, & &  {
+        height: 118px;
+        border-radius: 8px;
+        min-width: 100%;
+        &:global {
+            &.ant-skeleton-button {
+                height: 118px;
+                border-radius: 8px;
+                min-width: 100%;
+            }
+        }
+    }
+}

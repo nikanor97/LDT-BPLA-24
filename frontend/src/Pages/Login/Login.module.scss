@@ -1,0 +1,29 @@
+
+
+.wrapper {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #8EF8F2;
+    position: relative;
+    overflow: hidden;
+}
+
+.box {
+    min-width: 366px;
+    position: relative;
+    z-index: 2;
+}
+
+.background {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 778px;
+    height: 778px;
+}
+
+.content {
+    position: relative;
+}
