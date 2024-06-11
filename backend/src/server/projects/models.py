@@ -4,17 +4,14 @@ from decimal import Decimal
 from typing import Optional
 
 from pydantic import BaseModel
-from src.db.projects.models import (
-    FrameBase,
-    UserRoleBase,
-    Project,
-    ProjectBase,
-    VerificationTag,
-    ApartmentBase,
-    Video,
-    Apartment,
-)
-from src.db.users.models import User
+
+from src.db.projects.models.apartment import ApartmentBase, Apartment
+from src.db.projects.models.frame import FrameBase
+from src.db.projects.models.project import Project, ProjectBase
+from src.db.projects.models.user_role import UserRoleBase
+from src.db.projects.models.verification_tag import VerificationTag
+from src.db.projects.models.video import Video
+from src.db.users.models.user import User
 from src.server.common import ModelWithLabelAndValue
 
 

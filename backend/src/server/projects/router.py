@@ -5,16 +5,14 @@ from fastapi import APIRouter, Depends
 
 from common.rabbitmq.publisher import Publisher
 from src.db.main_db_manager import MainDbManager
-from src.db.projects.models import (
-    Frame,
-    FrameMarkup,
-    Label,
-    Video,
-    UserRole,
-    Project,
-    ProjectDocument,
-    VerificationTag,
-)
+from src.db.projects.models.frame import Frame
+from src.db.projects.models.frame_markup import FrameMarkup
+from src.db.projects.models.label import Label
+from src.db.projects.models.project import Project
+from src.db.projects.models.project_document import ProjectDocument
+from src.db.projects.models.user_role import UserRole
+from src.db.projects.models.verification_tag import VerificationTag
+from src.db.projects.models.video import Video
 from src.server.auth import Auth
 from src.server.common import METHOD, UnifiedResponse
 from src.server.projects.endpoints import ProjectsEndpoints
@@ -38,7 +36,6 @@ class ProjectsRouter:
 
         self.router = APIRouter(
             prefix=f"{settings.API_PREFIX}/projects",
-            # prefix=f"{settings.API_PREFIX}/markup",
             tags=["projects"],
         )
 
@@ -49,36 +46,6 @@ class ProjectsRouter:
             methods=[METHOD.POST],
             dependencies=[Depends(Auth(main_db_manager))],
         )
-
-        # self.router.add_api_route(
-        #     path="/galery",
-        #     endpoint=self._projects_endpoints.get_videos_from_galery,
-        #     response_model=UnifiedResponse[list[Video]],
-        #     methods=[METHOD.GET],
-        #     dependencies=[Depends(Auth(main_db_manager))],
-        # )
-        #
-        # self.router.add_api_route(
-        #     path="/assign-videos-to-project",
-        #     endpoint=self._projects_endpoints.assign_videos_to_project,
-        #     response_model=UnifiedResponse[list[Video]],
-        #     methods=[METHOD.POST],
-        #     dependencies=[Depends(Auth(main_db_manager))],
-        # )
-
-        # self.router.add_api_route(
-        #     path="/frame",
-        #     endpoint=self._projects_endpoints.create_frame,
-        #     response_model=UnifiedResponse[Frame],
-        #     methods=[METHOD.POST],
-        # )
-        #
-        # self.router.add_api_route(
-        #     path="/markup",
-        #     endpoint=self._projects_endpoints.create_markup,
-        #     response_model=UnifiedResponse[FrameMarkup],
-        #     methods=[METHOD.POST],
-        # )
 
         self.router.add_api_route(
             path="/frames-with-markups",
@@ -128,14 +95,6 @@ class ProjectsRouter:
             dependencies=[Depends(Auth(main_db_manager))],
         )
 
-        # self.router.add_api_route(
-        #     path="/videos-by-project",
-        #     endpoint=self._projects_endpoints.get_videos_by_project,
-        #     response_model=UnifiedResponse[list[Video]],
-        #     methods=[METHOD.GET],
-        #     dependencies=[Depends(Auth(main_db_manager))],
-        # )
-
         self.router.add_api_route(
             path="/frame",
             endpoint=self._projects_endpoints.get_frame,
@@ -168,7 +127,7 @@ class ProjectsRouter:
             methods=[METHOD.GET],
             # dependencies=[Depends(Auth(main_db_manager))],
         )
-
+        #
         self.router.add_api_route(
             path="/streaming-example",
             endpoint=self._projects_endpoints.streaming_example,
@@ -211,7 +170,7 @@ class ProjectsRouter:
             methods=[METHOD.DELETE],
             dependencies=[Depends(Auth(main_db_manager))],
         )
-
+#----------
         self.router.add_api_route(
             path="/user-role",
             endpoint=self._projects_endpoints.get_user_roles,

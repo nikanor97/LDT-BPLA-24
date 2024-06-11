@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException
 from src.db.main_db_manager import MainDbManager
+from src.db.users.db_manager.user_token import UserTokenDbManager
 from src.server.auth_utils import oauth2_scheme, TokenKind
 
 
@@ -20,6 +21,6 @@ class Auth:
 
     async def is_access_token_valid(self, token: str):
         async with self._main_db_manager.users.make_autobegin_session() as session:
-            return await self._main_db_manager.users.is_token_valid(
+            return await UserTokenDbManager.is_token_valid(
                 session, token, TokenKind.access
             )

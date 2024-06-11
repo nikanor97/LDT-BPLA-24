@@ -20,27 +20,31 @@ from common.rabbitmq.publisher import Publisher
 # from common.rabbitmq.client import RabbitClient
 from src.db.exceptions import ResourceAlreadyExists
 from src.db.main_db_manager import MainDbManager
-from src.db.projects.models import (
-    Frame,
-    FrameBase,
-    FrameMarkup,
-    Label,
-    LabelBase,
-    Video,
-    RoleTypeOption,
-    Project,
-    ProjectBase,
-    UserRole,
-    UserRoleBase,
-    Apartment,
-    ProjectDocument,
-    ApartmentDecorationTypeOption,
-    VerificationTag,
-    VerificationTagBase,
-    VideoStatusOption,
-    ApartmentStatusOption,
-)
-from src.db.users.models import User
+from src.db.projects.db_manager.apartment import ApartmentDbManager
+from src.db.projects.db_manager.frame import FrameDbManager
+from src.db.projects.db_manager.frame_markup import FrameMarkupDbManager
+from src.db.projects.db_manager.label import LabelDbManager
+from src.db.projects.db_manager.project import ProjectDbManager
+from src.db.projects.db_manager.project_document import ProjectDocumentDbManager
+from src.db.projects.db_manager.project_tag import ProjectTagDbManager
+from src.db.projects.db_manager.user_role import UserRoleDbManager
+from src.db.projects.db_manager.verification_tag import VerificationTagDbManager
+from src.db.projects.db_manager.video import VideoDbManager
+from src.db.projects.enums import RoleTypeOption, ApartmentDecorationTypeOption, VideoStatusOption, \
+    ApartmentStatusOption
+from src.db.projects.models.apartment import Apartment
+from src.db.projects.models.frame import Frame, FrameBase
+from src.db.projects.models.frame_markup import FrameMarkup
+from src.db.projects.models.label import LabelBase, Label
+from src.db.projects.models.project import Project, ProjectBase
+from src.db.projects.models.project_document import ProjectDocument
+from src.db.projects.models.project_tag import ProjectTag
+from src.db.projects.models.user_role import UserRoleBase, UserRole
+from src.db.projects.models.verification_tag import VerificationTagBase, VerificationTag
+from src.db.projects.models.video import Video
+from src.db.projects.db_manager.utils.get_all_projects_stats import get_all_projects_stats
+from src.db.users.db_manager.user import UserDbManager
+from src.db.users.models.user import User
 from src.server.auth_utils import oauth2_scheme, get_user_id_from_token
 from src.server.common import UnifiedResponse, exc_to_str
 from src.server.constants import tag_translation, colors
@@ -72,6 +76,16 @@ from starlette.templating import Jinja2Templates
 templates = Jinja2Templates(directory="templates")
 
 
+# class ProjectsEndpoints:
+#     def __init__(
+#         self,
+#         main_db_manager: MainDbManager,
+#         publisher: Optional[Publisher] = None
+#     ) -> None:
+#         self._main_db_manager = main_db_manager
+#         self._publisher = publisher
+
+
 class ProjectsEndpoints:
     def __init__(self, main_db_manager: MainDbManager, publisher: Publisher) -> None:
         self._main_db_manager = main_db_manager
@@ -90,7 +104,7 @@ class ProjectsEndpoints:
         owner_id = get_user_id_from_token(token)
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                apartment = await self._main_db_manager.projects.get_apartment(
+                apartment = await ApartmentDbManager.get_apartment(
                     session, apartment_id
                 )
             except NoResultFound as e:
@@ -135,7 +149,7 @@ class ProjectsEndpoints:
 
         try:
             async with self._main_db_manager.projects.make_autobegin_session() as session:
-                video = await self._main_db_manager.projects.create_video(
+                video = await VideoDbManager.create_video(
                     session, video_
                 )
         except NoResultFound as e:
@@ -147,34 +161,13 @@ class ProjectsEndpoints:
 
         return UnifiedResponse(data=video)
 
-    # async def create_frame(self, frame: FrameBase) -> UnifiedResponse[Frame]:
-    #     async with self._main_db_manager.markup.make_autobegin_session() as session:
-    #         try:
-    #             new_frame = await self._main_db_manager.markup.create_frame(session, frame)
-    #             return UnifiedResponse(data=new_frame)
-    #         except NoResultFound as e:
-    #             # raise HTTPException(status_code=404, detail=e.args)
-    #             return UnifiedResponse(error=exc_to_str(e), status_code=404)
-    #         except ResourceAlreadyExists as e:
-    #             # raise HTTPException(status_code=409, detail=e.args)
-    #             return UnifiedResponse(error=exc_to_str(e), status_code=409)
-    #
-    # async def create_markup(self, markup: FrameMarkupBase) -> UnifiedResponse[FrameMarkup]:
-    #     async with self._main_db_manager.markup.make_autobegin_session() as session:
-    #         try:
-    #             new_markup = await self._main_db_manager.markup.create_markup(session, markup)
-    #             return UnifiedResponse(data=new_markup)
-    #         except NoResultFound as e:
-    #             # raise HTTPException(status_code=404, detail=e.args)
-    #             return UnifiedResponse(error=exc_to_str(e), status_code=404)
-
     async def create_frames_with_markups(
         self, video_markup: VideoMarkupCreate
     ) -> UnifiedResponse[list[FrameMarkup]]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
                 frames = (
-                    await self._main_db_manager.projects.create_frames_with_markups(
+                    await FrameMarkupDbManager.create_frames_with_markups(
                         session, video_markup
                     )
                 )
@@ -188,7 +181,7 @@ class ProjectsEndpoints:
     ) -> UnifiedResponse[list[Label]]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                new_labels = await self._main_db_manager.projects.create_labels(
+                new_labels = await LabelDbManager.create_labels(
                     session, project_id, labels
                 )
                 return UnifiedResponse(data=new_labels)
@@ -202,7 +195,7 @@ class ProjectsEndpoints:
     ) -> UnifiedResponse[list[Label]]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                labels = await self._main_db_manager.projects.get_labels_by_project(
+                labels = await LabelDbManager.get_labels_by_project(
                     session, project_id
                 )
                 return UnifiedResponse(data=labels)
@@ -212,7 +205,7 @@ class ProjectsEndpoints:
     async def get_video(self, video_id: uuid.UUID) -> UnifiedResponse[Video]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                video = await self._main_db_manager.projects.get_video(
+                video = await VideoDbManager.get_video(
                     session, video_id
                 )
                 return UnifiedResponse(data=video)
@@ -222,14 +215,14 @@ class ProjectsEndpoints:
     async def get_project(self, project_id: uuid.UUID) -> UnifiedResponse[ProjectRead]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                project = await self._main_db_manager.projects.get_project(
+                project = await ProjectDbManager.get_project(
                     session, project_id
                 )
-                tags = await self._main_db_manager.projects.get_tags_by_project(
+                tags = await VerificationTagDbManager.get_tags_by_project(
                     session, project_id
                 )
                 user_roles_verificators = (
-                    await self._main_db_manager.projects.get_user_roles(
+                    await UserRoleDbManager.get_user_roles(
                         session,
                         project_id=project_id,
                         role_type=RoleTypeOption.verificator,
@@ -242,7 +235,7 @@ class ProjectsEndpoints:
         users_ids = {urv.user_id for urv in user_roles_verificators}
 
         async with self._main_db_manager.users.make_autobegin_session() as session:
-            verificators = await self._main_db_manager.users.get_users(
+            verificators = await UserDbManager.get_users(
                 session, users_ids
             )
 
@@ -252,7 +245,7 @@ class ProjectsEndpoints:
     async def delete_project(self, project_id: uuid.UUID) -> UnifiedResponse[Project]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                project = await self._main_db_manager.projects.delete_project(
+                project = await ProjectDbManager.delete_project(
                     session, project_id
                 )
                 return UnifiedResponse(data=project)
@@ -264,35 +257,19 @@ class ProjectsEndpoints:
     ) -> UnifiedResponse[list[ApartmentWithVideo]]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                apartments = await self._main_db_manager.projects.get_apartments_with_video_by_project(
+                apartments = await ApartmentDbManager.get_apartments_with_video_by_project(
                     session, project_id
                 )
                 return UnifiedResponse(data=apartments)
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
-    # NO NEED CAUSE WE HAVE GETPROJECT THAT RETURNS APARTMENTS ALSO
-    # async def get_videos_by_project(
-    #     self, project_id: uuid.UUID
-    # ) -> UnifiedResponse[list[Video]]:
-    #     # async with self._main_db_manager.projects.make_autobegin_session() as session:
-    #     #     try:
-    #     #         await self._main_db_manager.projects.get_project(session, project_id)
-    #     #     except NoResultFound as e:
-    #     #         return UnifiedResponse(error=exc_to_str(e), status_code=404)
-    #
-    #     async with self._main_db_manager.projects.make_autobegin_session() as session:
-    #         videos = await self._main_db_manager.projects.get_videos_by_project(
-    #             session, project_id
-    #         )
-    #         return UnifiedResponse(data=videos)
-
     async def get_videos_by_apartment(
-        self, apartment_id
+        self, apartment_id: uuid.UUID
     ) -> UnifiedResponse[list[Video]]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                videos = await self._main_db_manager.projects.get_videos_by_apartment(
+                videos = await VideoDbManager.get_videos_by_apartment(
                     session, apartment_id
                 )
                 return UnifiedResponse(data=videos)
@@ -302,7 +279,7 @@ class ProjectsEndpoints:
     async def get_frame(self, frame_id: uuid.UUID) -> UnifiedResponse[Frame]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                frame = await self._main_db_manager.projects.get_frame(
+                frame = await FrameDbManager.get_frame(
                     session, frame_id
                 )
                 return UnifiedResponse(data=frame)
@@ -314,7 +291,7 @@ class ProjectsEndpoints:
     ) -> UnifiedResponse[list[Frame]]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                frames = await self._main_db_manager.projects.get_frames_by_video(
+                frames = await FrameDbManager.get_frames_by_video(
                     session, video_id
                 )
                 return UnifiedResponse(data=frames)
@@ -326,27 +303,9 @@ class ProjectsEndpoints:
     ) -> UnifiedResponse[list[FramesWithMarkupRead]]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                frames = await self._main_db_manager.projects.get_frames_with_markups(
+                frames = await FrameDbManager.get_frames_with_markups(
                     session, video_id
                 )
-                # resp = []
-                # for fr in frames:
-                #     markups = []
-                #     for markup in fr.markups:
-                #         markups.append(FrameMarkupReadMassive(
-                #             id=markup.id,
-                #             label_id=markup.label_id,
-                #             coords=(
-                #                 markup.coord_top_left_x,
-                #                 markup.coord_top_left_y,
-                #                 markup.coord_bottom_right_x,
-                #                 markup.coord_bottom_right_y
-                #             ),
-                #             confidence=markup.confidence
-                #         ))
-                #     resp.append(FramesWithMarkupRead(
-                #         id=fr.id, video_id=fr.video_id, frame_offset=fr.frame_offset, markups=markups
-                #     ))
                 resp = [FramesWithMarkupRead.parse_obj(fr) for fr in frames]
                 return UnifiedResponse(data=resp)
             except NoResultFound as e:
@@ -364,56 +323,19 @@ class ProjectsEndpoints:
                     frame_ = FrameBase(video_id=video_id, frame_offset=frame_offset)
                 else:
                     frame_ = None
-                markups = await self._main_db_manager.projects.get_frame_markups(
+                markups = await FrameMarkupDbManager.get_frame_markups(
                     session, frame_=frame_, frame_id=frame_id
                 )
                 return UnifiedResponse(data=markups)
             except (NoResultFound, AssertionError) as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
-    # async def get_videos_from_galery(
-    #     self, token: Annotated[str, Depends(oauth2_scheme)]
-    # ) -> UnifiedResponse[list[Video]]:
-    #     # Checking if user with this id exists
-    #     async with self._main_db_manager.users.make_autobegin_session() as session:
-    #         try:
-    #             user_id = get_user_id_from_token(token)
-    #             await self._main_db_manager.users.get_user(session, user_id=user_id)
-    #         except NoResultFound as e:
-    #             return UnifiedResponse(error=exc_to_str(e), status_code=404)
-    #
-    #     async with self._main_db_manager.markup.make_autobegin_session() as session:
-    #         videos = await self._main_db_manager.markup.get_videos_by_owner(
-    #             session, user_id
-    #         )
-    #     return UnifiedResponse(data=videos)
-
-    # async def assign_videos_to_project(
-    #     self, videos_project: VideosWithProjectAssign
-    # ) -> UnifiedResponse[list[Video]]:
-    #     async with self._main_db_manager.users.make_autobegin_session() as session:
-    #         try:
-    #             await self._main_db_manager.users.get_project(
-    #                 session, videos_project.project_id
-    #             )
-    #         except NoResultFound as e:
-    #             return UnifiedResponse(error=exc_to_str(e), status_code=404)
-    #
-    #     async with self._main_db_manager.markup.make_autobegin_session() as session:
-    #         try:
-    #             videos = await self._main_db_manager.markup.assign_videos_to_project(
-    #                 session, videos_project.video_ids, videos_project.project_id
-    #             )
-    #         except NoResultFound as e:
-    #             return UnifiedResponse(error=exc_to_str(e), status_code=404)
-    #     return UnifiedResponse(data=videos)
-
     async def stream_video(self, video_id: uuid.UUID, range: str = Header(None)):
         # TODO: now works only for streaming from file-system
 
         try:
             async with self._main_db_manager.projects.make_autobegin_session() as session:
-                video_db = await self._main_db_manager.projects.get_video(
+                video_db = await VideoDbManager.get_video(
                     session, video_id
                 )
                 # TODO: make source_url not None in models and remove type ignore bolow
@@ -442,7 +364,7 @@ class ProjectsEndpoints:
     async def get_video_file(self, video_id: uuid.UUID):
         try:
             async with self._main_db_manager.projects.make_autobegin_session() as session:
-                video_db = await self._main_db_manager.projects.get_video(
+                video_db = await VideoDbManager.get_video(
                     session, video_id
                 )
                 # TODO: make source_url not None in models and remove type ignore bolow
@@ -456,7 +378,7 @@ class ProjectsEndpoints:
     async def streaming_example(self, video_id: uuid.UUID, request: Request):
         try:
             async with self._main_db_manager.projects.make_autobegin_session() as session:
-                await self._main_db_manager.projects.get_video(session, video_id)
+                await VideoDbManager.get_video(session, video_id)
         except NoResultFound as e:
             raise HTTPException(status_code=404, detail=e.args)
         return templates.TemplateResponse(
@@ -478,7 +400,7 @@ class ProjectsEndpoints:
         # Retrieving user roles
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                user_roles = await self._main_db_manager.projects.get_user_roles(
+                user_roles = await UserRoleDbManager.get_user_roles(
                     session, user_id=user_id, project_id=project_id, role_type=role_type
                 )
             except (NoResultFound, AssertionError) as e:
@@ -488,7 +410,7 @@ class ProjectsEndpoints:
         user_roles = [UserRoleWithProjectRead.parse_obj(ur) for ur in user_roles]
         user_ids = {ur.user_id for ur in user_roles}
         async with self._main_db_manager.users.make_autobegin_session() as session:
-            users = await self._main_db_manager.users.get_users(session, user_ids)
+            users = await UserDbManager.get_users(session, user_ids)
         users_by_id: dict[uuid.UUID, User] = dict()
         for usr in users:
             users_by_id[usr.id] = usr
@@ -517,7 +439,7 @@ class ProjectsEndpoints:
         # Checking whether users with verificators_ids exist in the DB
         async with self._main_db_manager.users.make_autobegin_session() as session:
             try:
-                await self._main_db_manager.users.get_users(
+                await UserDbManager.get_users(
                     session, project.verificators_ids
                 )
             except NoResultFound as e:
@@ -528,19 +450,19 @@ class ProjectsEndpoints:
             try:
                 # TODO: implement transactional behaviour here !!!
                 # Checking whether verification tags provided actually exist
-                await self._main_db_manager.projects.get_verification_tags(
+                await VerificationTagDbManager.get_verification_tags(
                     session, project.tags_ids
                 )
 
-                new_project = await self._main_db_manager.projects.create_project(
+                new_project = await ProjectDbManager.create_project(
                     session, proj, user_id
                 )
 
-                await self._main_db_manager.projects.create_project_tags(
+                await ProjectTagDbManager.create_project_tags(
                     session, new_project.id, project.tags_ids
                 )
 
-                tags = await self._main_db_manager.projects.get_tags_by_project(
+                tags = await VerificationTagDbManager.get_tags_by_project(
                     session, new_project.id
                 )
 
@@ -554,7 +476,7 @@ class ProjectsEndpoints:
                         )
                     )
 
-                await self._main_db_manager.projects.create_labels(
+                await LabelDbManager.create_labels(
                     session, new_project.id, labels
                 )
 
@@ -563,7 +485,7 @@ class ProjectsEndpoints:
 
                 # Checking if any verificators with verificators_ids are already assigned to the project
                 existing_user_roles = (
-                    await self._main_db_manager.projects.get_user_roles(
+                    await UserRoleDbManager.get_user_roles(
                         session,
                         project_id=new_project.id,
                         role_type=RoleTypeOption.verificator,
@@ -578,11 +500,11 @@ class ProjectsEndpoints:
                         user_id=u_id,
                         role_type=RoleTypeOption.verificator,
                     )
-                    await self._main_db_manager.projects.create_user_role(session, ur)
+                    await UserRoleDbManager.create_user_role(session, ur)
 
                 if proj.document_id is not None:
                     project_document = (
-                        await self._main_db_manager.projects.get_project_document(
+                        await ProjectDocumentDbManager.get_project_document(
                             session, proj.document_id
                         )
                     )
@@ -628,7 +550,7 @@ class ProjectsEndpoints:
 
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                new_user_role = await self._main_db_manager.projects.create_user_role(
+                new_user_role = await UserRoleDbManager.create_user_role(
                     session, user_role
                 )
                 return UnifiedResponse(data=new_user_role)
@@ -681,7 +603,7 @@ class ProjectsEndpoints:
         try:
             async with self._main_db_manager.projects.make_autobegin_session() as session:
                 project_document = (
-                    await self._main_db_manager.projects.create_project_document(
+                    await ProjectDocumentDbManager.create_project_document(
                         session, project_doc
                     )
                 )
@@ -697,7 +619,7 @@ class ProjectsEndpoints:
         try:
             async with self._main_db_manager.projects.make_autobegin_session() as session:
                 new_tags = (
-                    await self._main_db_manager.projects.create_verification_tags(
+                    await VerificationTagDbManager.create_verification_tags(
                         session, tags
                     )
                 )
@@ -709,7 +631,7 @@ class ProjectsEndpoints:
         self,
     ) -> UnifiedResponse[list[VerificationTag]]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
-            tags = await self._main_db_manager.projects.get_all_verification_tags(
+            tags = await VerificationTagDbManager.get_all_verification_tags(
                 session
             )
         return UnifiedResponse(data=tags)
@@ -719,7 +641,7 @@ class ProjectsEndpoints:
     ) -> UnifiedResponse[ApartmentWithPlans]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                apartment = await self._main_db_manager.projects.get_apartment(
+                apartment = await ApartmentDbManager.get_apartment(
                     session, apartment_id
                 )
                 # apartment_plan_url = "https://i.postimg.cc/bw5WSmD0/samolet-apt-1-room-apt-plan.png",
@@ -753,7 +675,7 @@ class ProjectsEndpoints:
     ) -> UnifiedResponse[Video]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                video = await self._main_db_manager.projects.change_video_status(
+                video = await VideoDbManager.change_video_status(
                     session, video_id, new_status
                 )
             except NoResultFound as e:
@@ -765,7 +687,7 @@ class ProjectsEndpoints:
     ) -> UnifiedResponse[Video]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                video = await self._main_db_manager.projects.write_gps_coords(
+                video = await VideoDbManager.write_gps_coords(
                     session, video_id, gps_coords
                 )
             except NoResultFound as e:
@@ -779,7 +701,7 @@ class ProjectsEndpoints:
         """
         async with self._main_db_manager.users.make_autobegin_session() as session:
             try:
-                user = await self._main_db_manager.users.get_user(
+                user = await UserDbManager.get_user(
                     session, user_id=user_id
                 )
                 return user
@@ -805,7 +727,7 @@ class ProjectsEndpoints:
     ) -> UnifiedResponse[ProjectScores]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                apartments = await self._main_db_manager.projects.get_apartments_with_video_by_project(
+                apartments = await ApartmentDbManager.get_apartments_with_video_by_project(
                     session, project_id
                 )
             except NoResultFound as e:
@@ -1055,7 +977,7 @@ class ProjectsEndpoints:
         self, apartment_id: uuid.UUID
     ) -> UnifiedResponse[Optional[ScoreMapItemWithLabels]]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
-            videos = await self._main_db_manager.projects.get_videos_by_apartment(
+            videos = await VideoDbManager.get_videos_by_apartment(
                 session, apartment_id
             )
         if len(videos) == 0:
@@ -1260,7 +1182,7 @@ class ProjectsEndpoints:
     async def finish_apartment_check(self, apartment_id: uuid.UUID):
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                await self._main_db_manager.projects.change_apartment_status(
+                await ApartmentDbManager.change_apartment_status(
                     session, apartment_id, ApartmentStatusOption.in_progress
                 )
             except NoResultFound as e:
@@ -1272,16 +1194,11 @@ class ProjectsEndpoints:
         user_id = get_user_id_from_token(token)
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             projects_stats = (
-                await self._main_db_manager.projects.get_all_projects_stats(
+                await get_all_projects_stats(
                     session, user_id
                 )
             )
 
-        # projects_stats = ProjectsStats(
-        #     total_apartments=100,
-        #     total_videos=24,
-        #     apartments_approved=15
-        # )
         return UnifiedResponse(data=projects_stats)
 
     async def get_user_projects(
@@ -1290,7 +1207,7 @@ class ProjectsEndpoints:
         user_id = get_user_id_from_token(token)
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             projects_with_users_ids = (
-                await self._main_db_manager.projects.get_projects_with_users_ids(
+                await ProjectDbManager.get_projects_with_users_ids(
                     session, user_id
                 )
             )
@@ -1302,7 +1219,7 @@ class ProjectsEndpoints:
                 users_ids.add(verificator_id)
 
         async with self._main_db_manager.users.make_autobegin_session() as session:
-            users = await self._main_db_manager.users.get_users(session, users_ids)
+            users = await UserDbManager.get_users(session, users_ids)
 
         users_by_ids: dict[uuid.UUID, User] = dict()
         for user in users:
@@ -1354,12 +1271,9 @@ class ProjectsEndpoints:
         self, video_name: str, video_id: uuid.UUID, video: Video, project_id: uuid.UUID
     ):
         async with self._main_db_manager.projects.make_autobegin_session() as session:
-            labels = await self._main_db_manager.projects.get_labels_by_project(
+            labels = await LabelDbManager.get_labels_by_project(
                 session, project_id
             )
-        # from pprint import pprint
-        #
-        # pprint(labels)
 
         labels_names = [l.name for l in labels]
         label_id_by_name = dict()
@@ -1380,81 +1294,3 @@ class ProjectsEndpoints:
             ensure=False,
         )
         print(rabbit_message)
-
-        # async with aiohttp.ClientSession() as session:
-        #     data = {
-        #         # "url": "file:///media/video/PXL_20230528_131042238.TS_1a0d0f83-827e-4af6-a37a-1b997102eb07.mp4",
-        #         "url": f"file:///media/video/{video_name}",
-        #         "labels": labels_names,
-        #         "frames_step": settings.CLIP_FRAME_STEP,
-        #     }
-        #
-        #     async with session.post(
-        #         f"http://{settings.CLIP_HOST}:{settings.CLIP_PORT}/detect", json=data
-        #     ) as resp:
-        #         pred_detection = await resp.json()
-        #
-        # # print(pred_detection)
-        #
-        # async with aiohttp.ClientSession() as session:
-        #     async with session.get(
-        #         f"http://{settings.CLASSIFIER_HOST}:{settings.CLASSIFIER_PORT}/predict?file_name=/media/video/{video_name}"
-        #     ) as resp:
-        #         pred_classification = await resp.text()
-
-        # print(pred_classification)
-        # pred_classification = json.loads(pred_classification)
-        #
-        # def get_label_id_by_name(name: str):
-        #     try:
-        #         words = name.split(" ")
-        #         if len(words) > 1:
-        #             name = words[0]
-        #         return label_id_by_name[name]
-        #     except KeyError as ke:
-        #         print(ke)
-        #         return label_id_by_name[list(label_id_by_name.keys())[0]]
-        #
-        # vmc = VideoMarkupCreate(
-        #     video_id=video_id,
-        #     frames=[
-        #         FramesWithMarkupCreate(
-        #             frame_offset=frame["frame_id"],
-        #             markup_list=[
-        #                 MarkupListCreate(
-        #                     coord_top_left=(
-        #                         int(box[0] * video.width),
-        #                         int(box[1] * video.height),
-        #                     ),
-        #                     coord_bottom_right=(
-        #                         int(box[2] * video.width),
-        #                         int(box[3] * video.height),
-        #                     ),
-        #                     label_id=get_label_id_by_name(frame["labels"][idx]),
-        #                     confidence=frame["logits"][idx],
-        #                 )
-        #                 for idx, box in enumerate(frame["boxes"])
-        #             ],
-        #         )
-        #         for frame in pred_detection["frames"]
-        #     ],
-        # )
-        #
-        # async with self._main_db_manager.projects.make_autobegin_session() as session:
-        #     await self._main_db_manager.projects.create_frames_with_markups(
-        #         session, vmc
-        #     )
-        #
-        # score_map, frame_results = post_process(
-        #     pred_classification,
-        #     pred_detection["frames"],
-        #     frames_num=len(pred_classification),
-        # )
-        # print(score_map)
-        # score_map_df = get_score_map_df(score_map)
-        # os.makedirs(settings.MEDIA_DIR / "score_maps", exist_ok=True)
-        # filename = f"{datetime.now().timestamp()}_{video_id}.csv"
-        # score_map_df.to_csv(settings.MEDIA_DIR / "score_maps" / filename)
-
-
-#  poetry run alembic downgrade base && poetry run alembic upgrade head && poetry run python scripts/init_db_for_android.py

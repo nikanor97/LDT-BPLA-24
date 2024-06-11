@@ -7,7 +7,8 @@ from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
 
 import settings
-from src.db.users.models import User, UserTokenBase
+from src.db.users.models.user import User
+from src.db.users.models.user_token import UserTokenBase
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

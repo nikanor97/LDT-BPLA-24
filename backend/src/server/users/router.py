@@ -1,7 +1,7 @@
 import settings
 from fastapi import APIRouter, Depends
 from src.db.main_db_manager import MainDbManager
-from src.db.users.models import User
+from src.db.users.models.user import User
 from src.server.auth import Auth
 from src.server.common import METHOD, UnifiedResponse
 from src.server.users.endpoints import UsersEndpoints

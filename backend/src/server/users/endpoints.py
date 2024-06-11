@@ -8,10 +8,12 @@ from sqlalchemy.exc import NoResultFound
 
 from src.db.exceptions import ResourceAlreadyExists
 from src.db.main_db_manager import MainDbManager
-from src.db.users.models import (
-    User,
-    UserBase,
-)
+from src.db.users.db_manager.user import UserDbManager
+from src.db.users.db_manager.user_password import UserPasswordDbManager
+from src.db.users.db_manager.user_token import UserTokenDbManager
+from src.db.users.models.user import User, UserBase
+from src.db.users.models.user_password import UserPassword
+from src.db.users.models.user_token import UserToken
 from src.server.auth_utils import (
     oauth2_scheme,
     get_user_id_from_token,
@@ -38,9 +40,9 @@ class UsersEndpoints:
         async with self._main_db_manager.users.make_autobegin_session() as session:
             try:
                 user = UserBase(name=user_create.name, email=user_create.email)
-                new_user = await self._main_db_manager.users.create_user(session, user)
+                new_user = await UserDbManager.create_user(session, user)
 
-                await self._main_db_manager.users.create_user_password(
+                await UserPasswordDbManager.create_user_password(
                     session, new_user.id, user_create.password
                 )
 
@@ -56,7 +58,7 @@ class UsersEndpoints:
         # user = authenticate_user(fake_users_db, form_data.username, form_data.password)
         async with self._main_db_manager.users.make_autobegin_session() as session:
             try:
-                user = await self._main_db_manager.users.authenticate_user(
+                user = await UserDbManager.authenticate_user(
                     session, form_data.username, form_data.password
                 )
             except NoResultFound as e:
@@ -76,7 +78,7 @@ class UsersEndpoints:
         user_token_base = create_user_token(user)
         async with self._main_db_manager.users.make_autobegin_session() as session:
             try:
-                user_token = await self._main_db_manager.users.create_user_token(
+                user_token = await UserTokenDbManager.create_user_token(
                     session, user_token_base
                 )
             except NoResultFound as e:
@@ -126,7 +128,7 @@ class UsersEndpoints:
         async with self._main_db_manager.users.make_autobegin_session() as session:
             try:
                 user_id = get_user_id_from_token(token)
-                user = await self._main_db_manager.users.get_user(
+                user = await UserDbManager.get_user(
                     session, user_id=user_id
                 )
             except NoResultFound as e:
@@ -139,7 +141,7 @@ class UsersEndpoints:
         self, refresh_token: str
     ) -> UnifiedResponse[TokenWithExpiryData]:
         async with self._main_db_manager.users.make_autobegin_session() as session:
-            is_valid = await self._main_db_manager.users.is_token_valid(
+            is_valid = await UserTokenDbManager.is_token_valid(
                 session, refresh_token, token_kind=TokenKind.refresh
             )
             if not is_valid:
@@ -149,15 +151,15 @@ class UsersEndpoints:
 
             user_id = get_user_id_from_token(refresh_token)
 
-            user = await self._main_db_manager.users.get_user(session, user_id=user_id)
+            user = await UserDbManager.get_user(session, user_id=user_id)
 
             user_token_base = create_user_token(user)
 
-            new_user_token = await self._main_db_manager.users.create_user_token(
+            new_user_token = await UserTokenDbManager.create_user_token(
                 session, user_token_base
             )
 
-            await self._main_db_manager.users.invalidate_previous_token(
+            await UserTokenDbManager.invalidate_previous_token(
                 session, refresh_token
             )
 
@@ -176,5 +178,5 @@ class UsersEndpoints:
 
     async def get_all_users(self) -> UnifiedResponse[list[User]]:
         async with self._main_db_manager.users.make_autobegin_session() as session:
-            users = await self._main_db_manager.users.get_all_users(session)
+            users = await UserDbManager.get_all_users(session)
         return UnifiedResponse(data=users)

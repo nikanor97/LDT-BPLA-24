@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from src.db.users.models import UserBase
+from src.db.users.models.user import UserBase
 
 
 class UserCreate(UserBase):

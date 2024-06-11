@@ -3,8 +3,8 @@ import json
 import settings
 from fastapi.encoders import jsonable_encoder
 from src.db import init_db_manager_closure
-from src.db.projects.db_manager import ProjectsDbManager
-from src.db.users.db_manager import UsersDbManager
+from src.db.projects.db_manager import DbManager as ProjectsDbManager
+from src.db.users.db_manager import DbManager as UsersDbManager
 
 
 class MainDbManager:

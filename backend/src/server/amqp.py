@@ -14,7 +14,7 @@ from src.db.main_db_manager import MainDbManager
 # from supply_common.db.messages import DuosReportValid
 
 import settings
-from src.db.projects.models import VideoStatusOption
+from src.db.projects.enums import VideoStatusOption
 from src.server.projects.models import (
     VideoMarkupCreate,
     FramesWithMarkupCreate,
