@@ -14,10 +14,6 @@ const initialState: iState.Value = {
     statistics: {
         request: getFullState(),
         fullRequest: getFullState(),
-        filters: {
-            mode: 'floor',
-            detalisation: 'mop'
-        }
     }
 };
 
@@ -72,10 +68,6 @@ export const Slice = createSlice({
         _getFullStatsError: (state) =>
             requestError(state.statistics.fullRequest),
 
-
-        setStatisticFilters: (state, action: PayloadAction<iActions.setStatisticFilters>) => {
-            state.statistics.filters = action.payload;
-        },
 
         getProjectContent: (state, action: PayloadAction<iActions.getProjectContent>) =>
             requestStart(state.content),

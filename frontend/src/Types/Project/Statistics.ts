@@ -1,10 +1,6 @@
-export type Filters = {
-    mode: 'home' | 'floor'
-    detalisation: 'mop' | 'not_mop'
-}
-
 export type Item = {
-    total_apartments: number;
-    total_videos: number;
-    apartments_approved: number;
+    photo_count: number;
+    video_count: number;
+    photo_with_det_count: number;
+    video_with_det_count: number;
 }

@@ -16,7 +16,6 @@ export declare namespace iState {
         statistics: {
             request: RequestFullState<Api.oGetProjectStats>;
             fullRequest: RequestFullState<Api.oGetProjectFullStats>;
-            filters: Project.Statistics.Filters;
         }
         content: RequestFullState<Array<Video.Item | Photo.Item> | null>
     }
@@ -32,7 +31,6 @@ export declare namespace iActions {
 
     type getApartments = Api.iGetApartments;
     type _getApartmentsSuccess = Api.oGetApartments;
-    type setStatisticFilters = Project.Statistics.Filters;
 
     type getFullStats = Api.iGetProjectFullStats;
     type _getFullStatsSuccess = Api.oGetProjectFullStats;

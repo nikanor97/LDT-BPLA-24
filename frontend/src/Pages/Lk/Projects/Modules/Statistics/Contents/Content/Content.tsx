@@ -1,13 +1,9 @@
 import * as React from 'react';
 import Layout from '../../Modules/Layout/Layout';
-import StatContainer from '@root/Components/StatContainer/StatContainer';
-import HomeIcon from '../../Icons/Home';
-import VideoIcon from '../../Icons/Youtube';
-import Tick from '../../Icons/Tick';
 import { useSelector } from 'react-redux';
 import {PageState} from '../../../../Redux/types';
-import styles from './Content.module.scss';
 import StatLineContainer from '@root/Components/StatLineContainer/StatLineContainer';
+import StatDonutContainer from '@root/Components/StatDonutContainer/StatDonutContainer';
 
 
 const Content = () => {
@@ -17,25 +13,29 @@ const Content = () => {
         <Layout 
             items={[
                 (
-                    <StatLineContainer title='Загруженные данные' count1={2} count2={3} name1='Видео' name2='Видео' />
+                    <StatLineContainer
+                        title='Загруженные данные'
+                        count1={data.photo_count} 
+                        count2={data.video_count}
+                        name1='Фото'
+                        name2='Видео' />
                 ),
                 (
-                    <StatContainer 
-                        title="Всего видео"
-                        count={data.total_videos}
-                        icon={<VideoIcon />}
+                    <StatDonutContainer 
+                        title="Фото с обнаружениями"
+                        count={data.photo_with_det_count}
+                        total={data.photo_count}
+                        color='#F3AF3D'
+                        hint='Количество фото с обнаруженными объектами: самолет, вертолет, БПЛА самолетного типа, БПЛА коптерного типа, птица и другие объекты'
                     />
                 ),
                 (
-                    <StatContainer 
-                        title="Всего проверенных"
-                        count={data.apartments_approved}
-                        total={
-                            <span className={styles.total}>
-                                /{data.total_apartments}
-                            </span>
-                        }
-                        icon={<Tick />}
+                    <StatDonutContainer 
+                        title="Видео с обнаружениями"
+                        count={data.video_with_det_count}
+                        total={data.video_count}
+                        color='#43AED1'
+                        hint='Количество видео с обнаруженными объектами: самолет, вертолет, БПЛА самолетного типа, БПЛА коптерного типа, птица и другие объекты'
                     />
                 )
             ]}

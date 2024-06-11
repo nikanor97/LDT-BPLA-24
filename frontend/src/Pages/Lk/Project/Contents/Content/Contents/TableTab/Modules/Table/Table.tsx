@@ -24,6 +24,7 @@ const TableModule = () => {
                 onRow={(record) => {
                     return {
                         onClick: () => {
+                            //TODO Изменить на пуш в viewer
                             history.push(routes.lk.apartment(record.id))
                         }
                     }

@@ -7,7 +7,7 @@ import { required } from '@root/Utils/Form/Rules';
 import {Input} from '@root/Components/Controls';
 import {RcFile} from "antd/es/upload";
 import {iForm} from './types';
-import { getApartName } from '@root/Utils/Apartment/getApartName';
+import { getApartName } from '@root/Utils/Viewer/getApartName';
 
 const {Dragger} = Upload;
 

@@ -23,10 +23,10 @@ const StatLineContainer = (props: iStatLineContainer) => {
             </div>
             <div className={styles.content}>
                 <div className={styles.lines}>
-                    <Tooltip placement="top" title={count1}>
+                    <Tooltip title={count1}>
                         <div style={{ width: `${ratio1}%`}} className={styles.lineLeft} />
                     </Tooltip>
-                    <Tooltip placement="top" title={count2}>
+                    <Tooltip title={count2}>
                         <div style={{ width: `${ratio2}%`}} className={styles.lineRight} />
                     </Tooltip>
                 </div>

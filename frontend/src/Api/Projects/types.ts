@@ -1,4 +1,4 @@
-import {User, Project, Apartment, Video, Photo} from '@root/Types';
+import {User, Project, Viewer, Video, Photo} from '@root/Types';
 import {RcFile} from 'antd/es/upload';
 
 
@@ -14,12 +14,12 @@ export declare namespace Api {
     type oGetProject = Project.Info;
 
     type iGetApartments = Project.Id;
-    type oGetApartments = Apartment.Item[];
+    type oGetApartments = Viewer.Item[];
 
     type iGetApartment = {
-        apartId: Apartment.Id;
+        apartId: Viewer.Id;
     }
-    type oGetApartment = Apartment.Item;
+    type oGetApartment = Viewer.Item;
 
     type iCreateProject = {
         name: string;
@@ -39,7 +39,7 @@ export declare namespace Api {
     }
     type oGetTags = Project.Tags.Item[];
     type iGetApartmentVideos = {
-        apartment_id: Apartment.Id;
+        apartment_id: Viewer.Id;
     }
     type oGetApartmentVideos = Video.Item[]
     type iGetVideoFrames = {
@@ -81,11 +81,6 @@ export declare namespace Api {
 
     type oChangeVideoStatus = Video.Item;
 
-
-    type iGetApartmentScores = {
-        apartment_id: Apartment.Id;
-    }
-    type oGetApartmentScores = Apartment.Scores.Result;
     type iGetProjectFullStats = {
         project_id: Project.Id;
     }

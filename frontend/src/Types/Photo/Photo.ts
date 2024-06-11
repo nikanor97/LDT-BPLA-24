@@ -19,5 +19,5 @@ export type Item = {
     "width": number,
     "source_url": string;
 	"type": "video" | "photo";
-	"detected_count": number
+	"detected_count": number,
 }

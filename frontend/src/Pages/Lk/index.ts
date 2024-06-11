@@ -1,10 +1,10 @@
 import Projects from './Projects/Projects';
 import Project from './Project/Project';
-import Apartment from './Apartment/Apartment';
+import Viewer from './Viewer/Viewer';
 
 
 export default {
     Projects,
     Project,
-    Apartment
+    Viewer
 }

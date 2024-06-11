@@ -2,7 +2,7 @@ import {TableProps} from "antd"
 import {Content} from '@root/Types';
 import moment from "moment";
 import StatusTag from "@root/Components/StatusTag/StatusTag";
-import {getStatusText, getStatusType} from '@root/Utils/Apartment/getStatus';
+import {getStatusText, getStatusType} from '@root/Utils/Viewer/getStatus';
 
 type Columns = TableProps<Content.Item>['columns']
 

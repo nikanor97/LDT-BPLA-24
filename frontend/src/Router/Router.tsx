@@ -51,7 +51,7 @@ const Router = () => {
                         <PageRoute 
                             path={routes.lk.apartment()}
                             exact
-                            Component={Pages.Lk.Apartment}
+                            Component={Pages.Lk.Viewer}
                         />
                         <PageRoute 
                             path='*' 

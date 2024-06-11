@@ -2,7 +2,6 @@ import axios from '../Request';
 import paths from './paths';
 import {Api} from './types';
 import qs from 'qs';
-import {RcFile} from 'antd/es/upload';
 import {omit} from 'lodash';
 
 export default {
@@ -50,8 +49,10 @@ export default {
         axios.get<Api.oGetTags>(paths.getTags),
     getApartmentVideos: (params: Api.iGetApartmentVideos) =>
         axios.get<Api.oGetApartmentVideos>(paths.getApartmentVideos, {params}),
+
     getProjectContent: (params: Api.iGetProjectContent) =>
         axios.get<Api.oGetProjectContent>(paths.getProjectContent, {params}),
+
     getVideoFrames: (params: Api.iGetVideoFrames) => 
         axios.get<Api.oGetVideoFrames>(paths.getVideoFrames, {params}),
     getLabels: (params: Api.iGetLabels) => 
@@ -79,7 +80,4 @@ export default {
 
     changeVideoStatus: (params: Api.iChangeVideoStatus) => 
         axios.post<Api.oChangeVideoStatus>(`${paths.changeVideoStatus}${qs.stringify(params, {addQueryPrefix: true})}`),
-
-    getApartmentScores: (params: Api.iGetApartmentScores) => 
-        axios.get<Api.oGetApartmentScores>(paths.getApartmentScores, {params})
 }
