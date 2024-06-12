@@ -1,3 +1,4 @@
+import enum
 import uuid
 from datetime import datetime
 from decimal import Decimal
@@ -12,7 +13,7 @@ from src.db.projects.models import (
     VerificationTag,
     ApartmentBase,
     Video,
-    Apartment,
+    Apartment, VideoBase, VideoStatusOption,
 )
 from src.db.users.models import User
 from src.server.common import ModelWithLabelAndValue
@@ -53,11 +54,6 @@ class FramesWithMarkupRead(FrameBase):
     markups: list[FrameMarkupReadMassive]
 
 
-# class VideosWithProjectAssign(BaseModel):
-#     video_ids: list[uuid.UUID]
-#     project_id: uuid.UUID
-
-
 class UserRoleWithProjectRead(UserRoleBase):
     id: uuid.UUID
     user: Optional[User]
@@ -71,31 +67,10 @@ class ProjectCreate(ProjectBase):
     ]  # ids of verificator users that will be attached to the project
 
 
-class ProjectRead(ProjectBase):
-    id: uuid.UUID
-    tags: list[VerificationTag]
-    verificators: Optional[list[User]]
-
-
-# class ProjectWithApartmentsRead(ProjectBase):
-#     apartments: list[Apartment]
-
-
-# class ProjectDocumentStats(BaseModel):
-#     project_document_id: uuid.UUID
-#     apt_number: int
-#     n_finishing: int
-#     n_rough: int
-
-
-# class VerificationTag(BaseModel):
-#     tagname: str
-#     id: str
-
-
-# class VerificationTagWithGroup(BaseModel):
-#     groupname: str
+# class ProjectRead(ProjectBase):
+#     id: uuid.UUID
 #     tags: list[VerificationTag]
+#     verificators: Optional[list[User]]
 
 
 class GpsCoords(BaseModel):
@@ -117,11 +92,11 @@ class ProjectWithUsersIds(ProjectBase):
     created_at: datetime
 
 
-class ProjectWithUsers(ProjectBase):
-    id: uuid.UUID
-    author: User
-    verificators: list[User]
-    created_at: datetime
+# class ProjectWithUsers(ProjectBase):
+#     id: uuid.UUID
+#     author: User
+#     verificators: list[User]
+#     created_at: datetime
 
 
 class ApartmentWithVideo(ApartmentBase):
@@ -267,3 +242,55 @@ class ApartmentWithPlans(Apartment):
 #     mop_ceiling_no_percent
 #     mop_ceiling_rough_percent
 #     mop_ceiling_finishing_percent
+
+
+class BplaProjectStats(BaseModel):
+    photo_count: int
+    video_count: int
+    photo_with_det_count: int
+    video_with_det_count: int
+
+
+class ProjectContentTypeOption(str, enum.Enum):
+    photo = "photo"
+    video = "video"
+    mixed = "mixed"
+
+
+class ContentTypeOption(str, enum.Enum):
+    photo = "photo"
+    video = "video"
+
+
+class ProjectWithUsers(ProjectBase):
+    id: uuid.UUID
+    author: User
+    # verificators: list[User]
+    created_at: datetime
+    content_type: ProjectContentTypeOption  # считать основываясь на том что в проекта
+    detected_count: int
+
+
+class ProjectRead(ProjectBase):
+    id: uuid.UUID
+    tags: list[VerificationTag]
+    # verificators: Optional[list[User]]
+    msg_receiver: str  # TODO: кто это ???
+
+
+class Content(BaseModel):
+    project_id: uuid.UUID
+    content_type: ContentTypeOption
+    height: int
+    width: int
+    content_id: uuid.UUID
+    length_sec: Optional[int]
+    n_frames: Optional[int]
+    name: str
+    owner_id: uuid.UUID
+    source_url: str
+    status: VideoStatusOption
+    detected_count: int
+    created_at: datetime
+    updated_at: datetime
+

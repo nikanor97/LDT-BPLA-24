@@ -13,7 +13,7 @@ from src.db.projects.models import (
     UserRole,
     Project,
     ProjectDocument,
-    VerificationTag,
+    VerificationTag, Photo,
 )
 from src.server.auth import Auth
 from src.server.common import METHOD, UnifiedResponse
@@ -28,7 +28,7 @@ from src.server.projects.models import (
     ProjectStats,
     ProjectScores,
     ApartmentWithPlans,
-    ScoreMapItemWithLabels,
+    ScoreMapItemWithLabels, BplaProjectStats, Content,
 )
 
 
@@ -39,7 +39,7 @@ class ProjectsRouter:
         self.router = APIRouter(
             prefix=f"{settings.API_PREFIX}/projects",
             # prefix=f"{settings.API_PREFIX}/markup",
-            tags=["projects"],
+            # tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -48,37 +48,8 @@ class ProjectsRouter:
             response_model=UnifiedResponse[Video],
             methods=[METHOD.POST],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
-
-        # self.router.add_api_route(
-        #     path="/galery",
-        #     endpoint=self._projects_endpoints.get_videos_from_galery,
-        #     response_model=UnifiedResponse[list[Video]],
-        #     methods=[METHOD.GET],
-        #     dependencies=[Depends(Auth(main_db_manager))],
-        # )
-        #
-        # self.router.add_api_route(
-        #     path="/assign-videos-to-project",
-        #     endpoint=self._projects_endpoints.assign_videos_to_project,
-        #     response_model=UnifiedResponse[list[Video]],
-        #     methods=[METHOD.POST],
-        #     dependencies=[Depends(Auth(main_db_manager))],
-        # )
-
-        # self.router.add_api_route(
-        #     path="/frame",
-        #     endpoint=self._projects_endpoints.create_frame,
-        #     response_model=UnifiedResponse[Frame],
-        #     methods=[METHOD.POST],
-        # )
-        #
-        # self.router.add_api_route(
-        #     path="/markup",
-        #     endpoint=self._projects_endpoints.create_markup,
-        #     response_model=UnifiedResponse[FrameMarkup],
-        #     methods=[METHOD.POST],
-        # )
 
         self.router.add_api_route(
             path="/frames-with-markups",
@@ -86,6 +57,7 @@ class ProjectsRouter:
             response_model=UnifiedResponse[list[FrameMarkup]],
             methods=[METHOD.POST],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["bpla"]
         )
 
         self.router.add_api_route(
@@ -94,6 +66,7 @@ class ProjectsRouter:
             response_model=UnifiedResponse[list[FramesWithMarkupRead]],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -102,6 +75,7 @@ class ProjectsRouter:
             response_model=UnifiedResponse[list[Label]],
             methods=[METHOD.POST],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -110,6 +84,7 @@ class ProjectsRouter:
             response_model=UnifiedResponse[list[Label]],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["bpla"]
         )
 
         self.router.add_api_route(
@@ -118,6 +93,7 @@ class ProjectsRouter:
             response_model=UnifiedResponse[Video],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -126,15 +102,8 @@ class ProjectsRouter:
             response_model=UnifiedResponse[list[Video]],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
-
-        # self.router.add_api_route(
-        #     path="/videos-by-project",
-        #     endpoint=self._projects_endpoints.get_videos_by_project,
-        #     response_model=UnifiedResponse[list[Video]],
-        #     methods=[METHOD.GET],
-        #     dependencies=[Depends(Auth(main_db_manager))],
-        # )
 
         self.router.add_api_route(
             path="/frame",
@@ -142,6 +111,7 @@ class ProjectsRouter:
             response_model=UnifiedResponse[Frame],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -150,6 +120,7 @@ class ProjectsRouter:
             response_model=UnifiedResponse[list[Frame]],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -160,6 +131,7 @@ class ProjectsRouter:
             description="Get markups for given frame. "
             "Frame can be given with frame_id or with pair (video_id, time_point)",
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -167,17 +139,20 @@ class ProjectsRouter:
             endpoint=self._projects_endpoints.stream_video,
             methods=[METHOD.GET],
             # dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
             path="/streaming-example",
             endpoint=self._projects_endpoints.streaming_example,
+            tags=["projects"],
         )
 
         self.router.add_api_route(
             path="/video-file",
             endpoint=self._projects_endpoints.get_video_file,
             methods=[METHOD.GET],
+            tags=["bpla"]
         )
 
         self.router.add_api_route(
@@ -186,6 +161,7 @@ class ProjectsRouter:
             response_model=UnifiedResponse[UserRole],
             methods=[METHOD.POST],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -194,15 +170,16 @@ class ProjectsRouter:
             response_model=UnifiedResponse[ProjectRead],
             methods=[METHOD.POST],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
-        self.router.add_api_route(
-            path="/project",
-            endpoint=self._projects_endpoints.get_project,
-            response_model=UnifiedResponse[ProjectRead],
-            methods=[METHOD.GET],
-            dependencies=[Depends(Auth(main_db_manager))],
-        )
+        # self.router.add_api_route(
+        #     path="/project",
+        #     endpoint=self._projects_endpoints.get_project,
+        #     response_model=UnifiedResponse[ProjectRead],
+        #     methods=[METHOD.GET],
+        #     dependencies=[Depends(Auth(main_db_manager))],
+        # )
 
         self.router.add_api_route(
             path="/project",
@@ -210,6 +187,7 @@ class ProjectsRouter:
             response_model=UnifiedResponse[Project],
             methods=[METHOD.DELETE],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -227,6 +205,7 @@ class ProjectsRouter:
                 }
             },
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -235,6 +214,7 @@ class ProjectsRouter:
             response_model=UnifiedResponse[ProjectDocument],
             methods=[METHOD.POST],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -243,6 +223,7 @@ class ProjectsRouter:
             response_model=UnifiedResponse[list[ApartmentWithVideo]],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -251,15 +232,16 @@ class ProjectsRouter:
             response_model=UnifiedResponse[ApartmentWithPlans],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
-        self.router.add_api_route(
-            path="/verification-tags",
-            endpoint=self._projects_endpoints.get_all_verification_tags,
-            response_model=UnifiedResponse[list[VerificationTag]],
-            methods=[METHOD.GET],
-            dependencies=[Depends(Auth(main_db_manager))],
-        )
+        # self.router.add_api_route(
+        #     path="/verification-tags",
+        #     endpoint=self._projects_endpoints.get_all_verification_tags,
+        #     response_model=UnifiedResponse[list[VerificationTag]],
+        #     methods=[METHOD.GET],
+        #     dependencies=[Depends(Auth(main_db_manager))],
+        # )
 
         self.router.add_api_route(
             path="/video-status",
@@ -267,6 +249,7 @@ class ProjectsRouter:
             response_model=UnifiedResponse[Video],
             methods=[METHOD.POST],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["bpla"]
         )
 
         self.router.add_api_route(
@@ -275,6 +258,7 @@ class ProjectsRouter:
             response_model=UnifiedResponse[Video],
             methods=[METHOD.POST],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -282,6 +266,7 @@ class ProjectsRouter:
             endpoint=self._projects_endpoints.get_score_map,
             methods=[METHOD.GET],
             # dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -289,23 +274,25 @@ class ProjectsRouter:
             endpoint=self._projects_endpoints.finish_apartment_check,
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
-        self.router.add_api_route(
-            path="/stats",
-            endpoint=self._projects_endpoints.get_projects_stats,
-            response_model=UnifiedResponse[ProjectsStats],
-            methods=[METHOD.GET],
-            dependencies=[Depends(Auth(main_db_manager))],
-        )
+        # self.router.add_api_route(
+        #     path="/stats",
+        #     endpoint=self._projects_endpoints.get_projects_stats,
+        #     response_model=UnifiedResponse[ProjectsStats],
+        #     methods=[METHOD.GET],
+        #     dependencies=[Depends(Auth(main_db_manager))],
+        # )
 
-        self.router.add_api_route(
-            path="/projects-with-users",
-            endpoint=self._projects_endpoints.get_user_projects,
-            response_model=UnifiedResponse[list[ProjectWithUsers]],
-            methods=[METHOD.GET],
-            dependencies=[Depends(Auth(main_db_manager))],
-        )
+        # self.router.add_api_route(
+        #     path="/projects-with-users",
+        #     endpoint=self._projects_endpoints.get_user_projects,
+        #     response_model=UnifiedResponse[list[ProjectWithUsers]],
+        #     methods=[METHOD.GET],
+        #     dependencies=[Depends(Auth(main_db_manager))],
+        #     tags=["projects"],
+        # )
 
         self.router.add_api_route(
             path="/stats-micro",
@@ -313,6 +300,7 @@ class ProjectsRouter:
             response_model=UnifiedResponse[ProjectStats],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -321,6 +309,7 @@ class ProjectsRouter:
             response_model=UnifiedResponse[ProjectScores],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -329,6 +318,7 @@ class ProjectsRouter:
             response_model=UnifiedResponse[Optional[ScoreMapItemWithLabels]],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
 
         self.router.add_api_route(
@@ -337,4 +327,100 @@ class ProjectsRouter:
             response_model=UnifiedResponse[ScoreMapItemWithLabels],
             methods=[METHOD.POST],
             dependencies=[Depends(Auth(main_db_manager))],
+            tags=["projects"],
         )
+
+#-------------------------------------------
+
+        self.router.add_api_route(
+            path="/project-stats",
+            endpoint=self._projects_endpoints.get_project_stats,
+            response_model=UnifiedResponse[Optional[BplaProjectStats]],
+            methods=[METHOD.GET],
+            dependencies=[Depends(Auth(main_db_manager))],
+            tags=['bpla']
+        )
+
+        self.router.add_api_route(
+            path="/verification-tags",
+            endpoint=self._projects_endpoints.get_all_verification_tags,
+            response_model=UnifiedResponse[list[VerificationTag]],
+            methods=[METHOD.GET],
+            dependencies=[Depends(Auth(main_db_manager))],
+            tags=['bpla']
+        )
+
+        self.router.add_api_route(
+            path="/projects-with-users",
+            endpoint=self._projects_endpoints.get_projects_with_users,
+            response_model=UnifiedResponse[list[ProjectWithUsers]],
+            methods=[METHOD.GET],
+            dependencies=[Depends(Auth(main_db_manager))],
+            tags=['bpla']
+        )
+
+        self.router.add_api_route(
+            path="/project",
+            endpoint=self._projects_endpoints.get_project,
+            response_model=UnifiedResponse[ProjectRead],
+            methods=[METHOD.GET],
+            dependencies=[Depends(Auth(main_db_manager))],
+            tags=['bpla']
+        )
+
+        self.router.add_api_route(
+            path="/video-info",
+            endpoint=self._projects_endpoints.get_video_info,
+            response_model=UnifiedResponse[Video],
+            methods=[METHOD.GET],
+            dependencies=[Depends(Auth(main_db_manager))],
+            tags=['bpla']
+        )
+
+        self.router.add_api_route(
+            path="/photo-info",
+            endpoint=self._projects_endpoints.get_photo_info,
+            response_model=UnifiedResponse[Photo],
+            methods=[METHOD.GET],
+            dependencies=[Depends(Auth(main_db_manager))],
+            tags=['bpla']
+        )
+
+        self.router.add_api_route(
+            path="/content-info",
+            endpoint=self._projects_endpoints.get_content_info,
+            response_model=UnifiedResponse[Content],
+            methods=[METHOD.GET],
+            dependencies=[Depends(Auth(main_db_manager))],
+            tags=['bpla']
+        )
+
+        self.router.add_api_route(
+            path="/content-by-project",
+            endpoint=self._projects_endpoints.get_content,
+            response_model=UnifiedResponse[list[Content]],
+            methods=[METHOD.GET],
+            dependencies=[Depends(Auth(main_db_manager))],
+            tags=['bpla']
+        )
+
+        self.router.add_api_route(
+            path="/create-upload-content",
+            endpoint=self._projects_endpoints.upload_content,
+            response_model=UnifiedResponse[list[Content]],
+            methods=[METHOD.POST],
+            dependencies=[Depends(Auth(main_db_manager))],
+            tags=['bpla']
+        )
+
+        self.router.add_api_route(
+            path="/download_detect_result",
+            endpoint=self._projects_endpoints.download_detect_result,
+            methods=[METHOD.GET],
+            dependencies=[Depends(Auth(main_db_manager))],
+            tags=['bpla']
+        )
+
+
+
+

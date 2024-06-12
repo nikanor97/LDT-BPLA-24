@@ -61,32 +61,32 @@ class ApartmentStatusOption(str, enum.Enum):
     declined = "declined"
 
 
-class VideoBase(ProjectsDataSQLModel):
-    name: str = Field(nullable=False)
-    description: Optional[str] = Field(nullable=True, default=None)
-    owner_id: uuid.UUID = Field(nullable=False)
-    status: VideoStatusOption = Field(
-        sa_column=Column(
-            sqlalchemy.Enum(VideoStatusOption), default=VideoStatusOption.created
-        )
-    )
-    apartment_id: uuid.UUID = Field(foreign_key="apartments.id", nullable=False)
-
-
-class Video(VideoBase, TimeStampWithIdMixin, table=True):
-    __tablename__ = "videos"
-    frames: Optional[list["Frame"]] = Relationship(
-        back_populates="video",
-    )
-    apartment: "Apartment" = Relationship(
-        back_populates="videos",
-    )
-    # TODO: maybe make these fields non-optional
-    length_sec: Optional[Decimal] = Field(nullable=True)
-    n_frames: Optional[int] = Field(nullable=True)
-    height: Optional[int] = Field(nullable=True)
-    width: Optional[int] = Field(nullable=True)
-    source_url: Optional[str] = Field(nullable=True)
+# class VideoBase(ProjectsDataSQLModel):
+#     name: str = Field(nullable=False)
+#     description: Optional[str] = Field(nullable=True, default=None)
+#     owner_id: uuid.UUID = Field(nullable=False)
+#     status: VideoStatusOption = Field(
+#         sa_column=Column(
+#             sqlalchemy.Enum(VideoStatusOption), default=VideoStatusOption.created
+#         )
+#     )
+#     apartment_id: uuid.UUID = Field(foreign_key="apartments.id", nullable=False)
+#
+#
+# class Video(VideoBase, TimeStampWithIdMixin, table=True):
+#     __tablename__ = "videos"
+#     frames: Optional[list["Frame"]] = Relationship(
+#         back_populates="video",
+#     )
+#     apartment: "Apartment" = Relationship(
+#         back_populates="videos",
+#     )
+#     # TODO: maybe make these fields non-optional
+#     length_sec: Optional[Decimal] = Field(nullable=True)
+#     n_frames: Optional[int] = Field(nullable=True)
+#     height: Optional[int] = Field(nullable=True)
+#     width: Optional[int] = Field(nullable=True)
+#     source_url: Optional[str] = Field(nullable=True)
 
 
 class ProjectDocumentBase(ProjectsDataSQLModel):
@@ -127,7 +127,7 @@ class ApartmentBase(ProjectsDataSQLModel):
 
 class Apartment(ApartmentBase, TimeStampWithIdMixin, table=True):
     __tablename__ = "apartments"
-    videos: Optional[list[Video]] = Relationship(
+    videos: Optional[list["Video"]] = Relationship(
         back_populates="apartment",
     )
     project: "Project" = Relationship(
@@ -135,35 +135,35 @@ class Apartment(ApartmentBase, TimeStampWithIdMixin, table=True):
     )
 
 
-class FrameBase(ProjectsDataSQLModel):
-    video_id: uuid.UUID = Field(foreign_key="videos.id", nullable=False)
-    frame_offset: int = Field(
-        nullable=False,
-        description="Offset in number of frames from the beginning of the video",
-    )
-
-
-class Frame(FrameBase, TimeStampWithIdMixin, table=True):
-    __tablename__ = "frames"
-    __table_args__ = (
-        Index(
-            "idx_frame_video_id_frame_offset", "video_id", "frame_offset", unique=True
-        ),
-    )
-
-    # markups: Optional[list["FrameMarkup"]] = Relationship(
-    #     sa_relationship=relationship(
-    #         "FrameMarkup",
-    #         foreign_keys=['frame_markup.frame_video_id', 'frame_markup.frame_time_point'],
-    #         back_populates="frame"
-    #     )
-    # )
-    markups: Optional[list["FrameMarkup"]] = Relationship(
-        back_populates="frame",
-    )
-    video: Video = Relationship(
-        back_populates="frames",
-    )
+# class FrameBase(ProjectsDataSQLModel):
+#     video_id: uuid.UUID = Field(foreign_key="videos.id", nullable=False)
+#     frame_offset: int = Field(
+#         nullable=False,
+#         description="Offset in number of frames from the beginning of the video",
+#     )
+#
+#
+# class Frame(FrameBase, TimeStampWithIdMixin, table=True):
+#     __tablename__ = "frames"
+#     __table_args__ = (
+#         Index(
+#             "idx_frame_video_id_frame_offset", "video_id", "frame_offset", unique=True
+#         ),
+#     )
+#
+#     # markups: Optional[list["FrameMarkup"]] = Relationship(
+#     #     sa_relationship=relationship(
+#     #         "FrameMarkup",
+#     #         foreign_keys=['frame_markup.frame_video_id', 'frame_markup.frame_time_point'],
+#     #         back_populates="frame"
+#     #     )
+#     # )
+#     markups: Optional[list["FrameMarkup"]] = Relationship(
+#         back_populates="frame",
+#     )
+#     video: Video = Relationship(
+#         back_populates="frames",
+#     )
 
 
 class LabelBase(ProjectsDataSQLModel):
@@ -210,39 +210,39 @@ class FrameMarkup(FrameMarkupBase, TimeStampWithIdMixin, table=True):
     #         Frame, foreign_keys=['frame_video_id', 'frame_time_point'], back_populates="markups"
     #     )
     # )
-    frame: Frame = Relationship(
+    frame: "Frame" = Relationship(
         back_populates="markups",
     )
     label: Label = Relationship()
 
 
-class ProjectBase(ProjectsDataSQLModel):
-    name: str = Field(nullable=False, index=True)
-    description: Optional[str] = Field(nullable=True, default=None)
-    status: Optional[ProjectStatusOption] = Field(
-        sa_column=Column(
-            sqlalchemy.Enum(ProjectStatusOption), default=ProjectStatusOption.created
-        )
-    )
-    document_id: Optional[uuid.UUID] = Field(nullable=True)  # TODO: Make not Optional
-    is_deleted: Optional[bool] = Field(default=False)
-    deadline_at: Optional[date] = Field(nullable=True)
-
-
-class Project(ProjectBase, TimeStampWithIdMixin, table=True):
-    __tablename__ = "projects"
-    roles: list["UserRole"] = Relationship(
-        back_populates="project",
-    )
-    apartments: list[Apartment] = Relationship(
-        back_populates="project",
-    )
-    labels: list[Label] = Relationship(
-        back_populates="project",
-    )
-    project_documents: Optional[list[ProjectDocument]] = Relationship(
-        back_populates="project",
-    )
+# class ProjectBase(ProjectsDataSQLModel):
+#     name: str = Field(nullable=False, index=True)
+#     description: Optional[str] = Field(nullable=True, default=None)
+#     status: Optional[ProjectStatusOption] = Field(
+#         sa_column=Column(
+#             sqlalchemy.Enum(ProjectStatusOption), default=ProjectStatusOption.created
+#         )
+#     )
+#     document_id: Optional[uuid.UUID] = Field(nullable=True)  # TODO: Make not Optional
+#     is_deleted: Optional[bool] = Field(default=False)
+#     deadline_at: Optional[date] = Field(nullable=True)
+#
+#
+# class Project(ProjectBase, TimeStampWithIdMixin, table=True):
+#     __tablename__ = "projects"
+#     roles: list["UserRole"] = Relationship(
+#         back_populates="project",
+#     )
+#     apartments: list[Apartment] = Relationship(
+#         back_populates="project",
+#     )
+#     labels: list[Label] = Relationship(
+#         back_populates="project",
+#     )
+#     project_documents: Optional[list[ProjectDocument]] = Relationship(
+#         back_populates="project",
+#     )
 
 
 class UserRoleBase(ProjectsDataSQLModel):
@@ -262,7 +262,7 @@ class UserRole(UserRoleBase, TimeStampWithIdMixin, table=True):
         ),
     )
 
-    project: Project = Relationship(
+    project: "Project" = Relationship(
         back_populates="roles",
     )
 
@@ -288,4 +288,115 @@ class ProjectTag(ProjectsDataSQLModel, TimeStampWithIdMixin, table=True):
     project_id: uuid.UUID = Field(foreign_key="projects.id", index=True)
     tag_id: uuid.UUID = Field(foreign_key="verification_tags.id", index=True)
     tag: VerificationTag = Relationship()
-    project: Project = Relationship()
+    project: "Project" = Relationship()
+
+
+
+# ------------------------------
+
+
+
+class ProjectBase(ProjectsDataSQLModel):
+    name: str = Field(nullable=False, index=True)
+    # description: Optional[str] = Field(nullable=True, default=None)
+    status: Optional[ProjectStatusOption] = Field(
+        sa_column=Column(
+            sqlalchemy.Enum(ProjectStatusOption), default=ProjectStatusOption.created
+        )
+    )
+    # document_id: Optional[uuid.UUID] = Field(nullable=True)  # TODO: Make not Optional
+    is_deleted: Optional[bool] = Field(default=False)
+    # deadline_at: Optional[date] = Field(nullable=True)
+
+
+class Project(ProjectBase, TimeStampWithIdMixin, table=True):
+    __tablename__ = "projects"
+    roles: list["UserRole"] = Relationship(
+        back_populates="project",
+    )
+    apartments: list[Apartment] = Relationship(
+        back_populates="project",
+    )
+    labels: list[Label] = Relationship(
+        back_populates="project",
+    )
+    project_documents: Optional[list[ProjectDocument]] = Relationship(
+        back_populates="project",
+    )
+
+
+class VideoBase(ProjectsDataSQLModel):
+    name: str = Field(nullable=False)
+    description: Optional[str] = Field(nullable=True, default=None)
+    owner_id: uuid.UUID = Field(nullable=False)
+    status: VideoStatusOption = Field(
+        sa_column=Column(
+            sqlalchemy.Enum(VideoStatusOption), default=VideoStatusOption.created
+        )
+    )
+    project_id: Optional[uuid.UUID] = Field(foreign_key="projects.id", nullable=True)
+    # apartment_id: uuid.UUID = Field(foreign_key="apartments.id", nullable=False)
+
+
+class Video(VideoBase, TimeStampWithIdMixin, table=True):
+    __tablename__ = "videos"
+    # frames: Optional[list["Frame"]] = Relationship(
+    #     back_populates="video",
+    # )
+    # apartment: "Apartment" = Relationship(
+    #     back_populates="videos",
+    # )
+    # TODO: maybe make these fields non-optional
+    length_sec: Optional[Decimal] = Field(nullable=True)
+    n_frames: Optional[int] = Field(nullable=True)
+    height: Optional[int] = Field(nullable=True)
+    width: Optional[int] = Field(nullable=True)
+    source_url: Optional[str] = Field(nullable=True)
+
+
+class PhotoBase(ProjectsDataSQLModel):
+    name: str = Field(nullable=False)
+    description: Optional[str] = Field(nullable=True, default=None)
+    owner_id: uuid.UUID = Field(nullable=False)
+    status: VideoStatusOption = Field(
+        sa_column=Column(
+            sqlalchemy.Enum(VideoStatusOption), default=VideoStatusOption.created
+        )
+    )
+    project_id: Optional[uuid.UUID] = Field(foreign_key="projects.id", nullable=True)
+
+
+class Photo(PhotoBase, TimeStampWithIdMixin, table=True):
+    __tablename__ = "photos"
+    height: Optional[int] = Field(nullable=True)
+    width: Optional[int] = Field(nullable=True)
+    source_url: Optional[str] = Field(nullable=True)
+    # frames: Optional["Frame"] = Relationship(
+    #     back_populates="photo",
+    # )
+
+
+class FrameContentTypeOption(str, enum.Enum):
+    photo = "photo"
+    video = "video"
+
+
+class FrameBase(ProjectsDataSQLModel):
+    content_id: uuid.UUID = Field(nullable=False)
+    content_type: FrameContentTypeOption = Field(nullable=False)
+
+
+class Frame(FrameBase, TimeStampWithIdMixin, table=True):
+    __tablename__ = "frames"
+    # __table_args__ = (
+    #     Index(
+    #         "idx_frame_video_id_frame_offset", "video_id", "frame_offset", unique=True
+    #     ),
+    # )
+
+    markups: Optional[list["FrameMarkup"]] = Relationship(
+        back_populates="frame",
+    )
+    # video: Video = Relationship(
+    #     back_populates="frames",
+    # )

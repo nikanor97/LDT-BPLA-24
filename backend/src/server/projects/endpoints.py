@@ -38,7 +38,7 @@ from src.db.projects.models import (
     VerificationTag,
     VerificationTagBase,
     VideoStatusOption,
-    ApartmentStatusOption,
+    ApartmentStatusOption, Photo,
 )
 from src.db.users.models import User
 from src.server.auth_utils import oauth2_scheme, get_user_id_from_token
@@ -61,7 +61,7 @@ from src.server.projects.models import (
     ProjectScoresForFloor,
     ProjectScores,
     ApartmentWithPlans,
-    ScoreMapItemWithLabels,
+    ScoreMapItemWithLabels, BplaProjectStats, Content,
 )
 from starlette.requests import Request
 from starlette.responses import Response, FileResponse
@@ -219,35 +219,35 @@ class ProjectsEndpoints:
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
-    async def get_project(self, project_id: uuid.UUID) -> UnifiedResponse[ProjectRead]:
-        async with self._main_db_manager.projects.make_autobegin_session() as session:
-            try:
-                project = await self._main_db_manager.projects.get_project(
-                    session, project_id
-                )
-                tags = await self._main_db_manager.projects.get_tags_by_project(
-                    session, project_id
-                )
-                user_roles_verificators = (
-                    await self._main_db_manager.projects.get_user_roles(
-                        session,
-                        project_id=project_id,
-                        role_type=RoleTypeOption.verificator,
-                    )
-                )
-
-            except NoResultFound as e:
-                return UnifiedResponse(error=exc_to_str(e), status_code=404)
-
-        users_ids = {urv.user_id for urv in user_roles_verificators}
-
-        async with self._main_db_manager.users.make_autobegin_session() as session:
-            verificators = await self._main_db_manager.users.get_users(
-                session, users_ids
-            )
-
-        project = ProjectRead(tags=tags, verificators=verificators, **project.dict())
-        return UnifiedResponse(data=project)
+    # async def get_project(self, project_id: uuid.UUID) -> UnifiedResponse[ProjectRead]:
+    #     async with self._main_db_manager.projects.make_autobegin_session() as session:
+    #         try:
+    #             project = await self._main_db_manager.projects.get_project(
+    #                 session, project_id
+    #             )
+    #             tags = await self._main_db_manager.projects.get_tags_by_project(
+    #                 session, project_id
+    #             )
+    #             user_roles_verificators = (
+    #                 await self._main_db_manager.projects.get_user_roles(
+    #                     session,
+    #                     project_id=project_id,
+    #                     role_type=RoleTypeOption.verificator,
+    #                 )
+    #             )
+    #
+    #         except NoResultFound as e:
+    #             return UnifiedResponse(error=exc_to_str(e), status_code=404)
+    #
+    #     users_ids = {urv.user_id for urv in user_roles_verificators}
+    #
+    #     async with self._main_db_manager.users.make_autobegin_session() as session:
+    #         verificators = await self._main_db_manager.users.get_users(
+    #             session, users_ids
+    #         )
+    #
+    #     project = ProjectRead(tags=tags, verificators=verificators, **project.dict())
+    #     return UnifiedResponse(data=project)
 
     async def delete_project(self, project_id: uuid.UUID) -> UnifiedResponse[Project]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
@@ -1323,32 +1323,32 @@ class ProjectsEndpoints:
 
         return UnifiedResponse(data=projects_with_users)
 
-    async def get_project_stats(
-        self, project_id: uuid.UUID
-    ) -> UnifiedResponse[ProjectStats]:
-        apartments_with_video = await self.get_apartments_by_project(project_id)
-
-        project_stats = ProjectStats(
-            total_apartments=len(apartments_with_video.data),
-            total_video_length_minutes=int(
-                sum(
-                    [
-                        a.video.length_sec
-                        for a in apartments_with_video.data
-                        if a.video is not None
-                    ]
-                )
-                / 60
-            ),
-            apartments_approved=sum(
-                [
-                    1
-                    for a in apartments_with_video.data
-                    if a.status == ApartmentStatusOption.approved
-                ]
-            ),
-        )
-        return UnifiedResponse(data=project_stats)
+    # async def get_project_stats(
+    #     self, project_id: uuid.UUID
+    # ) -> UnifiedResponse[ProjectStats]:
+    #     apartments_with_video = await self.get_apartments_by_project(project_id)
+    #
+    #     project_stats = ProjectStats(
+    #         total_apartments=len(apartments_with_video.data),
+    #         total_video_length_minutes=int(
+    #             sum(
+    #                 [
+    #                     a.video.length_sec
+    #                     for a in apartments_with_video.data
+    #                     if a.video is not None
+    #                 ]
+    #             )
+    #             / 60
+    #         ),
+    #         apartments_approved=sum(
+    #             [
+    #                 1
+    #                 for a in apartments_with_video.data
+    #                 if a.status == ApartmentStatusOption.approved
+    #             ]
+    #         ),
+    #     )
+    #     return UnifiedResponse(data=project_stats)
 
     async def _get_clip_predictions(
         self, video_name: str, video_id: uuid.UUID, video: Video, project_id: uuid.UUID
@@ -1381,80 +1381,77 @@ class ProjectsEndpoints:
         )
         print(rabbit_message)
 
-        # async with aiohttp.ClientSession() as session:
-        #     data = {
-        #         # "url": "file:///media/video/PXL_20230528_131042238.TS_1a0d0f83-827e-4af6-a37a-1b997102eb07.mp4",
-        #         "url": f"file:///media/video/{video_name}",
-        #         "labels": labels_names,
-        #         "frames_step": settings.CLIP_FRAME_STEP,
-        #     }
-        #
-        #     async with session.post(
-        #         f"http://{settings.CLIP_HOST}:{settings.CLIP_PORT}/detect", json=data
-        #     ) as resp:
-        #         pred_detection = await resp.json()
-        #
-        # # print(pred_detection)
-        #
-        # async with aiohttp.ClientSession() as session:
-        #     async with session.get(
-        #         f"http://{settings.CLASSIFIER_HOST}:{settings.CLASSIFIER_PORT}/predict?file_name=/media/video/{video_name}"
-        #     ) as resp:
-        #         pred_classification = await resp.text()
 
-        # print(pred_classification)
-        # pred_classification = json.loads(pred_classification)
-        #
-        # def get_label_id_by_name(name: str):
-        #     try:
-        #         words = name.split(" ")
-        #         if len(words) > 1:
-        #             name = words[0]
-        #         return label_id_by_name[name]
-        #     except KeyError as ke:
-        #         print(ke)
-        #         return label_id_by_name[list(label_id_by_name.keys())[0]]
-        #
-        # vmc = VideoMarkupCreate(
-        #     video_id=video_id,
-        #     frames=[
-        #         FramesWithMarkupCreate(
-        #             frame_offset=frame["frame_id"],
-        #             markup_list=[
-        #                 MarkupListCreate(
-        #                     coord_top_left=(
-        #                         int(box[0] * video.width),
-        #                         int(box[1] * video.height),
-        #                     ),
-        #                     coord_bottom_right=(
-        #                         int(box[2] * video.width),
-        #                         int(box[3] * video.height),
-        #                     ),
-        #                     label_id=get_label_id_by_name(frame["labels"][idx]),
-        #                     confidence=frame["logits"][idx],
-        #                 )
-        #                 for idx, box in enumerate(frame["boxes"])
-        #             ],
-        #         )
-        #         for frame in pred_detection["frames"]
-        #     ],
-        # )
-        #
-        # async with self._main_db_manager.projects.make_autobegin_session() as session:
-        #     await self._main_db_manager.projects.create_frames_with_markups(
-        #         session, vmc
+# ----------------------------------------------
+
+    async def get_project_stats(
+        self,
+        project_id: uuid.UUID,
+    ) -> BplaProjectStats:
+        pass
+
+    async def get_projects_with_users(
+        self,
+    ) -> list[ProjectWithUsers]:
+        pass
+
+    async def get_project(self, project_id: uuid.UUID) -> UnifiedResponse[ProjectRead]:
+        async with self._main_db_manager.projects.make_autobegin_session() as session:
+            try:
+                project = await self._main_db_manager.projects.get_project(
+                    session, project_id
+                )
+                tags = await self._main_db_manager.projects.get_tags_by_project(
+                    session, project_id
+                )
+                # user_roles_verificators = (
+                #     await self._main_db_manager.projects.get_user_roles(
+                #         session,
+                #         project_id=project_id,
+                #         role_type=RoleTypeOption.verificator,
+                #     )
+                # )
+
+            except NoResultFound as e:
+                return UnifiedResponse(error=exc_to_str(e), status_code=404)
+
+        # users_ids = {urv.user_id for urv in user_roles_verificators}
+
+        # async with self._main_db_manager.users.make_autobegin_session() as session:
+        #     verificators = await self._main_db_manager.users.get_users(
+        #         session, users_ids
         #     )
-        #
-        # score_map, frame_results = post_process(
-        #     pred_classification,
-        #     pred_detection["frames"],
-        #     frames_num=len(pred_classification),
-        # )
-        # print(score_map)
-        # score_map_df = get_score_map_df(score_map)
-        # os.makedirs(settings.MEDIA_DIR / "score_maps", exist_ok=True)
-        # filename = f"{datetime.now().timestamp()}_{video_id}.csv"
-        # score_map_df.to_csv(settings.MEDIA_DIR / "score_maps" / filename)
 
+        project = ProjectRead(tags=tags, **project.dict())
+        return UnifiedResponse(data=project)
 
-#  poetry run alembic downgrade base && poetry run alembic upgrade head && poetry run python scripts/init_db_for_android.py
+    async def get_video_info(self, video_id: uuid.UUID) -> UnifiedResponse[Video]:
+        pass
+
+    async def get_photo_info(self, photo_id: uuid.UUID) -> UnifiedResponse[Photo]:
+        pass
+
+    async def get_content_info(
+        self,
+        content_id: uuid.UUID
+    ) -> UnifiedResponse[Content]:
+        pass
+
+    async def get_content(
+        self,
+        project_id: uuid.UUID,
+    ) -> UnifiedResponse[list[Content]]:
+        pass
+
+    async def upload_content(
+        self,
+        project_id: uuid.UUID,
+        content: list[UploadFile],
+    ) -> UnifiedResponse[list[Content]]:
+        pass
+
+    async def download_detect_result(
+        self,
+        content_id: uuid.UUID,
+    ) -> FileResponse:
+        pass
