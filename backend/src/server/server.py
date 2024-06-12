@@ -11,9 +11,6 @@ from common.rabbitmq.publisher import Publisher
 from settings import API_PREFIX  # , AUTH_CLIENT_ID, AUTH_REGION, AUTH_USER_POOL_ID
 from src.db.main_db_manager import MainDbManager
 
-# from internal_common.server.cognito_auth_params import CognitoAuthParams
-# from internal_common.server.middelwares import AuthorizedRoutesMiddleware
-# from internal_common.server.ping_router import PingRouter
 from src.server.common import RouterProtocol
 from src.server.projects.router import ProjectsRouter
 from src.server.users.router import UsersRouter
@@ -58,38 +55,18 @@ def make_server_app(
         shutdown_events = []
 
     app = FastAPI(
-        title="API",
+        title="API БПЛА",
         version="0.1",
         openapi_url=f"{API_PREFIX}/openapi.json",
         docs_url=f"{API_PREFIX}/docs",
         default_response_class=ORJSONResponse,
     )
 
-    # if authorization:
-    #     auth_params = CognitoAuthParams(
-    #         client_id=AUTH_CLIENT_ID,
-    #         user_pool_id=AUTH_USER_POOL_ID,
-    #         region=AUTH_REGION,
-    #     )
-    #
-    #     ignore_routes = [
-    #         f"{API_PREFIX}/ping",
-    #         f"{API_PREFIX}/dcda/slack/message/update",
-    #         f"{API_PREFIX}/dcda/slack/command",
-    #     ]
-    #     auth_middleware = AuthorizedRoutesMiddleware(
-    #         auth_params=auth_params,
-    #         ignore_routes=ignore_routes,
-    #     )
-    #     app.add_middleware(BaseHTTPMiddleware, dispatch=auth_middleware)
-    #     shutdown_events.append(auth_params.close)
-
     routers_list: list[RouterProtocol] = [
         UsersRouter(main_db_manager=main_db_manager),
         ProjectsRouter(main_db_manager=main_db_manager, publisher=publisher),
     ]
     for router in routers_list:
-        # app.include_router(router.router, prefix=API_PREFIX)
         app.include_router(router.router)
 
     for event in startup_events:
@@ -101,11 +78,5 @@ def make_server_app(
     app.add_exception_handler(ValidationError, validation_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
-    # @app.get("/supply/openapi-camel.json", tags=["Core"], response_class=JSONResponse)
-    # async def openapi_camel() -> JSONResponse:
-    #     if app.openapi_schema is None:
-    #         return JSONResponse({"message": "can not find openapi schema for this application"})
-    #     openapi_camel_schema = camel.convert_api_spec_to_camelcase(app.openapi_schema)
-    #     return JSONResponse(openapi_camel_schema)
 
     return app
