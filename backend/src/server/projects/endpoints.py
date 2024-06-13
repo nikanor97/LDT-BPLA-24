@@ -549,8 +549,14 @@ class ProjectsEndpoints:
     async def get_project_stats(
         self,
         project_id: uuid.UUID,
-    ) -> BplaProjectStats:
-        pass
+    ) -> UnifiedResponse[BplaProjectStats]:
+        res = BplaProjectStats(
+            photo_count=56,
+            video_count=22,
+            photo_with_det_count=34,
+            video_with_det_count=12
+        )
+        return UnifiedResponse(data=res)
 
     async def get_projects_with_users(
         self, token: Annotated[str, Depends(oauth2_scheme)]
@@ -724,8 +730,8 @@ class ProjectsEndpoints:
 
     async def upload_content(
         self,
-        name: str,
-        description: str,
+        # name: str,
+        # description: str,
         project_id: uuid.UUID,
         files: list[UploadFile],
         token: Annotated[str, Depends(oauth2_scheme)],
@@ -774,8 +780,8 @@ class ProjectsEndpoints:
 
                 video_ = Video(
                     id=video_id,
-                    name=name,
-                    description=description,
+                    name=file.filename,
+                    description="",
                     owner_id=owner_id,
                     length_sec=Decimal(video_meta["duration"]),
                     n_frames=video_meta["nb_frames"],
@@ -836,8 +842,8 @@ class ProjectsEndpoints:
 
                 photo_ = Photo(
                     id=photo_id,
-                    name=name,
-                    description=description,
+                    name=file.filename,
+                    description="",
                     owner_id=owner_id,
                     height=height,
                     width=width,

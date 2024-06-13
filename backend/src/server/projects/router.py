@@ -375,7 +375,7 @@ class ProjectsRouter:
         self.router.add_api_route(
             path="/project-stats",
             endpoint=self._projects_endpoints.get_project_stats,
-            response_model=UnifiedResponse[Optional[BplaProjectStats]],
+            response_model=UnifiedResponse[BplaProjectStats],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
             tags=['bpla']
