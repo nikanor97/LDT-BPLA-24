@@ -16,7 +16,7 @@ from src.db.main_db_manager import MainDbManager
 import settings
 from src.db.projects.models import VideoStatusOption
 from src.server.projects.models import (
-    VideoMarkupCreate,
+    ContentMarkupCreate,
     FramesWithMarkupCreate,
     MarkupListCreate,
 )
@@ -134,7 +134,7 @@ class Server:
                 print(ke)
                 return label_id_by_name[list(label_id_by_name.keys())[0]]
 
-        vmc = VideoMarkupCreate(
+        vmc = ContentMarkupCreate(
             video_id=video_id,
             frames=[
                 FramesWithMarkupCreate(

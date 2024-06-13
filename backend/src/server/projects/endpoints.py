@@ -1,5 +1,6 @@
 import io
 import os
+import random
 import uuid
 from collections import Counter, defaultdict
 from decimal import Decimal
@@ -37,7 +38,7 @@ from src.db.projects.models import (
     VerificationTag,
     VerificationTagBase,
     VideoStatusOption,
-    Photo,
+    Photo, FrameContentTypeOption,
 )
 from src.db.users.models import User
 from src.server.auth_utils import oauth2_scheme, get_user_id_from_token
@@ -45,7 +46,7 @@ from src.server.common import UnifiedResponse, exc_to_str
 from src.server.constants import tag_translation, colors
 from src.server.projects.models import (
     FramesWithMarkupRead,
-    VideoMarkupCreate,
+    ContentMarkupCreate,
     UserRoleWithProjectRead,
     ProjectCreate,
     ProjectRead,
@@ -59,6 +60,7 @@ from src.server.projects.models import (
     ProjectScoresForFloor,
     ProjectScores,
     ScoreMapItemWithLabels, BplaProjectStats, Content, ContentTypeOption, ProjectContentTypeOption,
+    FramesWithMarkupCreate, MarkupListCreate,
 )
 from starlette.requests import Request
 from starlette.responses import Response, FileResponse
@@ -145,7 +147,7 @@ class ProjectsEndpoints:
         return UnifiedResponse(data=video)
 
     async def create_frames_with_markups(
-        self, video_markup: VideoMarkupCreate
+        self, video_markup: ContentMarkupCreate
     ) -> UnifiedResponse[list[FrameMarkup]]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
@@ -390,18 +392,6 @@ class ProjectsEndpoints:
             )
         return UnifiedResponse(data=tags)
 
-    async def change_video_status(
-        self, video_id: uuid.UUID, new_status: VideoStatusOption
-    ) -> UnifiedResponse[Video]:
-        async with self._main_db_manager.projects.make_autobegin_session() as session:
-            try:
-                video = await self._main_db_manager.projects.change_video_status(
-                    session, video_id, new_status
-                )
-            except NoResultFound as e:
-                return UnifiedResponse(error=exc_to_str(e), status_code=404)
-        return UnifiedResponse(data=video)
-
     async def write_gps(
         self, video_id: uuid.UUID, gps_coords: GpsCoords
     ) -> UnifiedResponse[Video]:
@@ -641,41 +631,8 @@ class ProjectsEndpoints:
                 )
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
-        if type(content) == Photo:
-            result = Content(
-                project_id=content.project_id,
-                content_type=ContentTypeOption.photo,
-                height=content.height,
-                width=content.width,
-                content_id=content_id,
-                length_sec=None,
-                n_frames=None,
-                name=content.name,
-                owner_id=content.owner_id,
-                source_url=content.source_url,
-                status=content.status,
-                detected_count=100500,  # TODO: определять реальное число
-                created_at=content.created_at,
-                updated_at=content.updated_at
-            )
-        else:
-            result = Content(
-                project_id=content.project_id,
-                content_type=ContentTypeOption.video,
-                height=content.height,
-                width=content.width,
-                content_id=content_id,
-                length_sec=content.length_sec,
-                n_frames=content.n_frames,
-                name=content.name,
-                owner_id=content.owner_id,
-                source_url=content.source_url,
-                status=content.status,
-                detected_count=100500,  # TODO: определять реальное число
-                created_at=content.created_at,
-                updated_at=content.updated_at
-            )
-        return UnifiedResponse(data=result)
+        res = Content.from_video_or_photo(content, detected_count=0)
+        return UnifiedResponse(data=res)
 
     async def get_content_by_project(
         self,
@@ -689,43 +646,7 @@ class ProjectsEndpoints:
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
-        content_items: list[Content] = []
-        for item in items:
-            if type(item) == Photo:
-                content = Content(
-                    project_id=item.project_id,
-                    content_type=ContentTypeOption.photo,
-                    height=item.height,
-                    width=item.width,
-                    content_id=item.id,
-                    length_sec=None,
-                    n_frames=None,
-                    name=item.name,
-                    owner_id=item.owner_id,
-                    source_url=item.source_url,
-                    status=item.status,
-                    detected_count=100500,  # TODO: определять реальное число
-                    created_at=item.created_at,
-                    updated_at=item.updated_at
-                )
-            else:
-                content = Content(
-                    project_id=item.project_id,
-                    content_type=ContentTypeOption.video,
-                    height=item.height,
-                    width=item.width,
-                    content_id=item.id,
-                    length_sec=item.length_sec,
-                    n_frames=item.n_frames,
-                    name=item.name,
-                    owner_id=item.owner_id,
-                    source_url=item.source_url,
-                    status=item.status,
-                    detected_count=100500,  # TODO: определять реальное число
-                    created_at=item.created_at,
-                    updated_at=item.updated_at
-                )
-            content_items.append(content)
+        content_items: list[Content] = [Content.from_video_or_photo(item, detected_count=0) for item in items]
         return UnifiedResponse(data=content_items)
 
     async def upload_content(
@@ -743,6 +664,12 @@ class ProjectsEndpoints:
         VIDEO_MIME_TYPES = ["video/mp4", "video/avi", "video/mpeg"]
 
         content_items: list[Content] = []
+
+        async with self._main_db_manager.projects.make_autobegin_session() as session:
+            labels = await self._main_db_manager.projects.get_labels_by_project(
+                session, project_id
+            )
+        labels_ids = [l.id for l in labels]
 
         for file in files:
             content_type: ContentTypeOption | None = None
@@ -792,10 +719,33 @@ class ProjectsEndpoints:
                     status=VideoStatusOption.created
                 )
 
+                frames_with_markups = ContentMarkupCreate(
+                    content_id=video_id,
+                    content_type=FrameContentTypeOption.video,
+                    frames=[FramesWithMarkupCreate(
+                        frame_offset=offset,
+                        markup_list=[MarkupListCreate(
+                            coord_top_left=(
+                                random.choice(range(1, video_.width // 2)),
+                                random.choice(range(1, video_.height // 2))
+                            ),
+                            coord_bottom_right=(
+                                random.choice(range(video_.width // 2, video_.width)),
+                                random.choice(range(video_.height // 2, video_.height))
+                            ),
+                            label_id=random.choice(labels_ids),
+                            confidence=Decimal(random.random())
+                        ) for _ in range(2)]
+                    ) for offset in [5, 10, 15]]
+                )
+
                 try:
                     async with self._main_db_manager.projects.make_autobegin_session() as session:
                         video = await self._main_db_manager.projects.create_video(
                             session, video_
+                        )
+                        await self._main_db_manager.projects.create_frames_with_markups(
+                            session, frames_with_markups
                         )
                 except NoResultFound as e:
                     return UnifiedResponse(error=exc_to_str(e), status_code=404)
@@ -804,23 +754,7 @@ class ProjectsEndpoints:
                 #     video_name, video_id, video_, apartment.project_id
                 # )
 
-                content = Content(
-                    project_id=project_id,
-                    content_type=content_type,
-                    height=video.height,
-                    width=video.width,
-                    content_id=video.id,
-                    length_sec=video.length_sec,
-                    n_frames=video.n_frames,
-                    name=video.name,
-                    owner_id=owner_id,
-                    source_url=video.source_url,
-                    status=video.status,
-                    detected_count=0,
-                    created_at=video.created_at,
-                    updated_at=video.updated_at
-                )
-                content_items.append(content)
+                content_items.append(Content.from_video(video, detected_count=2))
 
             elif content_type == ContentTypeOption.photo:
 
@@ -852,10 +786,33 @@ class ProjectsEndpoints:
                     status=VideoStatusOption.created
                 )
 
+                frames_with_markups = ContentMarkupCreate(
+                    content_id=photo_id,
+                    content_type=FrameContentTypeOption.photo,
+                    frames=[FramesWithMarkupCreate(
+                        frame_offset=0,  # 0 - для фото
+                        markup_list=[MarkupListCreate(
+                            coord_top_left=(
+                                random.choice(range(1, photo_.width // 2)),
+                                random.choice(range(1, photo_.height // 2))
+                            ),
+                            coord_bottom_right=(
+                                random.choice(range(photo_.width // 2, photo_.width)),
+                                random.choice(range(photo_.height // 2, photo_.height))
+                            ),
+                            label_id=random.choice(labels_ids),
+                            confidence=Decimal(random.random())
+                        ) for _ in range(3)]
+                    )]
+                )
+
                 try:
                     async with self._main_db_manager.projects.make_autobegin_session() as session:
                         photo = await self._main_db_manager.projects.create_photo(
                             session, photo_
+                        )
+                        await self._main_db_manager.projects.create_frames_with_markups(
+                            session, frames_with_markups
                         )
                 except NoResultFound as e:
                     return UnifiedResponse(error=exc_to_str(e), status_code=404)
@@ -864,23 +821,7 @@ class ProjectsEndpoints:
                 #     video_name, video_id, video_, apartment.project_id
                 # )
 
-                content = Content(
-                    project_id=project_id,
-                    content_type=content_type,
-                    height=photo.height,
-                    width=photo.width,
-                    content_id=photo.id,
-                    length_sec=None,
-                    n_frames=None,
-                    name=photo.name,
-                    owner_id=owner_id,
-                    source_url=photo.source_url,
-                    status=photo.status,
-                    detected_count=0,
-                    created_at=photo.created_at,
-                    updated_at=photo.updated_at
-                )
-                content_items.append(content)
+                content_items.append(Content.from_photo(photo, detected_count=3))
 
         return UnifiedResponse(data=content_items)
 
@@ -889,3 +830,17 @@ class ProjectsEndpoints:
         content_id: uuid.UUID,
     ) -> FileResponse:
         pass
+
+    async def change_content_status(
+        self, content_id: uuid.UUID, new_status: VideoStatusOption
+    ) -> UnifiedResponse[Video]:
+        async with self._main_db_manager.projects.make_autobegin_session() as session:
+            try:
+                content = await self._main_db_manager.projects.change_content_status(
+                    session, content_id, new_status
+                )
+            except NoResultFound as e:
+                return UnifiedResponse(error=exc_to_str(e), status_code=404)
+
+            res = Content.from_video_or_photo(content)
+        return UnifiedResponse(data=res)

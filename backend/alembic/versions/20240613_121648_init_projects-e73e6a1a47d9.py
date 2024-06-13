@@ -116,6 +116,7 @@ def upgrade_projects() -> None:
         sa.Column('id', sqlmodel.sql.sqltypes.GUID(), nullable=False),
         sa.Column('content_id', sqlmodel.sql.sqltypes.GUID(), nullable=False),
         sa.Column('content_type', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column('frame_offset', sa.Integer(), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=False),
         sa.Column('updated_at', sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint('id')

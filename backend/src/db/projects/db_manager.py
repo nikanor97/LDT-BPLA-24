@@ -28,7 +28,7 @@ from src.db.projects.models import (
     ProjectStatusOption, Photo,
 )
 from src.server.projects.models import (
-    VideoMarkupCreate,
+    ContentMarkupCreate,
     GpsCoords,
     ProjectWithUsersIds,
     ProjectsStats,
@@ -47,24 +47,23 @@ class ProjectsDbManager(BaseDbManager):
         return await Photo.create(session, photo)
 
     async def create_frames_with_markups(
-        self, session: AsyncSession, video_markup: VideoMarkupCreate
+        self, session: AsyncSession, content_markup: ContentMarkupCreate
     ) -> list[FrameMarkup]:
         # Checking if video with this id exists
         stmt = (
             select(Video)
-            .where(Video.id == video_markup.video_id)
-            .options(selectinload(Video.apartment))
+            .where(Video.id == content_markup.content_id)
         )
         video: Optional[Video] = (await session.execute(stmt)).scalar_one_or_none()
         if video is None:
-            raise NoResultFound(f"Video with id {video_markup.video_id} not found")
+            raise NoResultFound(f"Video with id {content_markup.content_id} not found")
 
         # Checking if all provided labels exist
         label_ids = set()
-        for frame in video_markup.frames:
+        for frame in content_markup.frames:
             for markup in frame.markup_list:
                 label_ids.add(markup.label_id)
-        stmt = select(Label.id).where(Label.project_id == video.apartment.project_id)
+        stmt = select(Label.id).where(Label.project_id == video.project_id)
         available_label_ids = (await session.execute(stmt)).scalars().all()
         not_existing_labels = label_ids - set(available_label_ids)
         if len(not_existing_labels) > 0:
@@ -74,17 +73,21 @@ class ProjectsDbManager(BaseDbManager):
             )
 
         # Creating frames
-        desired_frame_offsets = {fr.frame_offset for fr in video_markup.frames}
+        desired_frame_offsets = {fr.frame_offset for fr in content_markup.frames}
         stmt = (
             select(Frame.frame_offset)
-            .where(Frame.video_id == video_markup.video_id)
+            .where(Frame.content_id == content_markup.content_id)
             .where(col(Frame.frame_offset).in_(desired_frame_offsets))
         )
         existing_frame_offsets = (await session.execute(stmt)).scalars().all()
         new_frame_offsets = desired_frame_offsets - set(existing_frame_offsets)
         new_frames = []
         for tp in new_frame_offsets:
-            new_frame = Frame(video_id=video_markup.video_id, frame_offset=tp)
+            new_frame = Frame(
+                content_id=content_markup.content_id,
+                frame_offset=tp,
+                content_type=content_markup.content_type
+            )
             new_frames.append(new_frame)
             session.add(new_frame)
         # await session.commit()
@@ -94,7 +97,7 @@ class ProjectsDbManager(BaseDbManager):
         frame_offset_to_frame_id = {fr.frame_offset: fr.id for fr in frames}
 
         new_markups = []
-        for frame in video_markup.frames:
+        for frame in content_markup.frames:
             for markup in frame.markup_list:
                 new_markup = FrameMarkup(
                     frame_id=frame_offset_to_frame_id[frame.frame_offset],
@@ -447,3 +450,17 @@ class ProjectsDbManager(BaseDbManager):
             projects_with_users_ids.append(project_with_users_ids)
 
         return projects_with_users_ids
+
+    async def change_content_status(
+        self,
+        session: AsyncSession,
+        content_id: uuid.UUID,
+        status: VideoStatusOption,
+    ) -> Photo | Video:
+        try:
+            content = await Video.by_id(session, content_id)
+        except NoResultFound:
+            content = await Photo.by_id(session, content_id)
+        content.status = status
+        session.add(content)
+        return content

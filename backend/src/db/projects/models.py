@@ -385,6 +385,10 @@ class FrameContentTypeOption(str, enum.Enum):
 class FrameBase(ProjectsDataSQLModel):
     content_id: uuid.UUID = Field(nullable=False)
     content_type: FrameContentTypeOption = Field(nullable=False)
+    frame_offset: int = Field(
+        nullable=False,
+        description="Offset in number of frames from the beginning of the video",
+    )
 
 
 class Frame(FrameBase, TimeStampWithIdMixin, table=True):
