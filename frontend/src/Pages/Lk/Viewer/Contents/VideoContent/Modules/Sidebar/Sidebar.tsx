@@ -15,8 +15,8 @@ const Sidebar = () => {
                 {
                     video && (
                         <a 
-                            download="Score_map.csv"
-                            href={`/api/v1/projects/download-score-map?video_id=${video.id}`}> 
+                            download="Result.txt"
+                            href={`/api/v1/projects/download_detect_result?content_id=${video.content_id}`}> 
                             Скачать результаты
                         </a>
                     )

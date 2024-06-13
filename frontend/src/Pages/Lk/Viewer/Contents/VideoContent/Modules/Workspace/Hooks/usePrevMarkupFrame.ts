@@ -7,7 +7,7 @@ import { useSelector } from "react-redux";
 import {PageState} from '../../../../../Redux/types';
 
 export const usePrevMarkupFrame = (player: Videosjs.Player | undefined, cb: (time: number) => any) => {
-    const frames = useSelector((state: PageState) => state.Pages.LkViewer.videos.data?.frames);
+    const frames = useSelector((state: PageState) => state.Pages.LkViewer.content.data?.frames);
     const video = useVideo();
     return () => {
         if (!video) return;

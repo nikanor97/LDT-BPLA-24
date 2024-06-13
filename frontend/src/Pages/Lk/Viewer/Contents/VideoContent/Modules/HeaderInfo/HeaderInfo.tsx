@@ -6,18 +6,16 @@ import {useHistory} from 'react-router-dom';
 import routes from '@root/routes';
 import {useSelector} from 'react-redux';
 import {PageState} from '../../../../Redux/types';
-import StatusTag from '@root/Components/StatusTag/StatusTag';
-import {getStatusText, getStatusType} from '@root/Utils/Viewer/getStatus';
 
 const HeaderInfo = () => {
     const history = useHistory();
-    const apartment = useSelector((state: PageState) => state.Pages.LkViewer.apartment.data);
+    const contentInfo = useSelector((state: PageState) => state.Pages.LkViewer.content.data?.info);
 
     return (
         <div className={styles.wrapper}>
             <Button 
                 onClick={() => {
-                    history.push(routes.lk.project(apartment?.project_id))           
+                    history.push(routes.lk.project(contentInfo?.project_id))           
                 }}
                 className={styles.btn}>
                 <LeftOutlined />
@@ -25,15 +23,6 @@ const HeaderInfo = () => {
             <div className={styles.title}>
                 Модерация видео
             </div>
-            {
-                apartment !== null && (
-                    <StatusTag 
-                        className={styles.tag}
-                        text={getStatusText(apartment.status)}
-                        type={getStatusType(apartment.status)}
-                    />
-                )
-            }
         </div>
     )
 }

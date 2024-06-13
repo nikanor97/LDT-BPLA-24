@@ -19,20 +19,7 @@ export default {
             }
         })  
     },
-    getApartments: (projectId: Api.iGetApartments) => {
-        return axios.get<Api.oGetApartments>(paths.getApartments, {
-            params: {
-                project_id: projectId
-            }
-        })  
-    },
-    getApartment: (params: Api.iGetApartment) => {
-        return axios.get<Api.oGetApartment>(paths.getApartment, {
-            params: {
-                apartment_id: params.apartId
-            }
-        })
-    },
+
     createProject: (params: Api.iCreateProject) => {
         return axios.post<Api.oCreateProject>(paths.createProject, {
             ...params,
@@ -47,21 +34,21 @@ export default {
     },
     getTags: () =>
         axios.get<Api.oGetTags>(paths.getTags),
-    getApartmentVideos: (params: Api.iGetApartmentVideos) =>
-        axios.get<Api.oGetApartmentVideos>(paths.getApartmentVideos, {params}),
+    getContentInfo: (params: Api.iGetContentInfo) =>
+        axios.get<Api.oGetContentInfo>(paths.getContentInfo, {params}),
 
     getProjectContent: (params: Api.iGetProjectContent) =>
         axios.get<Api.oGetProjectContent>(paths.getProjectContent, {params}),
 
-    getVideoFrames: (params: Api.iGetVideoFrames) => 
-        axios.get<Api.oGetVideoFrames>(paths.getVideoFrames, {params}),
+    getContentFrames: (params: Api.iGetContentFrames) => 
+        axios.get<Api.oGetContentFrames>(paths.getContentFrames, {params}),
     getLabels: (params: Api.iGetLabels) => 
         axios.get<Api.oGetLabels>(paths.getLabels, {params}),
     uploadContent: (params: Api.iUploadContent) => {
         const fileData = new FormData();
         const search = qs.stringify(omit(params, ['document']), {addQueryPrefix: true})
         params.document.forEach((item) => {
-            fileData.append("file", (item));
+            fileData.append("files", (item));
         });
         return axios.post<Api.oUploadContent>(`${paths.uploadProjectContent}${search}`, fileData, {
             headers: {
@@ -73,11 +60,6 @@ export default {
         axios.get<Api.oGetProjectsStats>(paths.getStats),
     getMyProjects: () =>
         axios.get<Api.oGetMyProjects>(paths.getMyProjects),
-    getProjectStats: (params: Api.iGetProjectStats) => 
-        axios.get<Api.oGetProjectStats>(paths.getProjectStats, {params}),
-    getProjectFullStats: (params: Api.iGetProjectFullStats) =>
-        axios.get<Api.oGetProjectFullStats>(paths.getProjectFullStats, {params}),
-
     changeVideoStatus: (params: Api.iChangeVideoStatus) => 
         axios.post<Api.oChangeVideoStatus>(`${paths.changeVideoStatus}${qs.stringify(params, {addQueryPrefix: true})}`),
 }

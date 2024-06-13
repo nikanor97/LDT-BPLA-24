@@ -157,7 +157,7 @@ const Workspace = () => {
                                     onProgress={(player) => {
                                         setProgress(player.currentTime())
                                     }}
-                                    src={`/api/v1/projects/video-file?video_id=${video.id}`}
+                                    src={`/api/v1/projects/video-file?video_id=${video.content_id}`}
                                     onPlay={() => {
                                         setPlayed(true)
                                     }}

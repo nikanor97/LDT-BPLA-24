@@ -1,3 +1,3 @@
 export type iParams = {
-    apartId: string;
+    contentId: string;
 }

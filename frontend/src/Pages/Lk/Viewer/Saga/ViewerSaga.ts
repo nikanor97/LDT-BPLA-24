@@ -7,16 +7,6 @@ import {PayloadAction} from "@reduxjs/toolkit";
 import {Frames} from "@root/Types/Video";
 
 
-
-const getApartment = function*(action: PayloadAction<iActions.getApartment>) {
-    try {
-        const {data} = yield* call(Api.Projects.getApartment, action.payload)
-        yield* put(PageActions._getApartmentSuccess(data.data));
-    } catch (ex) {
-        yield* put(PageActions._getApartmentError())
-    }
-}
-
 const getLabels = function*(action: PayloadAction<iActions.getLabels>) {
     try {
         const {data} = yield* call(Api.Projects.getLabels, action.payload);
@@ -30,29 +20,29 @@ const getLabels = function*(action: PayloadAction<iActions.getLabels>) {
     }
 }
 
-const getVideos = function*(action: PayloadAction<iActions.getVideos>) {
+const getContentInfo = function*(action: PayloadAction<iActions.getContentInfo>) {
     try {
-        const videos = yield* call(Api.Projects.getApartmentVideos, action.payload)
-        const video = videos.data.data[videos.data.data.length - 1];
-        if (!video) {
-            yield* put(PageActions._getVideosSuccess({
+        const infoData = yield* call(Api.Projects.getContentInfo, action.payload)
+        const info = infoData.data.data;
+        if (!info) {
+            yield* put(PageActions._getContentInfoSuccess({
                 frames: null,
-                video: null
+                info: null
             }));
         }
-        const frames = yield* call(Api.Projects.getVideoFrames, {
-            video_id: video.id
+        const frames = yield* call(Api.Projects.getContentFrames, {
+            content_id: info.content_id
         })
         const framesObject: {[index: number]: Frames.MarkupedItem} = {};
         frames.data.data.forEach((frame) => {
             framesObject[frame.frame_offset] = frame;
         })
-        yield* put(PageActions._getVideosSuccess({
+        yield* put(PageActions._getContentInfoSuccess({
             frames: framesObject,
-            video
+            info
         }));
     } catch (ex) {
-        yield* put(PageActions._getVideosError())
+        yield* put(PageActions._getContentInfoError())
     }
 }
 
@@ -69,8 +59,7 @@ const changeVideoStatus = function*(action: PayloadAction<iActions.changeVideoSt
 
 
 export default function* () {
-    yield* takeLatest(PageActions.getApartment, getApartment);
-    yield* takeLatest(PageActions.getVideos, getVideos);
+    yield* takeLatest(PageActions.getContentInfo, getContentInfo);
     yield* takeLatest(PageActions.getLabels, getLabels);
     yield* takeLatest(PageActions.changeVideoStatus, changeVideoStatus);
 }

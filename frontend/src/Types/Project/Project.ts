@@ -41,6 +41,8 @@ export type ItemFull = {
     created_at: string;
     id: Id;
     type: string;
+    detected_count: number;
+    msg_receiver: string
 }
 
 export declare namespace Tags {

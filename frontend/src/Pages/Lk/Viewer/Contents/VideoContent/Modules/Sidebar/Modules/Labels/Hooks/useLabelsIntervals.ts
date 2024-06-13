@@ -1,9 +1,6 @@
 import {LabelIntervals} from '../types';
 import {useFramesByLabels} from "./useFramesByLabels"
 
-
-
-
 const eraseInterval = (item: LabelIntervals) => {
     item.start = null;
     item.current = null;

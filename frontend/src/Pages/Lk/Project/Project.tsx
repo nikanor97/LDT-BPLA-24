@@ -16,9 +16,7 @@ const Project = () => {
     
     useEffect(() => {
         dispatch(PageActions.getProject(params.projectId))
-        dispatch(PageActions.getApartments(params.projectId))
         dispatch(PageActions.getProjectContent({project_id: params.projectId}))
-        dispatch(PageActions.getProjectStats({project_id: params.projectId}))
         dispatch(PageActions.getFullStats({project_id: params.projectId}))
     }, []);
 

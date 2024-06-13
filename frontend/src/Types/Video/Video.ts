@@ -9,7 +9,7 @@ export type Status =
 
 export type Id = string;
 export type Item = {
-    "id": string;
+    "content_id": string;
     "created_at": string;
     "updated_at": string;
     "name": string;
@@ -22,7 +22,7 @@ export type Item = {
     "height": number,
     "width": number,
     "source_url": string;
-	"type": "video" | "photo";
+	"content_type": "video" | "photo";
 	"detected_count": number,
     "project_id": Project.Id,
 }

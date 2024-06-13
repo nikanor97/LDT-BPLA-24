@@ -20,12 +20,13 @@ const TableModule = () => {
                 pagination={false}
                 columns={columns}
                 className={styles.content}
-                rowKey={(record) => record.id}
+                rowKey={(record) => record.content_id}
                 onRow={(record) => {
                     return {
                         onClick: () => {
                             //TODO Изменить на пуш в viewer
-                            history.push(routes.lk.apartment(record.id))
+                            console.log(record)
+                            history.push(routes.lk.viewer(record.content_id))
                         }
                     }
                 }}

@@ -38,14 +38,14 @@ export declare namespace Api {
         project_id: Project.Id;
     }
     type oGetTags = Project.Tags.Item[];
-    type iGetApartmentVideos = {
-        apartment_id: Viewer.Id;
+    type iGetContentInfo = {
+        content_id: Viewer.Id;
     }
-    type oGetApartmentVideos = Video.Item[]
-    type iGetVideoFrames = {
-        video_id: Video.Id;
+    type oGetContentInfo = Video.Item
+    type iGetContentFrames = {
+        content_id: Video.Id;
     }
-    type oGetVideoFrames = Video.Frames.MarkupedItem[];
+    type oGetContentFrames = Video.Frames.MarkupedItem[];
 
     type iGetProjectContent = {
         project_id: Project.Id;

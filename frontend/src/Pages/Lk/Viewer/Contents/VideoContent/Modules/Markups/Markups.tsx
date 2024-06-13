@@ -17,7 +17,7 @@ type iMarkups = {
 const Markups = (props: iMarkups) => {
     const video = useVideo();
     const labels = useSelector((state:PageState) => state.Pages.LkViewer.labels.data)
-    const frames = useSelector((state:PageState) => state.Pages.LkViewer.videos.data?.frames)
+    const frames = useSelector((state:PageState) => state.Pages.LkViewer.content.data?.frames)
     const canvas = useRef<HTMLCanvasElement>(null);
     const fabricRef = useRef<fabric.Canvas>();
     const frame = useFrame(props.progress);

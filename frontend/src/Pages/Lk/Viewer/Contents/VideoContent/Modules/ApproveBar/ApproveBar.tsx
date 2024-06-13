@@ -7,7 +7,7 @@ import styles from './Approvebar.module.scss';
 import {PageActions} from '../../../../Redux/Store';
 
 const ApproveBar = () => {
-    const data = useSelector((state: PageState) => state.Pages.LkViewer.videos.data?.video);
+    const data = useSelector((state: PageState) => state.Pages.LkViewer.content.data?.info);
     const state = useSelector((state:PageState) => state.Pages.LkViewer.videoStatus);
     const dispatch = useDispatch();
     if (!data) return null;
@@ -24,7 +24,7 @@ const ApproveBar = () => {
                             loading={state.fetching}
                             onClick={() => {
                                 dispatch(PageActions.changeVideoStatus({
-                                    video_id: data.id,
+                                    video_id: data.content_id,
                                     new_status: 'declined'
                                 }))
                             }}
@@ -34,7 +34,7 @@ const ApproveBar = () => {
                         <Button 
                             onClick={() => {
                                 dispatch(PageActions.changeVideoStatus({
-                                    video_id: data.id,
+                                    video_id: data.content_id,
                                     new_status: 'approved'
                                 }))
                             }}

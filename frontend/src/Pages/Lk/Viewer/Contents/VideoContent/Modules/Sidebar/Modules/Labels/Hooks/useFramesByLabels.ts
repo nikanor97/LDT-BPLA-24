@@ -6,7 +6,7 @@ import {LabelGrouped} from '../types';
 
 export const useFramesByLabels = () => {
     const labels = useSelector((state:PageState) => state.Pages.LkViewer.labels.data)
-    const frames = useSelector((state:PageState) => state.Pages.LkViewer.videos.data?.frames)
+    const frames = useSelector((state:PageState) => state.Pages.LkViewer.content.data?.frames)
     const video = useVideo();
 
     if (!labels) return null;

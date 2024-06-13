@@ -32,6 +32,16 @@ export const useColumns = ():Columns => {
             }
         },
         {
+            dataIndex: ["detected_count"],
+            title: "Обнаружено объектов",
+            key: "detected_count"
+        },
+        {
+            dataIndex: ["msg_receiver"],
+            title: "Контакт ответственного",
+            key: "msg_receiver"
+        },
+        {
             title: 'Статус',
             dataIndex: ['status'],
             key: 'status',

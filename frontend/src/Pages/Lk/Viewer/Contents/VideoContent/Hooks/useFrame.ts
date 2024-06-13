@@ -9,7 +9,7 @@ const delta = 3;
 export const useFrame = (progres: number) => {
     const lastFrame = useRef<Video.Frames.MarkupedItem>(null);
     const frameNumber = useFrameNumber(progres);
-    const frames = useSelector((state:PageState) => state.Pages.LkViewer.videos.data?.frames)
+    const frames = useSelector((state:PageState) => state.Pages.LkViewer.content.data?.frames)
     if (!frames) return null;
     if (frameNumber in frames) {
         //@ts-ignore

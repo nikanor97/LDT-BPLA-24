@@ -49,7 +49,7 @@ const Router = () => {
                             Component={Pages.Lk.Project}
                         />
                         <PageRoute 
-                            path={routes.lk.apartment()}
+                            path={routes.lk.viewer()}
                             exact
                             Component={Pages.Lk.Viewer}
                         />

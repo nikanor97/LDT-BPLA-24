@@ -4,7 +4,7 @@ import {iState, iActions} from './types';
 
 const initialState: iState.Value = {
     apartment: getFullState(),
-    videos: getFullState(),
+    content: getFullState(),
     labels: getFullState(),
     playInterval: null,
     videoStatus: getShortState(),
@@ -22,16 +22,16 @@ export const Slice = createSlice({
         _getApartmentError: (state) => 
             requestError(state.apartment),
 
-        getVideos: (state, action: PayloadAction<iActions.getVideos>) => 
-            requestStart(state.videos),
-        _getVideosSuccess: (state, action: PayloadAction<iActions._getVideosSuccess>) =>
-            requestSuccess(state.videos, action.payload),
-        _getVideosError: (state) => 
-            requestError(state.videos),
+        getContentInfo: (state, action: PayloadAction<iActions.getContentInfo>) => 
+            requestStart(state.content),
+        _getContentInfoSuccess: (state, action: PayloadAction<iActions._getContentInfoSuccess>) =>
+            requestSuccess(state.content, action.payload),
+        _getContentInfoError: (state) => 
+            requestError(state.content),
         updateVideoMeta: (state, action:PayloadAction<iActions.updateVideoMeta>) => {
-            if (!state.videos.data?.video) return state;
-            state.videos.data.video = {
-                ...state.videos.data.video,
+            if (!state.content.data?.info) return state;
+            state.content.data.info = {
+                ...state.content.data.info,
                 ...action.payload
             }
         },
@@ -51,8 +51,8 @@ export const Slice = createSlice({
             requestStart(state.videoStatus),
         _changeVideoStatusSuccess: (state, action: PayloadAction<iActions._changeVideoStatusSuccess>) => {
             requestSuccess(state.videoStatus)
-            if (state.videos.data?.video) {
-                state.videos.data.video = action.payload
+            if (state.content.data?.info) {
+                state.content.data.info = action.payload
             }
         },
         

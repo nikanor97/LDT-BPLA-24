@@ -15,7 +15,7 @@ const Labels = () => {
     if (video.status === 'created') {
         return (
             <div className={styles.empty}>
-                    Детекция выполняется. Результаты будут доступны позже...
+                Детекция выполняется. Результаты будут доступны позже...
             </div>
         )
     }
