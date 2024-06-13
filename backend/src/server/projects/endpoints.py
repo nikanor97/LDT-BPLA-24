@@ -1,6 +1,8 @@
 import io
+import json
 import os
 import random
+import tempfile
 import uuid
 from collections import Counter, defaultdict
 from decimal import Decimal
@@ -63,7 +65,7 @@ from src.server.projects.models import (
     FramesWithMarkupCreate, MarkupListCreate,
 )
 from starlette.requests import Request
-from starlette.responses import Response, FileResponse
+from starlette.responses import Response, FileResponse, StreamingResponse
 from starlette.templating import Jinja2Templates
 
 
@@ -829,7 +831,61 @@ class ProjectsEndpoints:
         self,
         content_id: uuid.UUID,
     ) -> FileResponse:
-        pass
+        async with self._main_db_manager.projects.make_autobegin_session() as session:
+            content: Photo | Video = await self._main_db_manager.projects.get_content(
+                session, content_id
+            )
+            frames: list[Frame] = await self._main_db_manager.projects.get_frames_with_markups(
+                session, content_id
+            )
+        resp = [FramesWithMarkupRead.parse_obj(fr) for fr in frames]
+
+        if type(content) == Photo:
+            json_data = {
+                "photo_id": str(content.id),
+                "markups": [
+                    {
+                        "id": str(markup.id),
+                        "label_id": str(markup.label_id),
+                        "coord_top_left_x": float(markup.coord_top_left_x),
+                        "coord_top_left_y": float(markup.coord_top_left_y),
+                        "coord_bottom_right_x": float(markup.coord_bottom_right_x),
+                        "coord_bottom_right_y": float(markup.coord_bottom_right_y),
+                        "confidence": float(markup.confidence)
+                    } for markup in resp[0].markups
+                ]
+            }
+        elif type(content) == Video:
+            json_data = {
+                "video_id": str(content.id),
+                "frames": [
+                    {
+                        "frame_offset": frame.frame_offset,
+                        "markups": [
+                            {
+                                "id": str(markup.id),
+                                "label_id": str(markup.label_id),
+                                "coord_top_left_x": float(markup.coord_top_left_x),
+                                "coord_top_left_y": float(markup.coord_top_left_y),
+                                "coord_bottom_right_x": float(markup.coord_bottom_right_x),
+                                "coord_bottom_right_y": float(markup.coord_bottom_right_y),
+                                "confidence": float(markup.confidence)
+                            } for markup in frame.markups
+                        ]
+                    } for frame in resp
+                ]
+            }
+
+        # Конвертируем JSON в строку
+        json_data = json.dumps(json_data, indent=4, ensure_ascii=False)
+
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
+        async with aiofiles.open(temp_file.name, mode='w', encoding='utf-8') as f:
+            await f.write(json_data)
+
+        # Используем FileResponse для отправки файла
+        return FileResponse(temp_file.name, media_type='application/json', filename='data.json')
+
 
     async def change_content_status(
         self, content_id: uuid.UUID, new_status: VideoStatusOption

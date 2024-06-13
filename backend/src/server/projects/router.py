@@ -1,5 +1,7 @@
 from typing import Optional
 
+from starlette.responses import FileResponse
+
 import settings
 from fastapi import APIRouter, Depends
 
@@ -158,6 +160,7 @@ class ProjectsRouter:
         self.router.add_api_route(
             path="/download_detect_result",
             endpoint=self._projects_endpoints.download_detect_result,
+            response_class=FileResponse,
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
         )
