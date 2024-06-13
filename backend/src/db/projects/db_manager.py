@@ -50,7 +50,7 @@ class ProjectsDbManager(BaseDbManager):
         self, session: AsyncSession, content_markup: ContentMarkupCreate
     ) -> list[FrameMarkup]:
         # Checking if video with this id exists
-        ContentType = Video if content_markup.content_type == FrameContentTypeOption else Photo
+        ContentType = Video if content_markup.content_type == FrameContentTypeOption.video else Photo
         stmt = (
             select(ContentType)
             .where(ContentType.id == content_markup.content_id)
