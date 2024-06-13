@@ -25,7 +25,7 @@ from src.db.projects.models import (
     VerificationTagBase,
     ProjectTag,
     VideoStatusOption,
-    ProjectStatusOption, Photo,
+    ProjectStatusOption, Photo, FrameContentTypeOption,
 )
 from src.server.projects.models import (
     ContentMarkupCreate,
@@ -50,20 +50,21 @@ class ProjectsDbManager(BaseDbManager):
         self, session: AsyncSession, content_markup: ContentMarkupCreate
     ) -> list[FrameMarkup]:
         # Checking if video with this id exists
+        ContentType = Video if content_markup.content_type == FrameContentTypeOption else Photo
         stmt = (
-            select(Video)
-            .where(Video.id == content_markup.content_id)
+            select(ContentType)
+            .where(ContentType.id == content_markup.content_id)
         )
-        video: Optional[Video] = (await session.execute(stmt)).scalar_one_or_none()
-        if video is None:
-            raise NoResultFound(f"Video with id {content_markup.content_id} not found")
+        content: Optional[ContentType] = (await session.execute(stmt)).scalar_one_or_none()
+        if content is None:
+            raise NoResultFound(f"{ContentType} with id {content_markup.content_id} not found")
 
         # Checking if all provided labels exist
         label_ids = set()
         for frame in content_markup.frames:
             for markup in frame.markup_list:
                 label_ids.add(markup.label_id)
-        stmt = select(Label.id).where(Label.project_id == video.project_id)
+        stmt = select(Label.id).where(Label.project_id == content.project_id)
         available_label_ids = (await session.execute(stmt)).scalars().all()
         not_existing_labels = label_ids - set(available_label_ids)
         if len(not_existing_labels) > 0:
