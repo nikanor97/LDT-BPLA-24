@@ -43,6 +43,9 @@ class ProjectsDbManager(BaseDbManager):
     async def create_video(self, session: AsyncSession, video: Video) -> Video:
         return await Video.create(session, video)
 
+    async def create_photo(self, session: AsyncSession, photo: Photo) -> Photo:
+        return await Photo.create(session, photo)
+
     async def create_frames_with_markups(
         self, session: AsyncSession, video_markup: VideoMarkupCreate
     ) -> list[FrameMarkup]:
@@ -151,8 +154,8 @@ class ProjectsDbManager(BaseDbManager):
     async def get_video(self, session: AsyncSession, video_id: uuid.UUID) -> Video:
         return await Video.by_id(session, video_id)
 
-    async def get_photo(self, session: AsyncSession, video_id: uuid.UUID) -> Video:
-        return await Video.by_id(session, video_id)
+    async def get_photo(self, session: AsyncSession, photo_id: uuid.UUID) -> Photo:
+        return await Photo.by_id(session, photo_id)
 
     async def get_content(self, session: AsyncSession, content_id: uuid.UUID) -> Video | Photo:
         try:

@@ -598,7 +598,6 @@ class ProjectsEndpoints:
                     session, project_id
                 )
 
-
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
@@ -849,7 +848,7 @@ class ProjectsEndpoints:
 
                 try:
                     async with self._main_db_manager.projects.make_autobegin_session() as session:
-                        photo = await self._main_db_manager.projects.create_video(
+                        photo = await self._main_db_manager.projects.create_photo(
                             session, photo_
                         )
                 except NoResultFound as e:
