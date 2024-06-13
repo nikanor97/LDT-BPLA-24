@@ -1,4 +1,4 @@
-from pydantic import Field
+from sqlmodel import Field
 from src.db.mixins import TimeStampWithIdMixin
 from src.db.users.models import UsersSQLModel
 

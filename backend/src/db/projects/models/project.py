@@ -3,7 +3,7 @@ from typing import Optional, TYPE_CHECKING
 from uuid import UUID
 
 import sqlalchemy
-from pydantic import Field
+from sqlmodel import Field
 from sqlalchemy import Column
 from sqlmodel import Relationship
 from sqlalchemy.orm import relationship
@@ -24,9 +24,9 @@ class ProjectBase(ProjectsDataSQLModel):
     name: str = Field(nullable=False, index=True)
     description: Optional[str] = Field(nullable=True, default=None)
     status: Optional[ProjectStatusOption] = Field(
-        # sa_column=Column(
-        #     sqlalchemy.Enum(ProjectStatusOption), default=ProjectStatusOption.created
-        # )
+        sa_column=Column(
+            sqlalchemy.Enum(ProjectStatusOption), default=ProjectStatusOption.created
+        )
         # sa_column=Column(
         #     PgEnum(ProjectStatusOption, name="projectstatusoption", create_type=True),
         #     default=ProjectStatusOption.created
@@ -40,34 +40,34 @@ class ProjectBase(ProjectsDataSQLModel):
 class Project(ProjectBase, TimeStampWithIdMixin, table=True):
     __tablename__ = "projects"
     roles: list["UserRole"] = Relationship(
-        sa_relationship=relationship(
-            'UserRole',
-            back_populates="project",
-        ),
+        # sa_relationship=relationship(
+        #     'UserRole',
+        #     back_populates="project",
+        # ),
         # 'UserRole',
-        # back_populates="project",
+        back_populates="project",
     )
     apartments: list["Apartment"] = Relationship(
-        sa_relationship=relationship(
-            'Apartment',
-            back_populates="project",
-        ),
+        # sa_relationship=relationship(
+        #     'Apartment',
+        #     back_populates="project",
+        # ),
         # 'Apartment',
-        # back_populates="project",
+        back_populates="project",
     )
     labels: list["Label"] = Relationship(
-        sa_relationship=relationship(
-            'Label',
-            back_populates="project",
-        ),
+        # sa_relationship=relationship(
+        #     'Label',
+        #     back_populates="project",
+        # ),
         # 'Label',
-        # back_populates="project",
+        back_populates="project",
     )
     project_documents: Optional[list["ProjectDocument"]] = Relationship(
-        sa_relationship=relationship(
-            'ProjectDocument',
-            back_populates="project",
-        ),
+        # sa_relationship=relationship(
+        #     'ProjectDocument',
+        #     back_populates="project",
+        # ),
         # 'ProjectDocument',
-        # back_populates="project",
+        back_populates="project",
     )

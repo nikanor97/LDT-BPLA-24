@@ -1,4 +1,4 @@
-from pydantic import Field
+from sqlmodel import Field
 from sqlalchemy import Index
 
 from src.db.mixins import TimeStampWithIdMixin

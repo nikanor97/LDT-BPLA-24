@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from pydantic import Field
+from sqlmodel import Field
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlmodel import Relationship
@@ -22,12 +22,12 @@ class ProjectTag(ProjectsDataSQLModel, TimeStampWithIdMixin, table=True):
     project_id: UUID = Field(foreign_key="projects.id", index=True)
     tag_id: UUID = Field(foreign_key="verification_tags.id", index=True)
     tag: "VerificationTag" = Relationship(
-        sa_relationship=relationship(
-            'VerificationTag',
-        ),
+        # sa_relationship=relationship(
+        #     'VerificationTag',
+        # ),
     )
     project: "Project" = Relationship(
-        sa_relationship=relationship(
-            'Project',
-        ),
+        # sa_relationship=relationship(
+        #     'Project',
+        # ),
     )

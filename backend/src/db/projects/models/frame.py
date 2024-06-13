@@ -1,7 +1,7 @@
 from typing import Optional, TYPE_CHECKING
 from uuid import UUID
 
-from pydantic import Field
+from sqlmodel import Field
 from sqlalchemy import Index
 from sqlalchemy.orm import relationship
 from sqlmodel import Relationship
@@ -31,16 +31,16 @@ class Frame(FrameBase, TimeStampWithIdMixin, table=True):
     )
 
     markups: Optional[list["FrameMarkup"]] = Relationship(
-        sa_relationship=relationship(
-            "FrameMarkup",
-            back_populates="frame",
-        )
-        # back_populates="frame",
+        # sa_relationship=relationship(
+        #     "FrameMarkup",
+        #     back_populates="frame",
+        # )
+        back_populates="frame",
     )
     video: "Video" = Relationship(
-        sa_relationship=relationship(
-            "Video",
-            back_populates="frames",
-        )
-        # back_populates="frames",
+        # sa_relationship=relationship(
+        #     "Video",
+        #     back_populates="frames",
+        # )
+        back_populates="frames",
     )

@@ -1,7 +1,7 @@
 from typing import Optional, TYPE_CHECKING
 from uuid import UUID
 
-from pydantic import Field
+from sqlmodel import Field
 from sqlalchemy.orm import relationship
 from sqlmodel import Relationship
 
@@ -25,9 +25,9 @@ class ProjectDocumentBase(ProjectsDataSQLModel):
 class ProjectDocument(ProjectDocumentBase, TimeStampWithIdMixin, table=True):
     __tablename__ = "project_documents"
     project: Optional["Project"] = Relationship(
-        sa_relationship=relationship(
-            "Project",
-            back_populates="project_documents",
-        )
-        # back_populates="project_documents",
+        # sa_relationship=relationship(
+        #     "Project",
+        #     back_populates="project_documents",
+        # )
+        back_populates="project_documents",
     )

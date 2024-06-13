@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 class ApartmentBase(ProjectsDataSQLModel):
     number: str = Field(nullable=False)
     decoration_type: Optional[ApartmentDecorationTypeOption] = Field(
-        # sa_column=Column(sqlalchemy.Enum(ApartmentDecorationTypeOption), nullable=True)
+        sa_column=Column(sqlalchemy.Enum(ApartmentDecorationTypeOption), nullable=True)
     )
     building: Optional[str] = Field(nullable=True)
     section: Optional[str] = Field(nullable=True)
@@ -30,26 +30,26 @@ class ApartmentBase(ProjectsDataSQLModel):
     square: Optional[Decimal] = Field(nullable=True)
     project_id: UUID = Field(foreign_key="projects.id", nullable=False)
     status: Optional[ApartmentStatusOption] = Field(
-        # sa_column=Column(
-        #     sqlalchemy.Enum(ApartmentStatusOption),
-        #     default=ApartmentStatusOption.created,
-        # )
+        sa_column=Column(
+            sqlalchemy.Enum(ApartmentStatusOption),
+            default=ApartmentStatusOption.created,
+        )
     )
 
 
 class Apartment(ApartmentBase, TimeStampWithIdMixin, table=True):
     __tablename__ = "apartments"
     videos: Optional[list["Video"]] = Relationship(
-        sa_relationship=relationship(
-            "Video",
-            back_populates="apartment",
-        )
-        # back_populates="apartment",
+        # sa_relationship=relationship(
+        #     "Video",
+        #     back_populates="apartment",
+        # )
+        back_populates="apartment",
     )
     project: "Project" = Relationship(
-        sa_relationship=relationship(
-            "Project",
-            back_populates="apartments",
-        )
-        # back_populates="apartments",
+        # sa_relationship=relationship(
+        #     "Project",
+        #     back_populates="apartments",
+        # )
+        back_populates="apartments",
     )

@@ -3,7 +3,7 @@ from typing import Optional, TYPE_CHECKING
 from uuid import UUID
 
 import sqlalchemy
-from pydantic import Field
+from sqlmodel import Field
 from sqlalchemy import Column
 from sqlalchemy.orm import relationship
 from sqlmodel import Relationship
@@ -22,9 +22,9 @@ class VideoBase(ProjectsDataSQLModel):
     description: Optional[str] = Field(nullable=True, default=None)
     owner_id: UUID = Field(nullable=False)
     status: VideoStatusOption = Field(
-        # sa_column=Column(
-        #     sqlalchemy.Enum(VideoStatusOption), default=VideoStatusOption.created
-        # ),
+        sa_column=Column(
+            sqlalchemy.Enum(VideoStatusOption), default=VideoStatusOption.created
+        ),
         # default=VideoStatusOption.created,
     )
     apartment_id: UUID = Field(foreign_key="apartments.id", nullable=False)
@@ -33,18 +33,18 @@ class VideoBase(ProjectsDataSQLModel):
 class Video(VideoBase, TimeStampWithIdMixin, table=True):
     __tablename__ = "videos"
     frames: Optional[list["Frame"]] = Relationship(
-        sa_relationship=relationship(
-            'Frame',
-            back_populates="video",
-        ),
-        # back_populates="video",
+        # sa_relationship=relationship(
+        #     'Frame',
+        #     back_populates="video",
+        # ),
+        back_populates="video",
     )
     apartment: "Apartment" = Relationship(
-        sa_relationship=relationship(
-            'Apartment',
-            back_populates="videos",
-        ),
-        # back_populates="videos",
+        # sa_relationship=relationship(
+        #     'Apartment',
+        #     back_populates="videos",
+        # ),
+        back_populates="videos",
     )
     # TODO: maybe make these fields non-optional
     length_sec: Optional[Decimal] = Field(nullable=True)

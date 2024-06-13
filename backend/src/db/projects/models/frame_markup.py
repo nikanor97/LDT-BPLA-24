@@ -2,7 +2,7 @@ from decimal import Decimal
 from typing import Optional, TYPE_CHECKING
 from uuid import UUID
 
-from pydantic import Field
+from sqlmodel import Field
 from sqlalchemy.orm import relationship
 from sqlmodel import Relationship
 
@@ -29,15 +29,15 @@ class FrameMarkupBase(ProjectsDataSQLModel):
 class FrameMarkup(FrameMarkupBase, TimeStampWithIdMixin, table=True):
     __tablename__ = "frame_markup"
     frame: "Frame" = Relationship(
-        sa_relationship=relationship(
-            'Frame',
-            back_populates="markups",
-        ),
-        # back_populates="markups",
+        # sa_relationship=relationship(
+        #     'Frame',
+        #     back_populates="markups",
+        # ),
+        back_populates="markups",
     )
     label: "Label" = Relationship(
-        sa_relationship=relationship(
-            'Label',
-            # back_populates="markups",
-        ),
+        # sa_relationship=relationship(
+        #     'Label',
+        #     # back_populates="markups",
+        # ),
     )

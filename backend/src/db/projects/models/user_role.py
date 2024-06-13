@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 import sqlalchemy
-from pydantic import Field
+from sqlmodel import Field
 from sqlalchemy import Column, Index
 from sqlalchemy.orm import relationship
 from sqlmodel import Relationship
@@ -20,7 +20,7 @@ class UserRoleBase(ProjectsDataSQLModel):
     project_id: UUID = Field(foreign_key="projects.id", index=True)
 
     role_type: RoleTypeOption = Field(
-        # sa_column=Column(sqlalchemy.Enum(RoleTypeOption), nullable=False)
+        sa_column=Column(sqlalchemy.Enum(RoleTypeOption), nullable=False)
     )
 
 
@@ -33,9 +33,9 @@ class UserRole(UserRoleBase, TimeStampWithIdMixin, table=True):
     )
 
     project: "Project" = Relationship(
-        sa_relationship=relationship(
-            'Project',
-            back_populates="roles",
-        ),
-        # back_populates="roles",
+        # sa_relationship=relationship(
+        #     'Project',
+        #     back_populates="roles",
+        # ),
+        back_populates="roles",
     )
