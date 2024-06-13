@@ -11,9 +11,8 @@ from src.db.projects.models import (
     Project,
     ProjectBase,
     VerificationTag,
-    ApartmentBase,
     Video,
-    Apartment, VideoBase, VideoStatusOption,
+    VideoBase, VideoStatusOption,
 )
 from src.db.users.models import User
 from src.server.common import ModelWithLabelAndValue
@@ -62,9 +61,9 @@ class UserRoleWithProjectRead(UserRoleBase):
 
 class ProjectCreate(ProjectBase):
     tags_ids: list[uuid.UUID]  # ids of VerificationTags
-    verificators_ids: list[
-        uuid.UUID
-    ]  # ids of verificator users that will be attached to the project
+    # verificators_ids: list[
+    #     uuid.UUID
+    # ]  # ids of verificator users that will be attached to the project
 
 
 # class ProjectRead(ProjectBase):
@@ -88,7 +87,7 @@ class ProjectsStats(BaseModel):
 class ProjectWithUsersIds(ProjectBase):
     id: uuid.UUID
     author_id: uuid.UUID
-    verificators_ids: list[uuid.UUID]
+    # verificators_ids: list[uuid.UUID]
     created_at: datetime
 
 
@@ -97,12 +96,6 @@ class ProjectWithUsersIds(ProjectBase):
 #     author: User
 #     verificators: list[User]
 #     created_at: datetime
-
-
-class ApartmentWithVideo(ApartmentBase):
-    id: uuid.UUID
-    created_at: datetime
-    video: Optional[Video]
 
 
 class ProjectStats(BaseModel):
@@ -209,11 +202,6 @@ class ProjectScores(BaseModel):
     for_floor: ProjectScoresForFloor
 
 
-class ApartmentWithPlans(Apartment):
-    apartment_plan_url: Optional[str]
-    floor_plan_url: Optional[str]
-
-
 # class ScoreMap(BaseModel):
 #     non_mop_floor_no_percent
 #     non_mop_floor_rough_percent
@@ -265,7 +253,6 @@ class ContentTypeOption(str, enum.Enum):
 class ProjectWithUsers(ProjectBase):
     id: uuid.UUID
     author: User
-    # verificators: list[User]
     created_at: datetime
     content_type: ProjectContentTypeOption  # считать основываясь на том что в проекта
     detected_count: int
@@ -275,7 +262,8 @@ class ProjectRead(ProjectBase):
     id: uuid.UUID
     tags: list[VerificationTag]
     # verificators: Optional[list[User]]
-    msg_receiver: str  # TODO: кто это ???
+    created_at: datetime
+    updated_at: datetime
 
 
 class Content(BaseModel):

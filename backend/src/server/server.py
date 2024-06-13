@@ -6,7 +6,9 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, ORJSONResponse
 from pydantic import ValidationError
+from starlette.staticfiles import StaticFiles
 
+import settings
 from common.rabbitmq.publisher import Publisher
 from settings import API_PREFIX  # , AUTH_CLIENT_ID, AUTH_REGION, AUTH_USER_POOL_ID
 from src.db.main_db_manager import MainDbManager
@@ -61,6 +63,8 @@ def make_server_app(
         docs_url=f"{API_PREFIX}/docs",
         default_response_class=ORJSONResponse,
     )
+
+    app.mount("/api/static", StaticFiles(directory=settings.MEDIA_DIR), name="static")
 
     routers_list: list[RouterProtocol] = [
         UsersRouter(main_db_manager=main_db_manager),

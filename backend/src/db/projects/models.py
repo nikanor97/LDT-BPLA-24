@@ -31,9 +31,9 @@ class VideoStatusOption(str, enum.Enum):
     declined = "declined"  # Video is declined by admin
 
 
-class ApartmentDecorationTypeOption(str, enum.Enum):
-    rough = "rough"
-    finishing = "finishing"
+# class ApartmentDecorationTypeOption(str, enum.Enum):
+#     rough = "rough"
+#     finishing = "finishing"
 
 
 class RoleTypeOption(str, enum.Enum):
@@ -51,14 +51,14 @@ class ProjectStatusOption(str, enum.Enum):
     finished = "finished"  # When the project is totally finished
 
 
-class ApartmentStatusOption(str, enum.Enum):
-    created = "created"  # When apartment doesn't have video yet
-    in_progress = (
-        "in_progress"  # When apartment has a video, but it's extraction is not approved
-    )
-    # finished = "finished"  # When apartment's video is approved
-    approved = "approved"
-    declined = "declined"
+# class ApartmentStatusOption(str, enum.Enum):
+#     created = "created"  # When apartment doesn't have video yet
+#     in_progress = (
+#         "in_progress"  # When apartment has a video, but it's extraction is not approved
+#     )
+#     # finished = "finished"  # When apartment's video is approved
+#     approved = "approved"
+#     declined = "declined"
 
 
 # class VideoBase(ProjectsDataSQLModel):
@@ -89,50 +89,50 @@ class ApartmentStatusOption(str, enum.Enum):
 #     source_url: Optional[str] = Field(nullable=True)
 
 
-class ProjectDocumentBase(ProjectsDataSQLModel):
-    source_url: str = Field(nullable=False)
-    project_id: Optional[uuid.UUID] = Field(foreign_key="projects.id", nullable=True)
-    apt_count: Optional[int] = Field(nullable=True)
-    n_finishing: Optional[int] = Field(nullable=True)
-    n_rough: Optional[int] = Field(nullable=True)
-    project_name: Optional[str] = Field(nullable=True)
-    address: Optional[str] = Field(nullable=True)
+# class ProjectDocumentBase(ProjectsDataSQLModel):
+#     source_url: str = Field(nullable=False)
+#     project_id: Optional[uuid.UUID] = Field(foreign_key="projects.id", nullable=True)
+#     apt_count: Optional[int] = Field(nullable=True)
+#     n_finishing: Optional[int] = Field(nullable=True)
+#     n_rough: Optional[int] = Field(nullable=True)
+#     project_name: Optional[str] = Field(nullable=True)
+#     address: Optional[str] = Field(nullable=True)
 
 
-class ProjectDocument(ProjectDocumentBase, TimeStampWithIdMixin, table=True):
-    __tablename__ = "project_documents"
-    project: Optional["Project"] = Relationship(
-        back_populates="project_documents",
-    )
+# class ProjectDocument(ProjectDocumentBase, TimeStampWithIdMixin, table=True):
+#     __tablename__ = "project_documents"
+#     project: Optional["Project"] = Relationship(
+#         back_populates="project_documents",
+#     )
 
 
-class ApartmentBase(ProjectsDataSQLModel):
-    number: str = Field(nullable=False)
-    decoration_type: Optional[ApartmentDecorationTypeOption] = Field(
-        sa_column=Column(sqlalchemy.Enum(ApartmentDecorationTypeOption), nullable=True)
-    )
-    building: Optional[str] = Field(nullable=True)
-    section: Optional[str] = Field(nullable=True)
-    floor: Optional[int] = Field(nullable=True)
-    rooms_total: Optional[int] = Field(nullable=True)
-    square: Optional[Decimal] = Field(nullable=True)
-    project_id: uuid.UUID = Field(foreign_key="projects.id", nullable=False)
-    status: Optional[ApartmentStatusOption] = Field(
-        sa_column=Column(
-            sqlalchemy.Enum(ApartmentStatusOption),
-            default=ApartmentStatusOption.created,
-        )
-    )
-
-
-class Apartment(ApartmentBase, TimeStampWithIdMixin, table=True):
-    __tablename__ = "apartments"
-    videos: Optional[list["Video"]] = Relationship(
-        back_populates="apartment",
-    )
-    project: "Project" = Relationship(
-        back_populates="apartments",
-    )
+# class ApartmentBase(ProjectsDataSQLModel):
+#     number: str = Field(nullable=False)
+#     decoration_type: Optional[ApartmentDecorationTypeOption] = Field(
+#         sa_column=Column(sqlalchemy.Enum(ApartmentDecorationTypeOption), nullable=True)
+#     )
+#     building: Optional[str] = Field(nullable=True)
+#     section: Optional[str] = Field(nullable=True)
+#     floor: Optional[int] = Field(nullable=True)
+#     rooms_total: Optional[int] = Field(nullable=True)
+#     square: Optional[Decimal] = Field(nullable=True)
+#     project_id: uuid.UUID = Field(foreign_key="projects.id", nullable=False)
+#     status: Optional[ApartmentStatusOption] = Field(
+#         sa_column=Column(
+#             sqlalchemy.Enum(ApartmentStatusOption),
+#             default=ApartmentStatusOption.created,
+#         )
+#     )
+#
+#
+# class Apartment(ApartmentBase, TimeStampWithIdMixin, table=True):
+#     __tablename__ = "apartments"
+#     videos: Optional[list["Video"]] = Relationship(
+#         back_populates="apartment",
+#     )
+#     project: "Project" = Relationship(
+#         back_populates="apartments",
+#     )
 
 
 # class FrameBase(ProjectsDataSQLModel):
@@ -305,7 +305,8 @@ class ProjectBase(ProjectsDataSQLModel):
         )
     )
     # document_id: Optional[uuid.UUID] = Field(nullable=True)  # TODO: Make not Optional
-    is_deleted: Optional[bool] = Field(default=False)
+    is_deleted: bool = Field(default=False)
+    msg_receiver: Optional[str] = Field(nullable=True)
     # deadline_at: Optional[date] = Field(nullable=True)
 
 
@@ -314,15 +315,15 @@ class Project(ProjectBase, TimeStampWithIdMixin, table=True):
     roles: list["UserRole"] = Relationship(
         back_populates="project",
     )
-    apartments: list[Apartment] = Relationship(
-        back_populates="project",
-    )
+    # apartments: list[Apartment] = Relationship(
+    #     back_populates="project",
+    # )
     labels: list[Label] = Relationship(
         back_populates="project",
     )
-    project_documents: Optional[list[ProjectDocument]] = Relationship(
-        back_populates="project",
-    )
+    # project_documents: Optional[list[ProjectDocument]] = Relationship(
+    #     back_populates="project",
+    # )
 
 
 class VideoBase(ProjectsDataSQLModel):
