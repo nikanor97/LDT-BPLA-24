@@ -1,4 +1,5 @@
 from typing import Optional
+from uuid import UUID
 
 from starlette.responses import FileResponse
 
@@ -73,6 +74,22 @@ class ProjectsRouter:
             path="/project-stats",
             endpoint=self._projects_endpoints.get_project_stats,
             response_model=UnifiedResponse[BplaProjectStats],
+            methods=[METHOD.GET],
+            dependencies=[Depends(Auth(main_db_manager))],
+        )
+
+        self.router.add_api_route(
+            path="/projects-all-stats",
+            endpoint=self._projects_endpoints.get_projects_all_stats,
+            response_model=UnifiedResponse[BplaProjectStats],
+            methods=[METHOD.GET],
+            dependencies=[Depends(Auth(main_db_manager))],
+        )
+
+        self.router.add_api_route(
+            path="/content-ids-by-project",
+            endpoint=self._projects_endpoints.get_content_ids_by_project,
+            response_model=UnifiedResponse[list[UUID]],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
         )

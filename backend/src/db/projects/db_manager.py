@@ -167,6 +167,13 @@ class ProjectsDbManager(BaseDbManager):
         except NoResultFound:
             return await Photo.by_id(session, content_id)
 
+    async def get_all_content(self, session: AsyncSession) -> list[Video | Photo]:
+        stmt = select(Video)
+        videos = (await session.execute(stmt)).scalars().all()
+        stmt = select(Photo)
+        photos = (await session.execute(stmt)).scalars().all()
+        return videos + photos
+
     async def get_content_by_project(
         self,
         session: AsyncSession,

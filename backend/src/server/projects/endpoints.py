@@ -542,11 +542,41 @@ class ProjectsEndpoints:
         self,
         project_id: uuid.UUID,
     ) -> UnifiedResponse[BplaProjectStats]:
+        async with self._main_db_manager.projects.make_autobegin_session() as session:
+            content = await self._main_db_manager.projects.get_content_by_project(
+                session, project_id
+            )
+        photos = [c for c in content if type(c) == Photo]
+        videos = [c for c in content if type(c) == Video]
+
+        photos_with_det = [p for p in photos if p.status != VideoStatusOption.created]
+        videos_with_det = [v for v in videos if v.status != VideoStatusOption.created]
+
         res = BplaProjectStats(
-            photo_count=56,
-            video_count=22,
-            photo_with_det_count=34,
-            video_with_det_count=12
+            photo_count=len(photos),
+            video_count=len(videos),
+            photo_with_det_count=len(photos_with_det),
+            video_with_det_count=len(videos_with_det)
+        )
+        return UnifiedResponse(data=res)
+
+    async def get_projects_all_stats(
+        self,
+    ) -> UnifiedResponse[BplaProjectStats]:
+        async with self._main_db_manager.projects.make_autobegin_session() as session:
+            content = await self._main_db_manager.projects.get_all_content(session)
+
+        photos = [c for c in content if type(c) == Photo]
+        videos = [c for c in content if type(c) == Video]
+
+        photos_with_det = [p for p in photos if p.status != VideoStatusOption.created]
+        videos_with_det = [v for v in videos if v.status != VideoStatusOption.created]
+
+        res = BplaProjectStats(
+            photo_count=len(photos),
+            video_count=len(videos),
+            photo_with_det_count=len(photos_with_det),
+            video_with_det_count=len(videos_with_det)
         )
         return UnifiedResponse(data=res)
 
@@ -568,6 +598,27 @@ class ProjectsEndpoints:
         async with self._main_db_manager.users.make_autobegin_session() as session:
             users = await self._main_db_manager.users.get_users(session, users_ids)
 
+        project_id_to_detected_count: dict[uuid.UUID, int] = dict()
+        project_id_to_content_type: dict[uuid.UUID, ProjectContentTypeOption] = dict()
+        async with self._main_db_manager.projects.make_autobegin_session() as session:
+            for pwu in projects_with_users_ids:
+                content = await self._main_db_manager.projects.get_content_by_project(
+                    session, pwu.id
+                )
+                project_id_to_detected_count[pwu.id] = len(
+                    [c for c in content if c.status != VideoStatusOption.created]
+                )
+                videos = [c for c in content if type(c) == Video]
+                photos = [c for c in content if type(c) == Photo]
+                if len(videos) > 0 and len(photos) > 0:
+                    project_id_to_content_type[pwu.id] = ProjectContentTypeOption.mixed
+                elif len(videos) > 0:
+                    project_id_to_content_type[pwu.id] = ProjectContentTypeOption.video
+                elif len(photos) > 0:
+                    project_id_to_content_type[pwu.id] = ProjectContentTypeOption.photo
+                else:
+                    project_id_to_content_type[pwu.id] = ProjectContentTypeOption.mixed
+
         users_by_ids: dict[uuid.UUID, User] = dict()
         for user in users:
             users_by_ids[user.id] = user
@@ -575,11 +626,11 @@ class ProjectsEndpoints:
         projects_with_users: list[ProjectWithUsers] = []
         for project_with_users_ids in projects_with_users_ids:
             author = users_by_ids[project_with_users_ids.author_id]
-            content_type = ProjectContentTypeOption.mixed  # TODO: сделать опередение типа контента на основе содержимого проекта
+            content_type = project_id_to_content_type[project_with_users_ids.id]
             project_with_users = ProjectWithUsers(
                 author=author,
                 content_type=content_type,
-                detected_count=500,  # TODO: считать реальное кол-во объектов
+                detected_count=project_id_to_detected_count[project_with_users_ids.id],
                 **project_with_users_ids.dict(),
             )
             projects_with_users.append(project_with_users)
@@ -650,6 +701,22 @@ class ProjectsEndpoints:
 
         content_items: list[Content] = [Content.from_video_or_photo(item, detected_count=0) for item in items]
         return UnifiedResponse(data=content_items)
+
+    async def get_content_ids_by_project(
+        self,
+        project_id: uuid.UUID,
+    ) -> UnifiedResponse[list[uuid.UUID]]:
+        async with self._main_db_manager.projects.make_autobegin_session() as session:
+            try:
+                items = await self._main_db_manager.projects.get_content_by_project(
+                    session, project_id
+                )
+            except NoResultFound as e:
+                return UnifiedResponse(error=exc_to_str(e), status_code=404)
+
+        content_items: list[Content] = [Content.from_video_or_photo(item, detected_count=0) for item in items]
+        content_ids = [item.content_id for item in content_items]
+        return UnifiedResponse(data=content_ids)
 
     async def upload_content(
         self,
