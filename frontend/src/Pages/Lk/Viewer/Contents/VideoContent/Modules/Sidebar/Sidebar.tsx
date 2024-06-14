@@ -6,8 +6,6 @@ import { useVideo } from '../../Hooks/useVideo';
 const Sidebar = () => {
     const video = useVideo();
 
-    //TODO Поменять ручку скачивания результатов
-
     return (
         <div className={styles.wrapper}>
             <div className={styles.title}>

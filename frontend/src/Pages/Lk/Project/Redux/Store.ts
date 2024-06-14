@@ -5,16 +5,11 @@ import {iState, iActions} from './types';
 const initialState: iState.Value = {
     upload: getFullState(),
     getProject: getFullState(),
-    apartments: getFullState(),
     content: getFullState(),
     uploadDrawer: {
         visible: false
     },
     uploadContent: getFullState(),
-    statistics: {
-        request: getFullState(),
-        fullRequest: getFullState(),
-    }
 };
 
 
@@ -48,28 +43,6 @@ export const Slice = createSlice({
             requestSuccess(state.uploadContent, action.payload),
         _uploadContentError: (state) => 
             requestError(state.uploadContent),
-
-        getProjectStats: (state, action: PayloadAction<iActions.getProjectStats>) =>
-            requestStart(state.statistics.request),
-        _getProjectStatsSuccess: (state, action: PayloadAction<iActions._getProjectStatsSuccess>) =>  
-            requestSuccess(state.statistics.request, action.payload),
-        _getProjectStatsError: (state) =>
-            requestError(state.statistics.request),
-
-        getApartments: (state, action: PayloadAction<iActions.getApartments>) =>
-            requestStart(state.apartments),
-        _getApartmentsSuccess: (state, action: PayloadAction<iActions._getApartmentsSuccess>) =>
-            requestSuccess(state.apartments, action.payload),
-        _getApartmentError: (state) =>
-            requestError(state.apartments),
-
-        getFullStats: (state, action: PayloadAction<iActions.getFullStats>) =>
-            requestStart(state.statistics.fullRequest),
-        _getFullStatsSuccess: (state, action: PayloadAction<iActions._getFullStatsSuccess>) =>
-            requestSuccess(state.statistics.fullRequest, action.payload),
-        _getFullStatsError: (state) =>
-            requestError(state.statistics.fullRequest),
-
 
         getProjectContent: (state, action: PayloadAction<iActions.getProjectContent>) =>
             requestStart(state.content),

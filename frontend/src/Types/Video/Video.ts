@@ -1,4 +1,4 @@
-import {User, Viewer, Project} from '../';
+import {User, Project} from '../';
 
 export type Status = 
     'created' | 
@@ -16,7 +16,6 @@ export type Item = {
     "description": string;
     "owner_id": User.Id;
     "status": Status
-    "apartment_id": Viewer.Id,
     "length_sec": number,
     "n_frames": number,
     "height": number,

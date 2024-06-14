@@ -11,13 +11,13 @@ const Labels = () => {
     if (!photo) return null;
     if (!labelsIntervals) return null;
 
-    // if (video.status === 'created') {
-    //     return (
-    //         <div className={styles.empty}>
-    //             Детекция выполняется. Результаты будут доступны позже...
-    //         </div>
-    //     )
-    // }
+    if (photo.status === 'created') {
+        return (
+            <div className={styles.empty}>
+                Детекция выполняется. Результаты будут доступны позже...
+            </div>
+        )
+    }
 
     return (
         <div className={styles.wrapper}>

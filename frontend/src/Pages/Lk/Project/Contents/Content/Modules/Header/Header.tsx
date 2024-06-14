@@ -16,7 +16,6 @@ import routes from '@root/routes';
 
 const Header = () => {
     const project = useSelector((state:PageState) => state.Pages.LkProject.getProject.data);
-    const apartments = useSelector((state:PageState) => state.Pages.LkProject.apartments.data);
     const dispatch = useDispatch();
     const history  =  useHistory();
 
@@ -40,16 +39,6 @@ const Header = () => {
                                 text={getStatusText(project.status)}
                                 type={getStatusType(project.status)}
                             />
-                        )
-                    }
-                    {
-                        apartments && (
-                            <div className={styles.meta}>
-                                {declinationOfNumber({
-                                    value: apartments.length,
-                                    words: ['Объект', 'Объекта', 'Объектов']
-                                })}
-                            </div>
                         )
                     }
                 </div>

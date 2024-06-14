@@ -3,11 +3,8 @@ import {Drawer, Button, Form, Upload, message} from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import {PageState} from '../../../../../../Redux/types';
 import {PageActions} from '../../../../../../Redux/Store';
-import { required } from '@root/Utils/Form/Rules';
-import {Input} from '@root/Components/Controls';
 import {RcFile} from "antd/es/upload";
 import {iForm} from './types';
-import { getApartName } from '@root/Utils/Viewer/getApartName';
 
 const {Dragger} = Upload;
 
@@ -25,7 +22,7 @@ const UploadDrawer = () => {
     return (
         <Drawer 
             width={520}
-            title={`Загрузка видео`}
+            title={`Загрузка контента`}
             onClose={() => {
                 dispatch(PageActions.closeUploadDrawer());
             }}
@@ -46,7 +43,6 @@ const UploadDrawer = () => {
                 onFinish={() => {
                     dispatch(PageActions.uploadContent({
                         onSuccess: () => {
-                            // dispatch(PageActions.getVideos({apartment_id: apartment.id}))
                             dispatch(PageActions.closeUploadDrawer());
                         },
                         onError: () => {

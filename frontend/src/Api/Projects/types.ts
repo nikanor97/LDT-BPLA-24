@@ -16,14 +16,6 @@ export declare namespace Api {
     type iDeleteProject = Project.Id;
     type oDeleteProject = Project.Info;
 
-    type iGetApartments = Project.Id;
-    type oGetApartments = Viewer.Item[];
-
-    type iGetApartment = {
-        apartId: Viewer.Id;
-    }
-    type oGetApartment = Viewer.Item;
-
     type iCreateProject = {
         name: string;
         msg_receiver: string
@@ -70,11 +62,6 @@ export declare namespace Api {
     type oGetMyProjects = Project.ItemFull[];
     type iGetProjectStats = {
         project_id: Project.Id;
-    }
-    type oGetProjectStats = {
-        total_apartments: number;
-        total_video_length_minutes: number;
-        apartments_approved: number
     }
 
     type iChangeContentStatus = {

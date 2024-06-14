@@ -21,7 +21,6 @@ export declare namespace iState {
         [key: string]: Project.Label.Item;
     }
     type Value = {
-        apartment: RequestFullState<Viewer.Item>
         content: RequestFullState<VideosState>;
         labels: RequestFullState<Labels>;
         playInterval: PlayInterval | null;
@@ -32,9 +31,6 @@ export declare namespace iState {
 
 
 export declare namespace iActions {
-    type getApartment = Api.iGetApartment;
-    type _getApartmentSuccess = Api.oGetApartment;
-
     type getContentInfo = Api.iGetContentInfo;
     type _getContentInfoSuccess = iState.VideosState;
 

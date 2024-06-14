@@ -3,7 +3,6 @@ import {createSlice, PayloadAction} from '@reduxjs/toolkit';
 import {iState, iActions} from './types';
 
 const initialState: iState.Value = {
-    apartment: getFullState(),
     content: getFullState(),
     labels: getFullState(),
     playInterval: null,
@@ -15,12 +14,6 @@ export const Slice = createSlice({
     name: 'LkViewer',
     initialState,
     reducers: {
-        getApartment: (state, action: PayloadAction<iActions.getApartment>) =>
-            requestStart(state.apartment),
-        _getApartmentSuccess: (state, action: PayloadAction<iActions._getApartmentSuccess>) =>
-            requestSuccess(state.apartment, action.payload),
-        _getApartmentError: (state) => 
-            requestError(state.apartment),
 
         getContentInfo: (state, action: PayloadAction<iActions.getContentInfo>) => 
             requestStart(state.content),
