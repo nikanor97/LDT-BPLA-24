@@ -78,7 +78,7 @@ const Header = () => {
                             <Button
                                 icon={<DeleteOutlined />}
                                 type="default">
-                                Удалить
+                                Удалить проект
                             </Button>
                         </Popconfirm>
 
