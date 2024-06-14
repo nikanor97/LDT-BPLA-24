@@ -12,7 +12,7 @@ const Statistics = () => {
     const state = useSelector((state: PageState) => state.Pages.LkProjects.statistics);
 
     useEffect(() => {
-        dispatch(PageActions.getProjectStats());
+        dispatch(PageActions.getProjectsStats());
     }, []);
 
     if (state.data) {

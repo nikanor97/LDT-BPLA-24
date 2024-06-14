@@ -46,11 +46,11 @@ export const Slice = createSlice({
         _createProjectError: (state) => 
             requestError(state.create),
 
-        getProjectStats: (state) =>
+        getProjectsStats: (state) =>
             requestStart(state.statistics),
-        _getProjectStatsSuccess: (state, action: PayloadAction<iActions._getProjectStatsSuccess>) => 
+        _getProjectsStatsSuccess: (state, action: PayloadAction<iActions._getProjectsStatsSuccess>) => 
             requestSuccess(state.statistics, action.payload),
-        _getProjectStatsError: (state) => 
+        _getProjectsStatsError: (state) => 
             requestSuccess(state.statistics),
             
     }   

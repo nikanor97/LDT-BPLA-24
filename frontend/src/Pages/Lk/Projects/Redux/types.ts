@@ -31,7 +31,7 @@ export declare namespace iActions {
     type _getTagsSuccess = Api.oGetTags;
     type _getUsersSuccess = UserApi.oGetUsers;
 
-    type _getProjectStatsSuccess = Api.oGetProjectsStats;
+    type _getProjectsStatsSuccess = Api.oGetProjectsStats;
 }
 
 export type PageState = PageStateGeneric<{

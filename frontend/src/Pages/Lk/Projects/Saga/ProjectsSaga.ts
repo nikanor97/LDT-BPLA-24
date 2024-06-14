@@ -38,9 +38,9 @@ const getTags = function*() {
 const getProjectsStats = function*() {
     try {
         const {data} = yield* call(Api.Projects.getProjectsStats)
-        yield* put(PageActions._getProjectStatsSuccess(data.data));
+        yield* put(PageActions._getProjectsStatsSuccess(data.data));
     } catch (ex) {
-        yield* put(PageActions._getProjectStatsError());
+        yield* put(PageActions._getProjectsStatsError());
     }
 }
 
@@ -51,5 +51,5 @@ export default function* () {
     yield* takeLatest(PageActions.getProjects, getMyProjects)
     yield* takeLatest(PageActions.createProject, createProject)
     yield* takeLatest(PageActions.getTags, getTags)
-    yield* takeLatest(PageActions.getProjectStats, getProjectsStats)
+    yield* takeLatest(PageActions.getProjectsStats, getProjectsStats)
 }

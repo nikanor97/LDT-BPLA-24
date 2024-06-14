@@ -15,7 +15,7 @@ const useGetStatData = () => {
         if  (item.status === 'extracted') {
             data.content_after_detection  +=  1
         }
-        if  (item.status === "approved" || item.status === "declined") {
+        if  (item.status === "approved") {
             data.content_moderated  +=  1
         }
         data.detected_count += item.detected_count

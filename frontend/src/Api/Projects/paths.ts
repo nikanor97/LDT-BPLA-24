@@ -10,7 +10,7 @@ export default {
     getTags: '/v1/projects/verification-tags',
     getContentFrames: '/v1/projects/frames-with-markups',
     getLabels: '/v1/projects/labels',
-    getStats: '/v1/projects/project-stats',
+    getStats: '/v1/projects/projects-all-stats',
     getMyProjects: '/v1/projects/projects-with-users',
     changeContentStatus: '/v1/projects/content-status',
     getProjectContent: '/v1/projects/content-by-project',
