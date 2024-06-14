@@ -43,8 +43,8 @@ export declare namespace iActions {
     type updateVideoMeta = Partial<Video.Item>
 
     type setPlayInterval = iState.PlayInterval | null;
-    type changeVideoStatus = Api.iChangeVideoStatus;
-    type _changeVideoStatusSuccess = Api.oChangeVideoStatus;
+    type changeContentStatus = Api.iChangeContentStatus;
+    type _changeContenttatusSuccess = Api.oChangeContentStatus;
     type setImageIndex = number;
 }
 

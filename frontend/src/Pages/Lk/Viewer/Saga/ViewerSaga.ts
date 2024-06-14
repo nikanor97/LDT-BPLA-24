@@ -46,14 +46,14 @@ const getContentInfo = function*(action: PayloadAction<iActions.getContentInfo>)
     }
 }
 
-const changeVideoStatus = function*(action: PayloadAction<iActions.changeVideoStatus>) {
+const changeContentStatus = function*(action: PayloadAction<iActions.changeContentStatus>) {
     try {
-        const {data} = yield* call(Api.Projects.changeVideoStatus, action.payload)
-        yield* put(PageActions._changeVideoStatusSuccess(data.data))
-        yield* put(PageActions.getApartment({apartId: data.data.apartment_id}))
+        const {data} = yield* call(Api.Projects.changeContentStatus, action.payload)
+        yield* put(PageActions._changeContentStatusSuccess(data.data))
+        yield* put(PageActions.getContentInfo({content_id: action.payload.content_id}))
         
     } catch (ex) {
-        yield* put(PageActions._changeVideoStatusError())
+        yield* put(PageActions._changeContentStatusError())
     }
 }
 
@@ -61,5 +61,5 @@ const changeVideoStatus = function*(action: PayloadAction<iActions.changeVideoSt
 export default function* () {
     yield* takeLatest(PageActions.getContentInfo, getContentInfo);
     yield* takeLatest(PageActions.getLabels, getLabels);
-    yield* takeLatest(PageActions.changeVideoStatus, changeVideoStatus);
+    yield* takeLatest(PageActions.changeContentStatus, changeContentStatus);
 }

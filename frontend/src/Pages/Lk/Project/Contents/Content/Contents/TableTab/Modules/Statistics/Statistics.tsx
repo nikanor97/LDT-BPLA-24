@@ -6,12 +6,12 @@ import Loading from './Contents/Loading/Loading';
 
 
 const Statistics = () => {
-    const state = useSelector((state: PageState) => state.Pages.LkProject.statistics.request);
+    const content = useSelector((state: PageState)  => state.Pages.LkProject.content);
 
-    if (state.data) {
+    if (content.data) {
         return <Content />
     }
-    if (state.fetching) {
+    if (content.fetching) {
         return <Loading />;
     }
     return null;

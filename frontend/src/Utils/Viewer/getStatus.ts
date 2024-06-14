@@ -20,6 +20,8 @@ export const getStatusType = (status: Viewer.Status): StatusType => {
     switch (status) {
         case 'approved':
             return 'success';
+        case 'declined':
+            return 'declined';
         default:
             return 'default'
     }

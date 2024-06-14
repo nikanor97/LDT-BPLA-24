@@ -74,12 +74,12 @@ export declare namespace Api {
         apartments_approved: number
     }
 
-    type iChangeVideoStatus = {
-        video_id: Video.Id;
+    type iChangeContentStatus = {
+        content_id: Video.Id;
         new_status: Video.Status;
     }
 
-    type oChangeVideoStatus = Video.Item;
+    type oChangeContentStatus = Video.Item;
 
     type iGetProjectFullStats = {
         project_id: Project.Id;

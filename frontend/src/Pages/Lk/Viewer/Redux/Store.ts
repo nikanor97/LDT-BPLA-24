@@ -47,16 +47,16 @@ export const Slice = createSlice({
             state.playInterval = action.payload;
         },
 
-        changeVideoStatus: (state, action: PayloadAction<iActions.changeVideoStatus>) =>    
+        changeContentStatus: (state, action: PayloadAction<iActions.changeContentStatus>) =>    
             requestStart(state.videoStatus),
-        _changeVideoStatusSuccess: (state, action: PayloadAction<iActions._changeVideoStatusSuccess>) => {
+        _changeContentStatusSuccess: (state, action: PayloadAction<iActions._changeContenttatusSuccess>) => {
             requestSuccess(state.videoStatus)
             if (state.content.data?.info) {
                 state.content.data.info = action.payload
             }
         },
         
-        _changeVideoStatusError: (state) => 
+        _changeContentStatusError: (state) => 
             requestError(state.videoStatus),
 
     }   

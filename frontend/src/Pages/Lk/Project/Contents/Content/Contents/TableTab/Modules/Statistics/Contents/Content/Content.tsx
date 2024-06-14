@@ -1,54 +1,56 @@
 import * as React from 'react';
 import Layout from '../../Modules/Layout/Layout';
 import StatContainer from '@root/Components/StatContainer/StatContainer';
-import HomeIcon from '../../Icons/Home';
-import TimeIcon from '../../Icons/Timer';
-import Tick from '../../Icons/Tick';
+import DetectionsIcon from '../../Icons/Detections';
+import ContentAfterDetectioncon from '../../Icons/ContentAfterDetection';
+import ContentModerated from '../../Icons/ContentModerated';
 import { useSelector } from 'react-redux';
 import {PageState} from '../../../../../../../../Redux/types';
 import styles from './Content.module.scss';
+import useGetStatData from './Hooks/useGetStatData';
 
 
 const Content = () => {
-    const data = useSelector((state: PageState) => state.Pages.LkProject.statistics.request.data);
+    const content = useSelector((state: PageState)  => state.Pages.LkProject.content.data);
+    const data = useGetStatData();
+
+    if (!content) return null;
+
     if (!data) return null;
     return (
         <Layout 
             items={[
                 (
                     <StatContainer 
-                        count={data.total_apartments}
-                        title="Всего квартир"
-                        icon={<HomeIcon />}
+                        count={data.detected_count}
+                        title="Всего обнаружений"
+                        icon={<DetectionsIcon />}
                     />
                 ),
                 (
                     <StatContainer 
-                        count={
-                            <>
-                                {data.total_video_length_minutes}
-                                {' '}
-                                <span className={styles.timeMeta}>
-                                мин
-                                </span>
-                            </>
+                        count={data.content_after_detection}
+                        total={
+                            <span className={styles.meta}>
+                            /{data.content_count}
+                            </span>
                         }
-                        title="Продолжительность видео"
-                        icon={<TimeIcon />}
+                        title="Прошли детекцию"
+                        icon={<ContentAfterDetectioncon />}
                     />
                 ),
                 (
                     <StatContainer 
                         count={
-                            data.apartments_approved
+                            data.content_moderated
                         }
                         total={
                             <span className={styles.meta}>
-                            /{data.total_apartments}
+                            /{data.content_count}
                             </span>
                         }
-                        title="Количество проверенных"
-                        icon={<Tick />}
+                        title="Прошли модерацию"
+                        icon={<ContentModerated />}
                     />
                 )
             ]}

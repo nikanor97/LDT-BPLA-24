@@ -23,8 +23,8 @@ const ApproveBar = () => {
                             type="primary"
                             loading={state.fetching}
                             onClick={() => {
-                                dispatch(PageActions.changeVideoStatus({
-                                    video_id: data.content_id,
+                                dispatch(PageActions.changeContentStatus({
+                                    content_id: data.content_id,
                                     new_status: 'declined'
                                 }))
                             }}
@@ -33,8 +33,8 @@ const ApproveBar = () => {
                         </Button>
                         <Button 
                             onClick={() => {
-                                dispatch(PageActions.changeVideoStatus({
-                                    video_id: data.content_id,
+                                dispatch(PageActions.changeContentStatus({
+                                    content_id: data.content_id,
                                     new_status: 'approved'
                                 }))
                             }}

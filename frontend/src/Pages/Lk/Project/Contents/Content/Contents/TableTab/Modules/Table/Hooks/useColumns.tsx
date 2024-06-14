@@ -34,8 +34,8 @@ export const useColumns = ():Columns => {
             key: 'content_id',
             render: (content_type: Content.Item['content_type'])  =>  {
                 if (content_type === "photo") {
-                    return <Tag color={"#F3AF3D"}>Фото</Tag>
-                } else return <Tag color={"#43AED1"}>Видео</Tag>
+                    return <Tag style={{backgroundColor: "#fff1df", border:  "1px solid #F3AF3D", color: "#ca8c13"}}>Фото</Tag>
+                } else return <Tag style={{backgroundColor: "#e4f1f7", border:  "1px solid #43AED1", color: "#078fb1"}}>Видео</Tag>
             }
         },
         {

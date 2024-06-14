@@ -60,6 +60,6 @@ export default {
         axios.get<Api.oGetProjectsStats>(paths.getStats),
     getMyProjects: () =>
         axios.get<Api.oGetMyProjects>(paths.getMyProjects),
-    changeVideoStatus: (params: Api.iChangeVideoStatus) => 
-        axios.post<Api.oChangeVideoStatus>(`${paths.changeVideoStatus}${qs.stringify(params, {addQueryPrefix: true})}`),
+    changeContentStatus: (params: Api.iChangeContentStatus) => 
+        axios.post<Api.oChangeContentStatus>(`${paths.changeContentStatus}${qs.stringify(params, {addQueryPrefix: true})}`),
 }

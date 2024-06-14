@@ -11,7 +11,7 @@ export default {
     getLabels: '/v1/projects/labels',
     getStats: '/v1/projects/project-stats',
     getMyProjects: '/v1/projects/projects-with-users',
-    changeVideoStatus: '/v1/projects/video-status',
+    changeContentStatus: '/v1/projects/content-status',
     getProjectContent: '/v1/projects/content-by-project',
     getContentInfo: '/v1/projects/content-info',
 }
