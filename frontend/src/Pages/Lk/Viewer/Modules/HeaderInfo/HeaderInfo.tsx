@@ -5,7 +5,7 @@ import styles from './HeaderInfo.module.scss';
 import {useHistory} from 'react-router-dom';
 import routes from '@root/routes';
 import {useSelector} from 'react-redux';
-import {PageState} from '../../../../Redux/types';
+import {PageState} from '../../Redux/types';
 
 const HeaderInfo = () => {
     const history = useHistory();
@@ -21,7 +21,7 @@ const HeaderInfo = () => {
                 <LeftOutlined />
             </Button>
             <div className={styles.title}>
-                Модерация видео
+                Модерация: {contentInfo?.source_url}
             </div>
         </div>
     )

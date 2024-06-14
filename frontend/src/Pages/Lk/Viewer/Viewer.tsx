@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
 import Header from '@root/Modules/Header/Header';
 import {App} from '@root/Types';
-import HeaderInfo from './Contents/VideoContent/Modules/HeaderInfo/HeaderInfo';
+import HeaderInfo from './Modules/HeaderInfo/HeaderInfo';
 import styles from './Viewer.module.scss';
 import {useParams} from 'react-router-dom';
 import {iParams} from './types';

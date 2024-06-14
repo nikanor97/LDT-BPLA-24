@@ -3,6 +3,7 @@ import {useSelector } from 'react-redux';
 import {PageState} from '../Redux/types';
 import {Result} from 'antd';
 import VideoContent from '../Contents/VideoContent/Content';
+import PhotoContent from '../Contents/PhotoContent/Content';
 import Loader from '@root/Components/Loader/Loader';
 import styles from './ContentController.module.scss';
 
@@ -23,7 +24,7 @@ const ContentController = () => {
             if (state.data.info) {
                 if (state.data.info.content_type === "video") {
                     return <VideoContent />
-                } else return null; //TODO Сюда контент по фото
+                } else return <PhotoContent />; //TODO Сюда контент по фото
                 
             } else return (
                 <div className={styles.error}>

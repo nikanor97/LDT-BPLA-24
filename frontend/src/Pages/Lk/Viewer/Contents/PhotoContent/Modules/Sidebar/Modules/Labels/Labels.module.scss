@@ -1,0 +1,40 @@
+@import '/src/_variables.scss';
+
+.wrapper {
+
+}
+
+
+
+.empty {
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    color: #9f9f9f;
+}
+
+.collapse {
+    &:global {
+        &.ant-collapse {
+            background: #fff;
+            border: unset;
+            .ant-collapse-content {
+                .ant-collapse-content-box {
+                    padding-top:0;
+                    padding-left:40px;
+                }
+                &.ant-collapse-content-active {
+                    border: unset;
+                }
+            }
+            .ant-collapse-item {
+                border-radius: 0;
+                border-bottom: 1px solid #F2F4F7;
+            }
+            .ant-collapse-content-box {
+                border: unset;
+            }
+        }
+    }
+}

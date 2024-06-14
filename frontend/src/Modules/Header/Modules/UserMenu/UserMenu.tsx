@@ -7,10 +7,13 @@ import styles from './UserMenu.module.scss';
 import Actions from '@root/Redux/actions';
 import CS from '@root/Storages/Cookie';
 import { getUserAvatar } from '@root/Utils/User/getUserAvatar/getUserAvatar';
+import { useHistory } from 'react-router-dom';
+import routes from '@root/routes';
 
 const UserMenu = () => {
     const user = useSelector((state:AppState) => state.User.Info.data);
     const dispatch = useDispatch();
+    const history = useHistory();
 
     if (!user) return null;
     return (
@@ -42,6 +45,7 @@ const UserMenu = () => {
                         onClick: () => {
                             CS.token.clear();
                             dispatch(Actions.User.logout());
+                            history.push(routes.login)
                         }
                     }
                 ]}
