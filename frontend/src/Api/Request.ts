@@ -30,6 +30,9 @@ export default {
     post: function<T> (...args: Parameters<typeof axios.post>) {
         return axios.post<Api.SuccessResponse<T>>(...args)
     },
+    delete: function<T> (...args: Parameters<typeof axios.get>) {
+        return axios.delete<Api.SuccessResponse<T>>(...args)
+    },
 }
 
 

@@ -22,9 +22,6 @@ const Markups = (props: iMarkups) => {
     const fabricRef = useRef<fabric.Canvas>();
     const frame = useFrame(props.progress);
 
-    console.log(frames)
-    console.log(frame)
-
     useEffect(() => {
         if (!fabricRef.current) return;
         if (!labels) return;

@@ -6,7 +6,6 @@ import ApproveBar from './Modules/ApproveBar/ApproveBar';
 import styles from './Content.module.scss';
 
 const Content = () => {
-    console.log('Content');
     return (
         <div className={styles.wrapper}>
             <div className={styles.row}>

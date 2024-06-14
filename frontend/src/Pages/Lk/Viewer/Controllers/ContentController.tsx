@@ -11,11 +11,9 @@ const ContentController = () => {
     const state = useSelector((state:PageState) => state.Pages.LkViewer.content)
     const labels = useSelector((state:PageState) => state.Pages.LkViewer.labels)
 
-    console.log(labels)
-
     if (state.fetching || labels.fetching) return (
         <div className={styles.loader}>
-            <Loader text="Загрузка видео данных..." />
+            <Loader text="Загрузка контента..." />
         </div>
     )
 
@@ -30,7 +28,7 @@ const ContentController = () => {
                 <div className={styles.error}>
                     <Result
                         status="404"
-                        title="Видео отсутствуют"
+                        title="Контент отсутствуют"
                     />
                 </div>
             )

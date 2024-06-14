@@ -25,6 +25,11 @@ export declare namespace iState {
 export declare namespace iActions {
     type getProject = Api.iGetProject;
     type _getProectSuccess = Api.oGetProject;
+    type deleteProject = {
+        project_id: string,
+        onSuccess?:  ()  => void;
+        onError?:  ()  => void;
+    };
 
     type getProjectStats = Api.iGetProjectStats;
     type _getProjectStatsSuccess = Api.oGetProjectStats;

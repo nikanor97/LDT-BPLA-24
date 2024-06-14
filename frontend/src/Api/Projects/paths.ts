@@ -4,6 +4,7 @@ export default {
     getProjects: '/v1/projects/user-role',
     createProject: '/v1/projects/project',
     getProject: '/v1/projects/project',
+    deleteProject: '/v1/projects/project',
     getProjectVideos: '/v1/markup/videos-by-project',
     uploadProjectContent: '/v1/projects/create-upload-content',
     getTags: '/v1/projects/verification-tags',

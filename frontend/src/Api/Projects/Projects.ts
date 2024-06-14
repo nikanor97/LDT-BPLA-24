@@ -19,7 +19,13 @@ export default {
             }
         })  
     },
-
+    deleteProject: (projectId: Api.iDeleteProject) => {
+        return axios.delete<Api.oDeleteProject>(paths.deleteProject, {
+            params: {
+                project_id: projectId
+            }
+        })  
+    },
     createProject: (params: Api.iCreateProject) => {
         return axios.post<Api.oCreateProject>(paths.createProject, {
             ...params,

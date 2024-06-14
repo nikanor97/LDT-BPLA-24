@@ -32,6 +32,8 @@ export const Slice = createSlice({
             requestSuccess(state.getProject, action.payload),
         _getProjectError: (state) =>
             requestError(state.getProject),
+        deleteProject: (state, action: PayloadAction<iActions.deleteProject>) => 
+            state,
 
         openUploadDrawer: (state) => {
             state.uploadDrawer.visible = true;

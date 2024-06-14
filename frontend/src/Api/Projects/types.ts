@@ -13,6 +13,9 @@ export declare namespace Api {
     type iGetProject = Project.Id;
     type oGetProject = Project.Info;
 
+    type iDeleteProject = Project.Id;
+    type oDeleteProject = Project.Info;
+
     type iGetApartments = Project.Id;
     type oGetApartments = Viewer.Item[];
 

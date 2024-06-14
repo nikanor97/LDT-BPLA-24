@@ -15,6 +15,16 @@ const getProject = function*(action: PayloadAction<iActions.getProject>) {
     }
 }
 
+const deleteProject = function*(action: PayloadAction<iActions.deleteProject>) {
+    const {project_id, onError, onSuccess} = action.payload
+    try {
+        yield* call(Api.Projects.deleteProject, project_id)
+        onSuccess && onSuccess();
+    } catch (ex) {
+        onError && onError();
+    }
+}
+
 
 const uploadContent = function*(action: PayloadAction<iActions.uploadContent>) {
     const {params, onError, onSuccess} = action.payload
@@ -41,6 +51,7 @@ const getProjectContent = function*(action: PayloadAction<iActions.getProjectCon
 
 export default function* () {
     yield* takeLatest(PageActions.getProject, getProject);
+    yield* takeLatest(PageActions.deleteProject, deleteProject);
     yield* takeLatest(PageActions.uploadContent, uploadContent);
     yield* takeLatest(PageActions.getProjectContent, getProjectContent);
 }

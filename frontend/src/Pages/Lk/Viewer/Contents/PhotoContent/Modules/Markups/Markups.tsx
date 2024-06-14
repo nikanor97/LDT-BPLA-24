@@ -28,9 +28,6 @@ const Markups = (props: iMarkups) => {
     }, [])
 
     useEffect(() => {
-        console.log(frame)
-        console.log(labels)
-        console.log(fabricRef.current)
         if (!fabricRef.current) return;
         if (!labels) return;
         if (!frame) return;
