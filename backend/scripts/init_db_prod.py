@@ -11,7 +11,7 @@ from common.rabbitmq.publisher import Publisher
 from src.db.main_db_manager import MainDbManager
 from src.db.projects.models import ProjectBase, UserRoleBase, VerificationTagBase, LabelBase
 from src.server.constants import verification_tags
-from src.server.projects.models import ProjectCreate, VideoMarkupCreate, FramesWithMarkupCreate, MarkupListCreate
+from src.server.projects.models import ProjectCreate, ContentMarkupCreate, FramesWithMarkupCreate, MarkupListCreate
 from src.server.users.endpoints import UsersEndpoints
 from src.server.projects.endpoints import ProjectsEndpoints
 from src.server.users.models import UserCreate, UserLogin
@@ -123,7 +123,7 @@ async def init_db():
     #             apartment_id=apartment.id,
     #             token=token_artem.data.access_token,
     #         )
-    #         video_markup = VideoMarkupCreate(
+    #         video_markup = ContentMarkupCreate(
     #             video_id=video.data.id,
     #             frames=[FramesWithMarkupCreate(
     #                 frame_offset=j,

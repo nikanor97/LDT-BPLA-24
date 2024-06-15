@@ -16,25 +16,21 @@ from src.db.projects.models import (
     Label,
     LabelBase,
     Video,
-    Apartment,
     Project,
     RoleTypeOption,
     UserRole,
     ProjectBase,
     UserRoleBase,
-    ProjectDocument,
     VerificationTag,
     VerificationTagBase,
     ProjectTag,
     VideoStatusOption,
-    ApartmentStatusOption,
-    ProjectStatusOption,
+    ProjectStatusOption, Photo, FrameContentTypeOption,
 )
 from src.server.projects.models import (
-    VideoMarkupCreate,
+    ContentMarkupCreate,
     GpsCoords,
     ProjectWithUsersIds,
-    ApartmentWithVideo,
     ProjectsStats,
 )
 
@@ -43,60 +39,32 @@ from src.server.projects.models import (
 
 
 class ProjectsDbManager(BaseDbManager):
-    async def get_apartment(
-        self, session: AsyncSession, apartment_id: uuid.UUID
-    ) -> Apartment:
-        return await Apartment.by_id(session, apartment_id)
 
     async def create_video(self, session: AsyncSession, video: Video) -> Video:
-        await Apartment.by_id(session, video.apartment_id)
         return await Video.create(session, video)
 
-    # async def create_frame(
-    #     self,
-    #     session: AsyncSession,
-    #     frame: FrameBase,
-    # ) -> Frame:
-    #     # Checking if project with this id exists
-    #     await Video.by_id(session, frame.video_id)
-    #
-    #     stmt = select(Frame).where(Frame.video_id == frame.video_id).where(Frame.frame_offset == frame.frame_offset)
-    #     existing_frame = (await session.execute(stmt)).scalar_one_or_none()
-    #     if existing_frame is None:
-    #         return await Frame.create(session, frame)
-    #     else:
-    #         raise ResourceAlreadyExists(f"Frame with video_id {frame.video_id} "
-    #                                     f"and frame_offset {frame.frame_offset} already exists")
-    #
-    # async def create_markup(self, session: AsyncSession, frame_markup: FrameMarkupBase) -> FrameMarkup:
-    #     # Checking if frame with this id exists
-    #     await Frame.by_id(session, frame_markup.frame_id)
-    #
-    #     label = (await session.execute(select(Label).where(Label.id == frame_markup.label_id))).scalar_one_or_none()
-    #     if label is None:
-    #         raise NoResultFound(f"Label with id {frame_markup.label_id} was not found")
-    #
-    #     return await FrameMarkup.create(session, frame_markup)
+    async def create_photo(self, session: AsyncSession, photo: Photo) -> Photo:
+        return await Photo.create(session, photo)
 
     async def create_frames_with_markups(
-        self, session: AsyncSession, video_markup: VideoMarkupCreate
+        self, session: AsyncSession, content_markup: ContentMarkupCreate
     ) -> list[FrameMarkup]:
         # Checking if video with this id exists
+        ContentType = Video if content_markup.content_type == FrameContentTypeOption.video else Photo
         stmt = (
-            select(Video)
-            .where(Video.id == video_markup.video_id)
-            .options(selectinload(Video.apartment))
+            select(ContentType)
+            .where(ContentType.id == content_markup.content_id)
         )
-        video: Optional[Video] = (await session.execute(stmt)).scalar_one_or_none()
-        if video is None:
-            raise NoResultFound(f"Video with id {video_markup.video_id} not found")
+        content: Optional[ContentType] = (await session.execute(stmt)).scalar_one_or_none()
+        if content is None:
+            raise NoResultFound(f"{ContentType} with id {content_markup.content_id} not found")
 
         # Checking if all provided labels exist
         label_ids = set()
-        for frame in video_markup.frames:
+        for frame in content_markup.frames:
             for markup in frame.markup_list:
                 label_ids.add(markup.label_id)
-        stmt = select(Label.id).where(Label.project_id == video.apartment.project_id)
+        stmt = select(Label.id).where(Label.project_id == content.project_id)
         available_label_ids = (await session.execute(stmt)).scalars().all()
         not_existing_labels = label_ids - set(available_label_ids)
         if len(not_existing_labels) > 0:
@@ -106,17 +74,21 @@ class ProjectsDbManager(BaseDbManager):
             )
 
         # Creating frames
-        desired_frame_offsets = {fr.frame_offset for fr in video_markup.frames}
+        desired_frame_offsets = {fr.frame_offset for fr in content_markup.frames}
         stmt = (
             select(Frame.frame_offset)
-            .where(Frame.video_id == video_markup.video_id)
+            .where(Frame.content_id == content_markup.content_id)
             .where(col(Frame.frame_offset).in_(desired_frame_offsets))
         )
         existing_frame_offsets = (await session.execute(stmt)).scalars().all()
         new_frame_offsets = desired_frame_offsets - set(existing_frame_offsets)
         new_frames = []
         for tp in new_frame_offsets:
-            new_frame = Frame(video_id=video_markup.video_id, frame_offset=tp)
+            new_frame = Frame(
+                content_id=content_markup.content_id,
+                frame_offset=tp,
+                content_type=content_markup.content_type
+            )
             new_frames.append(new_frame)
             session.add(new_frame)
         # await session.commit()
@@ -126,7 +98,7 @@ class ProjectsDbManager(BaseDbManager):
         frame_offset_to_frame_id = {fr.frame_offset: fr.id for fr in frames}
 
         new_markups = []
-        for frame in video_markup.frames:
+        for frame in content_markup.frames:
             for markup in frame.markup_list:
                 new_markup = FrameMarkup(
                     frame_id=frame_offset_to_frame_id[frame.frame_offset],
@@ -186,13 +158,47 @@ class ProjectsDbManager(BaseDbManager):
     async def get_video(self, session: AsyncSession, video_id: uuid.UUID) -> Video:
         return await Video.by_id(session, video_id)
 
-    # async def get_apartments_by_project(
-    #     self, session: AsyncSession, project_id: uuid.UUID
-    # ) -> list[Video]:
-    #     # Checking of the project existence should be done explicitly
-    #     stmt = select(Video).where(Video.project_id == project_id)
-    #
-    #     return (await session.execute(stmt)).scalars().all()
+    async def get_photo(self, session: AsyncSession, photo_id: uuid.UUID) -> Photo:
+        return await Photo.by_id(session, photo_id)
+
+    async def get_content(self, session: AsyncSession, content_id: uuid.UUID) -> Video | Photo:
+        try:
+            return await Video.by_id(session, content_id)
+        except NoResultFound:
+            return await Photo.by_id(session, content_id)
+
+    async def get_all_content(self, session: AsyncSession) -> list[Video | Photo]:
+        stmt = select(Video)
+        videos = (await session.execute(stmt)).scalars().all()
+        stmt = select(Photo)
+        photos = (await session.execute(stmt)).scalars().all()
+
+        # Отсеиваем контент, принадлежащий удаленным проектам
+        projects_ids: set[uuid.UUID] = set()
+        for video in videos:
+            projects_ids.add(video.project_id)
+        for photo in photos:
+            projects_ids.add(photo.project_id)
+
+        stmt = select(Project).where(col(Project.id).in_(projects_ids))
+        projects = (await session.execute(stmt)).scalars().all()
+        deleted_projects_ids = {project.id for project in projects if project.is_deleted}
+
+        videos = [video for video in videos if video.project_id not in deleted_projects_ids]
+        photos = [photo for photo in photos if photo.project_id not in deleted_projects_ids]
+
+        return videos + photos
+
+    async def get_content_by_project(
+        self,
+        session: AsyncSession,
+        project_id: uuid.UUID
+    ) -> list[Video | Photo]:
+        stmt = select(Video).where(Video.project_id == project_id)
+        videos = (await session.execute(stmt)).scalars().all()
+        stmt = select(Photo).where(Photo.project_id == project_id)
+        photos = (await session.execute(stmt)).scalars().all()
+        return videos + photos
 
     async def get_frame(self, session: AsyncSession, frame_id: uuid.UUID) -> Frame:
         return await Frame.by_id(session, frame_id)
@@ -207,13 +213,16 @@ class ProjectsDbManager(BaseDbManager):
         return frames
 
     async def get_frames_with_markups(
-        self, session: AsyncSession, video_id: uuid.UUID
+        self, session: AsyncSession, content_id: uuid.UUID
     ) -> list[Frame]:
-        await Video.by_id(session, video_id)
+        try:
+            await Video.by_id(session, content_id)
+        except NoResultFound:
+            await Photo.by_id(session, content_id)
 
         stmt = (
             select(Frame)
-            .where(Frame.video_id == video_id)
+            .where(Frame.content_id == content_id)
             .options(selectinload(Frame.markups))
         )
         frames = (await session.execute(stmt)).scalars().all()
@@ -251,57 +260,10 @@ class ProjectsDbManager(BaseDbManager):
             raise NoResultFound("No frame markups found")
         return frame.markups
 
-    # async def get_videos_by_owner(
-    #     self, session: AsyncSession, owner_id: uuid.UUID
-    # ) -> list[Video]:
-    #     # Checking that user with owner_id exists should be done explicitly
-    #
-    #     stmt = select(Video).where(Video.owner_id == owner_id)
-    #     videos = (await session.execute(stmt)).scalars().all()
-    #     return videos
-
-    # async def assign_videos_to_project(
-    #     self, session: AsyncSession, video_ids: list[uuid.UUID], project_id: uuid.UUID
-    # ) -> list[Video]:
-    #     for video_id in video_ids:
-    #         await Video.by_id(session, video_id)
-    #
-    #     stmt = select(Video).where(col(Video.id).in_(set(video_ids)))
-    #     videos: list[Video] = (await session.execute(stmt)).scalars().all()
-    #
-    #     for idx, _ in enumerate(videos):
-    #         videos[idx].project_id = project_id
-    #         session.add(videos[idx])
-    #
-    #     await session.commit()
-    #     return videos
-
     async def get_project(
         self, session: AsyncSession, project_id: uuid.UUID
     ) -> Project:
         return await Project.by_id(session, project_id)
-
-    async def get_apartments_with_video_by_project(
-        self, session: AsyncSession, project_id: uuid.UUID
-    ) -> list[ApartmentWithVideo]:
-        stmt = (
-            select(Apartment)
-            .where(Apartment.project_id == project_id)
-            .options(selectinload(Apartment.videos))
-        )
-        apartments: list[Apartment] = (await session.execute(stmt)).scalars().all()
-
-        apartments_with_video: list[ApartmentWithVideo] = []
-        for idx, apartment in enumerate(apartments):
-            video = None
-            if len(apartment.videos) > 0:
-                video = sorted(apartment.videos, key=lambda x: x.created_at)[-1]
-            apartment_with_video = ApartmentWithVideo(video=video, **apartment.dict())
-            apartments_with_video.append(apartment_with_video)
-        apartments_with_video = sorted(
-            apartments_with_video, key=lambda x: x.created_at
-        )
-        return apartments_with_video
 
     async def get_user_roles(
         self,
@@ -373,19 +335,6 @@ class ProjectsDbManager(BaseDbManager):
                 f"user_id {user_role.user_id} and "
                 f"project_id {user_role.project_id} already exists"
             )
-
-    async def create_project_document(
-        self, session: AsyncSession, project_doc: ProjectDocument
-    ) -> ProjectDocument:
-        if project_doc.project_id is not None:
-            await Project.by_id(session, project_doc.project_id)
-        project_document = await ProjectDocument.create(session, project_doc)
-        return project_document
-
-    async def get_project_document(
-        self, session: AsyncSession, document_id: uuid.UUID
-    ) -> ProjectDocument:
-        return await ProjectDocument.by_id(session, document_id)
 
     async def delete_project(
         self, session: AsyncSession, project_id: uuid.UUID
@@ -474,67 +423,6 @@ class ProjectsDbManager(BaseDbManager):
 
         return tags
 
-    async def get_videos_by_apartment(
-        self, session: AsyncSession, apartment_id: uuid.UUID
-    ) -> list[Video]:
-        await Apartment.by_id(session, apartment_id)
-        stmt = (
-            select(Apartment)
-            .where(Apartment.id == apartment_id)
-            .options(selectinload(Apartment.videos))
-        )
-        apartment: Apartment = (await session.execute(stmt)).scalar()
-        return apartment.videos
-
-    async def change_video_status(
-        self, session: AsyncSession, video_id: uuid.UUID, new_status: VideoStatusOption
-    ) -> Video:
-        video = await Video.by_id(session, video_id)
-        video.status = new_status
-        session.add(video)
-
-        apartment = await Apartment.by_id(session, video.apartment_id)
-        project = await Project.by_id(session, apartment.project_id)
-
-        if new_status == VideoStatusOption.declined:
-            apartment.status = ApartmentStatusOption.declined
-
-        if new_status in {VideoStatusOption.approved, VideoStatusOption.extracted}:
-            if project.status == ProjectStatusOption.created:
-                project.status = ProjectStatusOption.in_progress
-            if apartment.status == ApartmentStatusOption.created:
-                apartment.status = ApartmentStatusOption.in_progress
-
-        if new_status == VideoStatusOption.approved:
-            apartment.status = ApartmentStatusOption.approved
-
-            apartments_by_project = await self.get_apartments_with_video_by_project(
-                session, apartment.project_id
-            )
-            if all(
-                [
-                    a.status == ApartmentStatusOption.approved
-                    for a in apartments_by_project
-                ]
-            ):
-                project.status = ProjectStatusOption.finished
-
-        session.add(apartment)
-        session.add(project)
-
-        return video
-
-    async def change_apartment_status(
-        self,
-        session: AsyncSession,
-        apartment_id: uuid.UUID,
-        new_status: ApartmentStatusOption,
-    ) -> Apartment:
-        apartment = await Apartment.by_id(session, apartment_id)
-        apartment.status = new_status
-        session.add(apartment)
-        return apartment
-
     async def write_gps_coords(
         self, session: AsyncSession, video_id: uuid.UUID, gps_coords: GpsCoords
     ) -> Video:
@@ -575,47 +463,27 @@ class ProjectsDbManager(BaseDbManager):
             if project_by_id[project_id].is_deleted:
                 continue
             author_id = None
-            verificators_ids = []
             for ur in usr_rls:
                 if ur.role_type == RoleTypeOption.author:
                     author_id = ur.user_id
-                elif ur.role_type == RoleTypeOption.verificator:
-                    verificators_ids.append(ur.user_id)
             project_with_users_ids = ProjectWithUsersIds(
                 author_id=author_id,
-                verificators_ids=verificators_ids,
                 **project_by_id[project_id].dict(),
             )
             projects_with_users_ids.append(project_with_users_ids)
 
         return projects_with_users_ids
 
-    async def get_all_projects_stats(
-        self, session: AsyncSession, user_id: uuid.UUID
-    ) -> ProjectsStats:
-        projects = await self.get_projects_with_users_ids(session, user_id)
-        projects_ids = {p.id for p in projects}
-
-        stmt = select(Apartment).where(col(Apartment.project_id).in_(projects_ids))
-        related_apartments = (await session.execute(stmt)).scalars().all()
-        related_apartments_ids = {ra.id for ra in related_apartments}
-
-        stmt = select(Video.apartment_id)
-        apartments_ids = (await session.execute(stmt)).scalars().all()
-
-        apartments_ids = set(apartments_ids).intersection(related_apartments_ids)
-
-        n_appartments_approved = sum(
-            [
-                1
-                for a in related_apartments
-                if a.status == ApartmentStatusOption.approved
-            ]
-        )
-
-        stats = ProjectsStats(
-            total_apartments=len(related_apartments),
-            total_videos=len(apartments_ids),
-            apartments_approved=n_appartments_approved,
-        )
-        return stats
+    async def change_content_status(
+        self,
+        session: AsyncSession,
+        content_id: uuid.UUID,
+        status: VideoStatusOption,
+    ) -> Photo | Video:
+        try:
+            content = await Video.by_id(session, content_id)
+        except NoResultFound:
+            content = await Photo.by_id(session, content_id)
+        content.status = status
+        session.add(content)
+        return content

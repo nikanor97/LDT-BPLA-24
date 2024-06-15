@@ -1,3 +1,4 @@
+import enum
 import uuid
 from datetime import datetime
 from decimal import Decimal
@@ -10,9 +11,8 @@ from src.db.projects.models import (
     Project,
     ProjectBase,
     VerificationTag,
-    ApartmentBase,
     Video,
-    Apartment,
+    VideoBase, VideoStatusOption, Photo, FrameContentTypeOption,
 )
 from src.db.users.models import User
 from src.server.common import ModelWithLabelAndValue
@@ -33,8 +33,9 @@ class FramesWithMarkupCreate(BaseModel):
     markup_list: list[MarkupListCreate]
 
 
-class VideoMarkupCreate(BaseModel):
-    video_id: uuid.UUID
+class ContentMarkupCreate(BaseModel):
+    content_id: uuid.UUID
+    content_type: FrameContentTypeOption
     frames: list[FramesWithMarkupCreate]
 
 
@@ -53,11 +54,6 @@ class FramesWithMarkupRead(FrameBase):
     markups: list[FrameMarkupReadMassive]
 
 
-# class VideosWithProjectAssign(BaseModel):
-#     video_ids: list[uuid.UUID]
-#     project_id: uuid.UUID
-
-
 class UserRoleWithProjectRead(UserRoleBase):
     id: uuid.UUID
     user: Optional[User]
@@ -66,36 +62,15 @@ class UserRoleWithProjectRead(UserRoleBase):
 
 class ProjectCreate(ProjectBase):
     tags_ids: list[uuid.UUID]  # ids of VerificationTags
-    verificators_ids: list[
-        uuid.UUID
-    ]  # ids of verificator users that will be attached to the project
+    # verificators_ids: list[
+    #     uuid.UUID
+    # ]  # ids of verificator users that will be attached to the project
 
 
-class ProjectRead(ProjectBase):
-    id: uuid.UUID
-    tags: list[VerificationTag]
-    verificators: Optional[list[User]]
-
-
-# class ProjectWithApartmentsRead(ProjectBase):
-#     apartments: list[Apartment]
-
-
-# class ProjectDocumentStats(BaseModel):
-#     project_document_id: uuid.UUID
-#     apt_number: int
-#     n_finishing: int
-#     n_rough: int
-
-
-# class VerificationTag(BaseModel):
-#     tagname: str
-#     id: str
-
-
-# class VerificationTagWithGroup(BaseModel):
-#     groupname: str
+# class ProjectRead(ProjectBase):
+#     id: uuid.UUID
 #     tags: list[VerificationTag]
+#     verificators: Optional[list[User]]
 
 
 class GpsCoords(BaseModel):
@@ -113,21 +88,15 @@ class ProjectsStats(BaseModel):
 class ProjectWithUsersIds(ProjectBase):
     id: uuid.UUID
     author_id: uuid.UUID
-    verificators_ids: list[uuid.UUID]
+    # verificators_ids: list[uuid.UUID]
     created_at: datetime
 
 
-class ProjectWithUsers(ProjectBase):
-    id: uuid.UUID
-    author: User
-    verificators: list[User]
-    created_at: datetime
-
-
-class ApartmentWithVideo(ApartmentBase):
-    id: uuid.UUID
-    created_at: datetime
-    video: Optional[Video]
+# class ProjectWithUsers(ProjectBase):
+#     id: uuid.UUID
+#     author: User
+#     verificators: list[User]
+#     created_at: datetime
 
 
 class ProjectStats(BaseModel):
@@ -234,11 +203,6 @@ class ProjectScores(BaseModel):
     for_floor: ProjectScoresForFloor
 
 
-class ApartmentWithPlans(Apartment):
-    apartment_plan_url: Optional[str]
-    floor_plan_url: Optional[str]
-
-
 # class ScoreMap(BaseModel):
 #     non_mop_floor_no_percent
 #     non_mop_floor_rough_percent
@@ -267,3 +231,102 @@ class ApartmentWithPlans(Apartment):
 #     mop_ceiling_no_percent
 #     mop_ceiling_rough_percent
 #     mop_ceiling_finishing_percent
+
+
+class BplaProjectStats(BaseModel):
+    photo_count: int
+    video_count: int
+    photo_with_det_count: int
+    video_with_det_count: int
+
+
+class ProjectContentTypeOption(str, enum.Enum):
+    photo = "photo"
+    video = "video"
+    mixed = "mixed"
+
+
+class ContentTypeOption(str, enum.Enum):
+    photo = "photo"
+    video = "video"
+
+
+class ProjectWithUsers(ProjectBase):
+    id: uuid.UUID
+    author: User
+    created_at: datetime
+    content_type: ProjectContentTypeOption  # считать основываясь на том что в проекта
+    detected_count: int
+
+
+class ProjectRead(ProjectBase):
+    id: uuid.UUID
+    tags: list[VerificationTag]
+    # verificators: Optional[list[User]]
+    created_at: datetime
+    updated_at: datetime
+
+
+class Content(BaseModel):
+    project_id: uuid.UUID
+    content_type: ContentTypeOption
+    height: int
+    width: int
+    content_id: uuid.UUID
+    length_sec: Optional[int]
+    n_frames: Optional[int]
+    name: str
+    owner_id: uuid.UUID
+    source_url: str
+    status: VideoStatusOption
+    detected_count: int
+    created_at: datetime
+    updated_at: datetime
+
+    @classmethod
+    def from_video(cls, video: Video, detected_count: int = 0):
+        return cls(
+            project_id=video.project_id,
+            content_type=ContentTypeOption.video,
+            height=video.height,
+            width=video.width,
+            content_id=video.id,
+            length_sec=video.length_sec,
+            n_frames=video.n_frames,
+            name=video.name,
+            owner_id=video.owner_id,
+            source_url=video.source_url,
+            status=video.status,
+            detected_count=detected_count,
+            created_at=video.created_at,
+            updated_at=video.updated_at
+        )
+
+    @classmethod
+    def from_photo(cls, photo: Photo, detected_count: int = 0):
+        return cls(
+            project_id=photo.project_id,
+            content_type=ContentTypeOption.photo,
+            height=photo.height,
+            width=photo.width,
+            content_id=photo.id,
+            length_sec=None,
+            n_frames=None,
+            name=photo.name,
+            owner_id=photo.owner_id,
+            source_url=photo.source_url,
+            status=photo.status,
+            detected_count=detected_count,
+            created_at=photo.created_at,
+            updated_at=photo.updated_at
+        )
+
+    @classmethod
+    def from_video_or_photo(cls, item: Photo | Video, detected_count: int = 0):
+        if isinstance(item, Video):
+            return cls.from_video(item, detected_count=detected_count)
+        elif isinstance(item, Photo):
+            return cls.from_photo(item, detected_count=detected_count)
+        else:
+            raise ValueError(f"Unexpected item type: {type(item)}")
+
