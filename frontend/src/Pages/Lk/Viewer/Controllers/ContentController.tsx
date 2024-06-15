@@ -13,7 +13,7 @@ const ContentController = () => {
 
     if (state.fetching || labels.fetching) return (
         <div className={styles.loader}>
-            <Loader text="Загрузка контента..." />
+            <Loader />
         </div>
     )
 

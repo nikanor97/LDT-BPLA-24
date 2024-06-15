@@ -12,10 +12,27 @@ type iStatLineContainer = {
 
 const StatLineContainer = (props: iStatLineContainer) => {
     const { title, count1, count2, name1, name2 }  = props;
+  
     const total = count1 + count2;
-    const ratio1 = (count1 / total) * 100;
-    const ratio2 = (count2 / total) * 100;
-
+    let ratio1;
+    let ratio2;
+    if (total === 0) {
+        ratio1 = 50;
+        ratio2 = 50
+    }
+    if (count1 === 0 && count2 > 0) {
+        ratio1 = 0;
+        ratio2 = 100;
+    }
+    if (count2 === 0 && count1 > 0)  {
+        ratio1  = 100;
+        ratio2  = 0;
+    } 
+    if (count1 > 0 && count2 > 0){
+        ratio1 = (count1 / total) * 100;
+        ratio2 = (count2 / total) * 100;
+    }
+    
     return (
         <div className={styles.wrapper}>
             <div className={styles.title}>
@@ -40,8 +57,6 @@ const StatLineContainer = (props: iStatLineContainer) => {
                         <span className={styles.name}>{name2}</span>
                     </div>
                 </div>
-
-
             </div>
         </div>
     )

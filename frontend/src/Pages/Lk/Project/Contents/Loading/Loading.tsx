@@ -5,7 +5,7 @@ import styles from './Loading.module.scss';
 const Loading = () => {
     return (
         <div className={styles.wrapper}>
-            <Loader text="Загрузка данных о проекте..." />
+            <Loader />
         </div>
     )
 }

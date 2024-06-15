@@ -20,7 +20,7 @@ const RootPage = () => {
 
     return (
         <div className={styles.wrapper}>
-            <Loader text="Проверка роли..." />
+            <Loader />
         </div>
     )
 }

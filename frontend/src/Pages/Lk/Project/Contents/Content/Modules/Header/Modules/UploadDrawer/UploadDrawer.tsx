@@ -44,6 +44,7 @@ const UploadDrawer = () => {
                     dispatch(PageActions.uploadContent({
                         onSuccess: () => {
                             dispatch(PageActions.closeUploadDrawer());
+                            setFiles([]);
                         },
                         onError: () => {
                             message.error('Ошибка при загрузке видео')
@@ -61,6 +62,7 @@ const UploadDrawer = () => {
                         setFiles(fileList);
                         return false;
                     }}
+                    fileList={files}
                     accept='.mp4,.png,.jpg,.jpeg'
                     onRemove={(file) => {
                         setFiles(files.filter((item) => item.uid !== file.uid));

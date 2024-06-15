@@ -53,6 +53,20 @@ const CanvasVideo = forwardRef<Videosjs.Player | null | undefined, iCanvasVideo>
                 props.onError && props.onError(player.current);
             }
         })
+        player.current.on('seeked', () => {
+            if (player.current) {
+                if (!player.current.paused()) {
+                    player.current.play();
+                }
+            }
+        });
+        player.current.on('timeupdate', () => {
+            if (player.current) {
+                if (!player.current.paused()) {
+                    player.current.play();
+                }
+            }
+        });
     }, []);
     
     const syncCanvas = useCallback(() => {

@@ -30,7 +30,7 @@ const GetUser = (props: iGetUser) => {
     else {
         if (state.fetching && !state.data) return (
             <div className={styles.loader}>
-                <Loader text="Получение данных пользователя..." />
+                <Loader />
             </div>
         )
     }
