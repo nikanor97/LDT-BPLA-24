@@ -420,24 +420,6 @@ class ProjectsEndpoints:
             except (NoResultFound, AssertionError) as e:
                 return e
 
-    async def get_projects_stats(
-        self, token: Annotated[str, Depends(oauth2_scheme)]
-    ) -> UnifiedResponse[ProjectsStats]:
-        user_id = get_user_id_from_token(token)
-        async with self._main_db_manager.projects.make_autobegin_session() as session:
-            projects_stats = (
-                await self._main_db_manager.projects.get_all_projects_stats(
-                    session, user_id
-                )
-            )
-
-        # projects_stats = ProjectsStats(
-        #     total_apartments=100,
-        #     total_videos=24,
-        #     apartments_approved=15
-        # )
-        return UnifiedResponse(data=projects_stats)
-
     async def _get_clip_predictions(
         self, video_name: str, video_id: uuid.UUID, video: Video, project_id: uuid.UUID
     ):
@@ -808,6 +790,8 @@ class ProjectsEndpoints:
                     ) for offset in [5, 10, 15]]
                 )
 
+                video_.status = VideoStatusOption.extracted
+
                 try:
                     async with self._main_db_manager.projects.make_autobegin_session() as session:
                         video = await self._main_db_manager.projects.create_video(
@@ -874,6 +858,8 @@ class ProjectsEndpoints:
                         ) for _ in range(3)]
                     )]
                 )
+
+                photo_.status = VideoStatusOption.extracted
 
                 try:
                     async with self._main_db_manager.projects.make_autobegin_session() as session:

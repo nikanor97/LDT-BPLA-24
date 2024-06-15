@@ -172,6 +172,21 @@ class ProjectsDbManager(BaseDbManager):
         videos = (await session.execute(stmt)).scalars().all()
         stmt = select(Photo)
         photos = (await session.execute(stmt)).scalars().all()
+
+        # Отсеиваем контент, принадлежащий удаленным проектам
+        projects_ids: set[uuid.UUID] = set()
+        for video in videos:
+            projects_ids.add(video.project_id)
+        for photo in photos:
+            projects_ids.add(photo.project_id)
+
+        stmt = select(Project).where(col(Project.id).in_(projects_ids))
+        projects = (await session.execute(stmt)).scalars().all()
+        deleted_projects_ids = {project.id for project in projects if project.is_deleted}
+
+        videos = [video for video in videos if video.project_id not in deleted_projects_ids]
+        photos = [photo for photo in photos if photo.project_id not in deleted_projects_ids]
+
         return videos + photos
 
     async def get_content_by_project(
