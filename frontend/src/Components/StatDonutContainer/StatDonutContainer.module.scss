@@ -1,0 +1,51 @@
+.wrapper {
+    padding: 16px;
+    background: #FFFFFF;
+    border: 1px solid #ECECEE;
+    border-radius: 8px;
+    height: 90px;
+}
+
+.title {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 20px;
+    color: #23272B;
+}
+
+.content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.value {
+    font-weight: 600;
+    font-size: 40px;
+    line-height: 40px;
+    display: flex;
+    align-items: flex-end;
+    color: #000000;
+}
+
+.text {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.total {
+    color: #A3ADBF;
+    font-weight: 400;
+}
+
+.donut {
+    display: flex;
+    align-items: center;
+    width: 90px;
+    flex: none;
+    flex-shrink: none;
+}

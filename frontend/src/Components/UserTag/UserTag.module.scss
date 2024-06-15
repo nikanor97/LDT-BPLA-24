@@ -1,0 +1,33 @@
+.wrapper {
+    display: flex;
+    align-items: center;
+    :global {
+        .ant-avatar {
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
+        .ant-avatar-string {
+            display: flex;
+        }
+        .anticon {
+            font-size: 14px;
+        }
+    }
+}
+.content {
+    margin-left: 8px;
+}
+.name {
+    font-size: 12px;
+    line-height: 14px;
+    color: #000;
+}
+.email {
+    font-size: 12px;
+    line-height: 14px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #868686;
+}

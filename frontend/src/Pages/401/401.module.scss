@@ -1,0 +1,83 @@
+@import "/src/_variables.scss";
+
+
+.wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #11111B;
+    padding-top: 32px;
+    padding-bottom: 32px;
+    @media screen and (min-width: $lg) {
+        justify-content: center;
+    }
+}
+
+.code {
+    font-weight: 600;
+    color: #11111B;
+    @media screen and (min-width: $xs) {
+        font-size: 40px;
+        line-height: 48px;
+        margin-bottom: 16px;
+    }
+    @media screen and (min-width: $md) {
+        font-size: 48px;
+        line-height: 54px;
+    }
+    @media screen and (min-width: $lg) {
+        font-size: 60px;
+        line-height: 66px;
+        margin-bottom: 0px;
+    }
+
+}
+
+.title {
+    font-weight: 600;
+    margin-bottom: 12px;
+    @media screen and (min-width: $xs) {
+        font-size: 20px;
+        line-height: 28px;
+    }
+    @media screen and (min-width: $lg) {
+        font-size: 24px;
+        line-height: 32px;
+    }
+}
+
+.content {
+    text-align: center;
+    max-width: 592px;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.desc {
+    font-weight: 300;
+    @media screen and (min-width: $xs) {
+        font-size: 16px;
+        line-height: 24px;
+    }
+    @media screen and (min-width: $lg) {
+        font-size: 20px;
+        line-height: 28px;
+    }
+}
+
+.img {
+    @media screen and (min-width: $xs) {
+        max-width: 225px;
+    }
+    @media screen and (min-width: $md) {
+        max-width: 288px;
+    }
+    @media screen and (min-width: $xl) {
+        max-width: 320px;
+    }
+    img {
+        max-width: 100%;
+    }
+}

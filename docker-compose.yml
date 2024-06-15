@@ -1,13 +1,14 @@
-version: "3.3"
+version: "3.8"
 services:
 
-#  frontend:
-#    stdin_open: true
-#    build:
-#      context: frontend/
-#    ports:
-#      - "${FRONTEND_PORT_ON_HOST}:${FRONTEND_PORT}"
-#    restart: on-failure
+  frontend:
+    stdin_open: true
+    build:
+      context: frontend/
+      target: PROD
+    ports:
+      - "${FRONTEND_PORT_ON_HOST}:${FRONTEND_PORT}"
+    restart: on-failure
 
   db:
     image: postgres:13-alpine

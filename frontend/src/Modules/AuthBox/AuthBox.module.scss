@@ -1,0 +1,17 @@
+.wrapper {
+    background: #F8F9FB;
+    border-radius: 24px;
+    padding: 40px;
+    padding-top: 32px;
+    padding-bottom: 56px;
+}
+
+.logo {
+    text-align: center;
+    font-size: 20px;
+    margin-bottom: 32px;
+    &Image {
+        width: 146px;
+        height: 32px;
+    }
+}

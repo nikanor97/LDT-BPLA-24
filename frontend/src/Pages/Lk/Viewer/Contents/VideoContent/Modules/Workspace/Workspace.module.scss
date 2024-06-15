@@ -1,0 +1,120 @@
+@import '/src/variables';
+
+.shortcuts,.wrapper {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+}
+.container {
+    overflow: hidden;
+    max-height: 100%;
+    background: #ccc;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    &Loaded {
+        background: unset;
+        position: unset;
+    }
+}
+.videoContainer {
+    overflow: hidden;
+}
+.video {
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    canvas {
+        border-radius: 8px;
+    }
+}
+.errImg {
+    position: absolute;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+}
+.toolbar {
+    display: flex;
+    padding: 8px;
+    padding-top: 16px;
+    align-items: center;
+    &Btn {
+        &:hover {
+            cursor: pointer;
+        }
+    }
+}
+
+.track {
+    background: #D0D5DD;
+    border-radius: 1px;
+    height: 8px;
+    width: 100%;
+    margin-left: 8px;
+    margin-right: 8px;
+    overflow: hidden;
+    position: relative;
+    &:hover {
+        cursor: pointer;
+    }
+}
+.time {
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 16px;
+    color: #667085;
+    min-width: 36px;
+}
+.thumb {
+    background: $primaryColor;
+    height: 100%;
+    width: 0%;
+}
+.toolbarBtns {
+    font-size: 20px;
+    margin-right: 8px;
+    display: flex;
+    align-items: center;
+    span {
+        margin-right: 3px;
+        min-width: 25px;
+        min-height: 25px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        &:hover {
+            cursor: pointer;
+            background: #eaeaea;
+            border-radius: 4px;
+        }
+        &:last-child {
+            margin-right: 0;
+        }
+    }
+}
+
+.loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 25px;
+}
+
+.alertErr {
+    margin-top: 20px
+}
+.playInterval {
+    background: #43AED138;
+    position: absolute;
+    height: 100%;
+    top: 0;
+    z-index: 2;
+}
