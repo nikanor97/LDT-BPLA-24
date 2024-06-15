@@ -22,8 +22,7 @@ const ContentController = () => {
             if (state.data.info) {
                 if (state.data.info.content_type === "video") {
                     return <VideoContent />
-                } else return <PhotoContent />; //TODO Сюда контент по фото
-                
+                } else return <PhotoContent />;                
             } else return (
                 <div className={styles.error}>
                     <Result

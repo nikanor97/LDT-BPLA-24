@@ -3,7 +3,7 @@ import {App} from '@root/Types';
 import LoginForm from './Modules/LoginForm/LoginForm';
 import AuthBox from '@root/Modules/AuthBox/AuthBox';
 import styles from './Login.module.scss';
-import Background from './Img/Background.png';
+import Background from '@root/Img/Copter.png';
 import PageStateContainer from '@root/Containers/PageState/PageState';
 import {Slice} from './Redux/Store';
 import LoginSaga from './Saga/LoginSaga';

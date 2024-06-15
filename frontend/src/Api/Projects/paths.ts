@@ -15,4 +15,5 @@ export default {
     changeContentStatus: '/v1/projects/content-status',
     getProjectContent: '/v1/projects/content-by-project',
     getContentInfo: '/v1/projects/content-info',
+    getContentIds: '/v1/projects/content-ids-by-project',
 }

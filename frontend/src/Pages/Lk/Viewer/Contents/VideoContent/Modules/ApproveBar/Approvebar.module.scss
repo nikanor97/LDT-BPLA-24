@@ -3,4 +3,9 @@
     background: #fff;
     border-top: 1px solid #EAEAEF;
     text-align: end;
+    .iconButton {
+        display: flex;
+        align-items: center;
+        padding: 4px 8px;
+    }
 }

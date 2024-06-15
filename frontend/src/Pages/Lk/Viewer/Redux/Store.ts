@@ -7,6 +7,7 @@ const initialState: iState.Value = {
     labels: getFullState(),
     playInterval: null,
     videoStatus: getShortState(),
+    content_ids: getFullState(),
 };
 
 
@@ -35,6 +36,13 @@ export const Slice = createSlice({
             requestSuccess(state.labels, action.payload),
         _getLabelsError: (state) => 
             requestError(state.labels),
+
+        getContentIds: (state, action: PayloadAction<iActions.getContentIds>) => 
+            requestStart(state.content_ids),
+        _getContentIdsSuccess: (state, action: PayloadAction<iActions._getContentIdsSuccess>) =>
+            requestSuccess(state.content_ids, action.payload),
+        _getContentIdsError: (state) => 
+            requestError(state.content_ids),
 
         setPlayInterval: (state, action: PayloadAction<iActions.setPlayInterval>) => {
             state.playInterval = action.payload;

@@ -46,6 +46,10 @@ export declare namespace Api {
         project_id: Project.Id;
     }
     type oGetProjectContent = Array<Video.Item | Photo.Item>;
+    type iGetContentIds = {
+        project_id: Project.Id;
+    }
+    type oGetContentIds = Array<Video.Item['content_id'] | Photo.Item['content_id']>;
 
     type iGetLabels = {
         project_id: string;

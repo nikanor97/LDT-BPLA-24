@@ -25,6 +25,7 @@ const Viewer:App.Page = () => {
     useEffect(() => {
         if (contentInfo?.project_id === undefined) return;
         dispatch(PageActions.getLabels({project_id: contentInfo.project_id}))
+        dispatch(PageActions.getContentIds({project_id: contentInfo.project_id}))
     }, [contentInfo?.project_id]);
 
     return (

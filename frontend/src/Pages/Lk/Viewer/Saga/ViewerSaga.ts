@@ -20,6 +20,15 @@ const getLabels = function*(action: PayloadAction<iActions.getLabels>) {
     }
 }
 
+const getContentIds = function*(action: PayloadAction<iActions.getContentIds>) {
+    try {
+        const {data} = yield* call(Api.Projects.getContentIds, action.payload);
+        yield* put(PageActions._getContentIdsSuccess(data.data));
+    } catch (ex) {
+        yield* put(PageActions._getContentIdsError())
+    }
+}
+
 const getContentInfo = function*(action: PayloadAction<iActions.getContentInfo>) {
     try {
         const infoData = yield* call(Api.Projects.getContentInfo, action.payload)
@@ -61,5 +70,6 @@ const changeContentStatus = function*(action: PayloadAction<iActions.changeConte
 export default function* () {
     yield* takeLatest(PageActions.getContentInfo, getContentInfo);
     yield* takeLatest(PageActions.getLabels, getLabels);
+    yield* takeLatest(PageActions.getContentIds, getContentIds);
     yield* takeLatest(PageActions.changeContentStatus, changeContentStatus);
 }

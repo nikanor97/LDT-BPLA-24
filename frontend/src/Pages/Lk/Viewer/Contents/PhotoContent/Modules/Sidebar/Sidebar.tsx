@@ -6,8 +6,6 @@ import { usePhoto } from '../../Hooks/usePhoto';
 const Sidebar = () => {
     const photo = usePhoto();
 
-    //TODO Поменять ручку скачивания результатов
-
     return (
         <div className={styles.wrapper}>
             <div className={styles.title}>

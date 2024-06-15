@@ -25,7 +25,7 @@ export declare namespace iState {
         labels: RequestFullState<Labels>;
         playInterval: PlayInterval | null;
         videoStatus: RequestShortState;
-        
+        content_ids: RequestFullState<(Video.Item['content_id'] | Photo.Item['content_id'])[]>;
     }
 }
 
@@ -34,8 +34,12 @@ export declare namespace iActions {
     type getContentInfo = Api.iGetContentInfo;
     type _getContentInfoSuccess = iState.VideosState;
 
+    type getContentIds = Api.iGetContentIds;
+    type _getContentIdsSuccess = (Video.Item['content_id'] | Photo.Item['content_id'])[];
+
     type getLabels = Api.iGetLabels;
     type _getLabelsSuccess = iState.Labels
+    
     type updateVideoMeta = Partial<Video.Item>
 
     type setPlayInterval = iState.PlayInterval | null;

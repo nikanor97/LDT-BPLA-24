@@ -46,6 +46,9 @@ export default {
     getProjectContent: (params: Api.iGetProjectContent) =>
         axios.get<Api.oGetProjectContent>(paths.getProjectContent, {params}),
 
+    getContentIds: (params: Api.iGetContentIds) =>
+        axios.get<Api.oGetContentIds>(paths.getContentIds, {params}),
+
     getContentFrames: (params: Api.iGetContentFrames) => 
         axios.get<Api.oGetContentFrames>(paths.getContentFrames, {params}),
     getLabels: (params: Api.iGetLabels) => 

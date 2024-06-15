@@ -9,7 +9,6 @@ export default {
             root: prefix,
             projects: `${prefix}/projects`,
             project: (pid: string = ':projectId') => `${prefix}/projects/${pid}`,
-            //TODO Изменить нв viewer
             viewer: (cid: string = ':contentId') => `${prefix}/viewer/${cid}`
         }
     })()
