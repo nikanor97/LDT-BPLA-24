@@ -61,7 +61,7 @@ const Markups = (props: iMarkups) => {
             })
             fabricRef.current?.add(Group);
         })
-    }, [frame?.id])
+    }, [frame])
 
     useEffect(() => {
         if (!canvas.current) return;
