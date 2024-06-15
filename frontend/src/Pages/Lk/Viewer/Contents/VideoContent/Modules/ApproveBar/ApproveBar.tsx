@@ -18,37 +18,39 @@ const ApproveBar = () => {
     const history  = useHistory();
     const dispatch = useDispatch();
     if (!data) return null;
-    if (data.status === 'approved') return null;
-    if (data.status === 'declined') return null;
 
     return (
         <div className={styles.wrapper}>
             <GridContainer>
                 <div>
                     <Space size={12}>
-                        <Button 
-                            type="primary"
-                            loading={state.fetching}
-                            onClick={() => {
-                                dispatch(PageActions.changeContentStatus({
-                                    content_id: data.content_id,
-                                    new_status: 'declined'
-                                }))
-                            }}
-                            danger>
-                            Отклонить
-                        </Button>
-                        <Button 
-                            onClick={() => {
-                                dispatch(PageActions.changeContentStatus({
-                                    content_id: data.content_id,
-                                    new_status: 'approved'
-                                }))
-                            }}
-                            loading={state.fetching}
-                            type="primary">
-                            Принять
-                        </Button>
+                        {(data.status !== 'approved' && data.status !== 'declined') && (
+                            <>
+                                <Button 
+                                    type="primary"
+                                    loading={state.fetching}
+                                    onClick={() => {
+                                        dispatch(PageActions.changeContentStatus({
+                                            content_id: data.content_id,
+                                            new_status: 'declined'
+                                        }))
+                                    }}
+                                    danger>
+                                    Отклонить
+                                </Button>
+                                <Button 
+                                    onClick={() => {
+                                        dispatch(PageActions.changeContentStatus({
+                                            content_id: data.content_id,
+                                            new_status: 'approved'
+                                        }))
+                                    }}
+                                    loading={state.fetching}
+                                    type="primary">
+                                    Принять
+                                </Button>
+                            </>
+                        )}
                         <Button
                             disabled={!previousId}
                             className={styles.iconButton}
