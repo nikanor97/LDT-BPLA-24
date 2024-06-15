@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "ldt2024-drones-notebooks"
+version = "0.1.0"
+description = ""
+authors = ["nikita <nikanor97@gmail.com>"]
+readme = "README.md"
+packages = [{include = "ldt2024_drones_notebooks"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+notebook = "^7.2.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
