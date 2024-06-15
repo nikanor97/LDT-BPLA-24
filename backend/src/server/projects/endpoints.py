@@ -666,7 +666,7 @@ class ProjectsEndpoints:
                 )
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
-        res = Content.from_video_or_photo(content, detected_count=0)
+        res = Content.from_video_or_photo(content, detected_count=0)  # TODO: проставлять РЕАЛЬНОЕ ЗНАЧЕНИЕ
         return UnifiedResponse(data=res)
 
     async def get_content_by_project(
@@ -681,7 +681,7 @@ class ProjectsEndpoints:
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
-        content_items: list[Content] = [Content.from_video_or_photo(item, detected_count=0) for item in items]
+        content_items: list[Content] = [Content.from_video_or_photo(item, detected_count=0) for item in items]  # TODO: проставлять РЕАЛЬНОЕ ЗНАЧЕНИЕ
         return UnifiedResponse(data=content_items)
 
     async def get_content_ids_by_project(
@@ -690,14 +690,13 @@ class ProjectsEndpoints:
     ) -> UnifiedResponse[list[uuid.UUID]]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                items = await self._main_db_manager.projects.get_content_by_project(
+                items: list[Video | Photo] = await self._main_db_manager.projects.get_content_by_project(
                     session, project_id
                 )
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
-        content_items: list[Content] = [Content.from_video_or_photo(item, detected_count=0) for item in items]
-        content_ids = [item.content_id for item in content_items]
+        content_ids = [item.id for item in items]
         return UnifiedResponse(data=content_ids)
 
     async def upload_content(
@@ -787,7 +786,7 @@ class ProjectsEndpoints:
                             label_id=random.choice(labels_ids),
                             confidence=Decimal(random.random())
                         ) for _ in range(2)]
-                    ) for offset in [5, 10, 15]]
+                    ) for offset in range(video_.n_frames)]  # ДЕЛАЕМ ДЛЯ КАЖДОГО КАДРА
                 )
 
                 video_.status = VideoStatusOption.extracted
@@ -807,7 +806,7 @@ class ProjectsEndpoints:
                 #     video_name, video_id, video_, apartment.project_id
                 # )
 
-                content_items.append(Content.from_video(video, detected_count=2))
+                content_items.append(Content.from_video(video, detected_count=2))  # TODO: проставлять РЕАЛЬНОЕ ЗНАЧЕНИЕ
 
             elif content_type == ContentTypeOption.photo:
 
@@ -876,7 +875,7 @@ class ProjectsEndpoints:
                 #     video_name, video_id, video_, apartment.project_id
                 # )
 
-                content_items.append(Content.from_photo(photo, detected_count=3))
+                content_items.append(Content.from_photo(photo, detected_count=3))  # TODO: проставлять РЕАЛЬНОЕ ЗНАЧЕНИЕ
 
         return UnifiedResponse(data=content_items)
 
