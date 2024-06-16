@@ -6,12 +6,16 @@ import uvloop
 
 from common.rabbitmq.consumer import Consumer, Subscription
 from common.rabbitmq.publisher import Publisher
+from scripts.init_db_prod import init_db
 from src.db.base_manager import run_migrations
 from src.db.main_db_manager import MainDbManager
 from common.rabbitmq.connection_pool import ConnectionPool as AmqpConnectionPool
 
 import settings
+from src.db.projects.models import VerificationTagBase
 from src.server.amqp_processors import yolo_markup_processor
+from src.server.constants import verification_tags
+from src.server.projects.endpoints import ProjectsEndpoints
 from src.server.server import make_server_app
 
 from common.rabbitmq.amqp import Server as AMQPServer
@@ -39,6 +43,17 @@ async def main(loop: asyncio.AbstractEventLoop) -> None:
         connection_pool=amqp_connection_pool,
         # app_id=settings.SERVICE_NAME,
     )
+
+    tags_base = []
+    pe = ProjectsEndpoints(main_db_manager, publisher)
+    for groupname, tagnames in verification_tags.items():
+        for tagname in tagnames:
+            tag_base = VerificationTagBase(
+                tagname=tagname[0],
+                groupname=groupname
+            )
+            tags_base.append(tag_base)
+    tags = await pe.create_verification_tags(tags_base)
 
     content_frames_counter: defaultdict = defaultdict(int)
 
@@ -79,6 +94,7 @@ async def main(loop: asyncio.AbstractEventLoop) -> None:
     config = uvicorn.Config(server_app, host="0.0.0.0", port=settings.APP_PORT)
 
     server = uvicorn.Server(config)
+
     await server.serve()
 
 
