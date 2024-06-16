@@ -34,14 +34,14 @@ class Server:
             if message.routing_key is None:
                 raise ValueError("routing key somehow is empty")
 
-            local_logger.info(f"Received message from {message.routing_key}")
+            local_logger.debug(f"Received message from {message.routing_key}")
 
             body = message.body.decode("utf-8")
             # message_data = json.loads(body)["data"]
             # message_header = json.loads(body)["header"]
             data = json.loads(body)["data"]
 
-            local_logger.info(
+            local_logger.debug(
                 f"Exchange: {message.exchange}, "
                 f"Type: {message.routing_key}, "
                 # f"File ID: {message_header['file_id']}"
