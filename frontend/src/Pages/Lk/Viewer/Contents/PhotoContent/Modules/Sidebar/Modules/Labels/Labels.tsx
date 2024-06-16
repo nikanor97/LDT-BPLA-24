@@ -27,7 +27,7 @@ const Labels = () => {
                         .map((interval, index) => {
                             if (!interval.label) return null;
                             return (
-                                <CollapseHeader interval={interval} />
+                                <CollapseHeader interval={interval} key={index}/>
                             )
                         })
                 }
