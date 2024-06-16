@@ -14,7 +14,7 @@ const Sidebar = () => {
                     photo && (
                         <a 
                             download="Result.txt"
-                            href={`/api/v1/projects/download_detect_result?content_id=${photo.content_id}`}> 
+                            href={`/api/v1/projects/download_detect_result?content_id==${photo.content_id}`}> 
                             Скачать результаты
                         </a>
                     )
