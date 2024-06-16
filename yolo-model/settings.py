@@ -26,6 +26,7 @@ else:
 API_PREFIX = getenv("API_PREFIX", "/api/v1")
 
 MEDIA_DIR = BASE_DIR / "media"
+MEDIA_DIR.mkdir(exist_ok=True)
 
 RABBIT_LOGIN = getenv("RABBIT_LOGIN", "login")
 RABBIT_PASSWORD = getenv("RABBIT_PASSWORD", "password")
