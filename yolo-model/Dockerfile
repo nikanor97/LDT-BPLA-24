@@ -1,0 +1,16 @@
+FROM python:3.11
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+ENV POETRY_VERSION=1.7.1
+ENV PYTHONPATH "${PYTHONPATH}:/app"
+
+RUN pip install "poetry==$POETRY_VERSION"
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
+
+WORKDIR /app
+COPY . /app
+
+RUN poetry config installer.max-workers 10
+RUN poetry install # --without device
+#RUN pip install -r requirements.txt
