@@ -198,12 +198,13 @@ class ProjectsEndpoints:
                 labels = await self._main_db_manager.projects.get_labels_by_project(
                     session, project_id
                 )
-                for idx, label in enumerate(labels):
-                    if label.name in tag_translation_eng_rus:
-                        labels[idx].name = tag_translation_eng_rus[label.name]
-                return UnifiedResponse(data=labels)
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
+        for idx, label in enumerate(labels):
+            if label.name in tag_translation_eng_rus:
+                labels[idx].name = tag_translation_eng_rus[label.name]
+        return UnifiedResponse(data=labels)
+
 
     async def get_video(self, video_id: uuid.UUID) -> UnifiedResponse[Video]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:

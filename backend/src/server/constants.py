@@ -33,7 +33,7 @@ verification_tags = {
     ],
     "БПЛА": [
         ("Квадракоптеры", "uav"),
-        ("БПЛА самолетного типа", "fixed-wing-uav"),
+        ("БПЛА самолетного типа", "fixed-wing_uav"),
     ]
 }
 
@@ -46,10 +46,10 @@ tag_translation = {
 }
 
 tag_translation_eng_rus = {
-    "bird": "Птицы",
-    "plane": "Самолеты",
-    "helicopter": "Вертолеты",
-    "uav": "Квадракоптеры",
+    "bird": "Птица",
+    "plane": "Самолет",
+    "helicopter": "Вертолет",
+    "uav": "Квадракоптер",
     "fixed-wing_uav": "БПЛА самолетного типа",
     "fixed-wing-uav": "БПЛА самолетного типа",
 }
