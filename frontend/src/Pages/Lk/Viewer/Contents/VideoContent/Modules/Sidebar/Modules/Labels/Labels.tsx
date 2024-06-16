@@ -32,8 +32,6 @@ const Labels = () => {
         )
     }
 
-    console.log(labelsIntervals)
-
     return (
         <div className={styles.wrapper}>
             <Collapse className={styles.collapse}>

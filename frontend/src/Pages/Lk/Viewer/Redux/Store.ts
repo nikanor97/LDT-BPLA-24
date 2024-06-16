@@ -60,6 +60,7 @@ export const Slice = createSlice({
         _changeContentStatusError: (state) => 
             requestError(state.videoStatus),
 
+        downloadResult: (state, action: PayloadAction<iActions.downloadResult>) => state,
     }   
 });
 export const PageActions = Slice.actions;

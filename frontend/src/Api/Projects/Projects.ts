@@ -69,6 +69,16 @@ export default {
         axios.get<Api.oGetProjectsStats>(paths.getStats),
     getMyProjects: () =>
         axios.get<Api.oGetMyProjects>(paths.getMyProjects),
+    downloadResult: (params: Api.iDownloadResult) => {
+        return axios.get(
+            paths.downloadResult,
+            {
+                params,
+                responseType: "blob"
+
+            }
+        );
+    },
     changeContentStatus: (params: Api.iChangeContentStatus) => 
         axios.post<Api.oChangeContentStatus>(`${paths.changeContentStatus}${qs.stringify(params, {addQueryPrefix: true})}`),
 }

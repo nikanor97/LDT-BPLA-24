@@ -46,6 +46,9 @@ export declare namespace iActions {
     type changeContentStatus = Api.iChangeContentStatus;
     type _changeContenttatusSuccess = Api.oChangeContentStatus;
     type setImageIndex = number;
+    type downloadResult = {
+        content_id: (Video.Item['content_id'] | Photo.Item['content_id']);
+    }
 }
 
 export type PageState = PageStateGeneric<{

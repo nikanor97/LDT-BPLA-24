@@ -5,6 +5,7 @@ import Api from '@root/Api';
 import {PayloadAction} from "@reduxjs/toolkit";
 
 import {Frames} from "@root/Types/Video";
+import { message } from "antd";
 
 
 const getLabels = function*(action: PayloadAction<iActions.getLabels>) {
@@ -66,10 +67,31 @@ const changeContentStatus = function*(action: PayloadAction<iActions.changeConte
     }
 }
 
+const downloadResult = function* (action: PayloadAction<iActions.downloadResult>) {
+    const {payload} = action;
+
+    try {
+        const response = yield* call(Api.Projects.downloadResult, payload);
+        const data: BlobPart = response.data as unknown as BlobPart;
+        if (!data) throw new Error("Ошибка скачивания документа");
+        const blob = new Blob([data]);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        const filename = "Result.txt";
+        link.setAttribute("download", decodeURIComponent(filename));
+        document.body.appendChild(link);
+        link.click();
+    } catch (error) {
+        message.error("Ошибка скачивания документа");
+    }
+};
+
 
 export default function* () {
     yield* takeLatest(PageActions.getContentInfo, getContentInfo);
     yield* takeLatest(PageActions.getLabels, getLabels);
     yield* takeLatest(PageActions.getContentIds, getContentIds);
     yield* takeLatest(PageActions.changeContentStatus, changeContentStatus);
+    yield* takeLatest(PageActions.downloadResult, downloadResult);
 }

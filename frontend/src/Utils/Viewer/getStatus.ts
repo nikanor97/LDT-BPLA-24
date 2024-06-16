@@ -4,7 +4,7 @@ import {StatusType} from '@root/Components/StatusTag/StatusTag';
 export const getStatusText = (status: Viewer.Status) => {
     switch (status) {
         case 'created':
-            return 'Загружено';
+            return 'В обработке';
         case 'in_progress':
             return 'В работе';
         case 'approved':
