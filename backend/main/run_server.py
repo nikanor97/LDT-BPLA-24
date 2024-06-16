@@ -1,4 +1,5 @@
 import asyncio
+from collections import defaultdict
 
 import uvicorn
 import uvloop
@@ -39,6 +40,8 @@ async def main(loop: asyncio.AbstractEventLoop) -> None:
         # app_id=settings.SERVICE_NAME,
     )
 
+    content_frames_counter: defaultdict = defaultdict(int)
+
     amqp_server = AMQPServer(
         publisher=publisher,
         main_db_manager=main_db_manager,
@@ -46,6 +49,7 @@ async def main(loop: asyncio.AbstractEventLoop) -> None:
             "from_yolo_model": yolo_markup_processor,
         },
         asyncronous_consumer=True,
+        content_frames_counter=content_frames_counter
     )
 
     subscriptions = [

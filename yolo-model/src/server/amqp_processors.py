@@ -34,6 +34,7 @@ async def yolo_model_processor(data: dict, publisher: Publisher, main_db_manager
             "markup": str(markup) if markup is not None else {},
             "frame_id": data["frame_id"],
             "project_id": data["project_id"],
+            "frames_in_content": data["frames_in_content"],
             # "frame_markup_id": data["frame_markup_id"],
         },
     }

@@ -865,7 +865,8 @@ class ProjectsEndpoints:
                     data_to_send = {
                         "image_path": filename,
                         "frame_id": str(frame.id),
-                        "project_id": str(project_id)
+                        "project_id": str(project_id),
+                        "frames_in_content": str(len(filenames)),
                     }
 
                     await self._publisher.publish(
@@ -876,7 +877,7 @@ class ProjectsEndpoints:
                     )
                 logger.info(f"Message for video {video.id} sent to detector")
 
-                video_.status = VideoStatusOption.extracted  # TODO: статус только когда получили предсказания
+                video_.status = VideoStatusOption.created
 
                 # await self._get_clip_predictions(
                 #     video_name, video_id, video_, apartment.project_id
@@ -914,7 +915,7 @@ class ProjectsEndpoints:
                     status=VideoStatusOption.created
                 )
 
-                photo_.status = VideoStatusOption.created  # TODO: статус только когда получили предсказания
+                photo_.status = VideoStatusOption.created
 
                 try:
                     async with self._main_db_manager.projects.make_autobegin_session() as session:
@@ -931,7 +932,8 @@ class ProjectsEndpoints:
                     data_to_send = {
                         "image_path": f"photo/{photo_.source_url}",
                         "frame_id": str(frame.id),
-                        "project_id": str(project_id)
+                        "project_id": str(project_id),
+                        "frames_in_content": "1",
                     }
 
                     message = await self._publisher.publish(

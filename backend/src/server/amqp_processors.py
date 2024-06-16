@@ -7,7 +7,7 @@ from loguru import logger
 from common.rabbitmq.publisher import Publisher
 from src.db.exceptions import ResourceAlreadyExists
 from src.db.main_db_manager import MainDbManager
-from src.db.projects.models import FrameMarkup, VerificationTag, Label, LabelBase, VideoStatusOption
+from src.db.projects.models import FrameMarkup, VerificationTag, Label, LabelBase, VideoStatusOption, Video
 
 # quadcopter_uav
 # airplane
@@ -52,6 +52,7 @@ async def yolo_markup_processor(
 
     project_id = UUID(data["project_id"])
     frame_id = UUID(data["frame_id"])
+    frames_in_content = int(data["frames_in_content"])
     markups = ast.literal_eval(data['markup'])
 
     labels_names = set(label_map.keys())
@@ -92,8 +93,17 @@ async def yolo_markup_processor(
         frame_markup_items.append(frame_markup)
 
     async with main_db_manager.projects.make_autobegin_session() as session:
-        session.add_all(frame_markup_items)
         content = await main_db_manager.projects.get_content_by_frame_id(session, frame_id)
-        content.status = VideoStatusOption.extracted
+
+        content_frames_counter = kwargs['content_frames_counter']
+        content_frames_counter[content.id] += 1
+
+        print(content_frames_counter)
+        if content_frames_counter[content.id] == frames_in_content:
+            content.status = VideoStatusOption.extracted
+        else:
+            content.status = VideoStatusOption.in_progress
+
+        session.add_all(frame_markup_items)
 
     logger.info(f"New {len(frame_markup_items)} frame markup items created")
