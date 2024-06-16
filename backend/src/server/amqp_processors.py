@@ -32,6 +32,14 @@ colors = [
     "#6add23",
 ]
 
+confidence_thresholds = {
+    0: 0.5,
+    1: 0.3,  # может, 0.4
+    2: 0.3,
+    3: 0.3,
+    4: 0.4,
+}
+
 
 async def yolo_markup_processor(
     data: dict, publisher: Publisher, main_db_manager: MainDbManager, **kwargs
@@ -68,6 +76,10 @@ async def yolo_markup_processor(
 
     frame_markup_items: list[FrameMarkup] = []
     for markup in markups:
+        if markup[4] not in label_map.values():
+            continue
+        if markup[5] < confidence_thresholds[markup[4]]:
+            continue
         frame_markup = FrameMarkup(
             frame_id=frame_id,
             label_id=label_class_to_id[markup[4]],

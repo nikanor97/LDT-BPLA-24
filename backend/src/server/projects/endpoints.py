@@ -469,6 +469,30 @@ class ProjectsEndpoints:
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
+    # async def get_frames_with_markups(
+    #     self, content_id: uuid.UUID
+    # ) -> UnifiedResponse[list[FramesWithMarkupRead]]:
+    #     async with self._main_db_manager.projects.make_autobegin_session() as session:
+    #         try:
+    #             frames = await self._main_db_manager.projects.get_frames_with_markups(
+    #                 session, content_id
+    #             )
+    #             labels = await self._main_db_manager.projects.get_labels_by_project(
+    #                 session, frames[0].project_id
+    #             )
+    #             label_id_to_name = {label.id: label.name for label in labels}
+    #             for idx_frame, frame in enumerate(frames):
+    #                 for idx_markup, markup in enumerate(frame.markups):
+    #                     label_name = label_id_to_name[markup.label_id]
+    #                     if label_name not in label_map:
+    #                         continue
+    #                     if markup.confidence < confidence_thresholds[markup]:
+    #                         frames[idx_frame].markups[idx_markup].confidence = 0
+    #             resp = [FramesWithMarkupRead.parse_obj(fr) for fr in frames]
+    #             return UnifiedResponse(data=resp)
+    #         except NoResultFound as e:
+    #             return UnifiedResponse(error=exc_to_str(e), status_code=404)
+
     async def create_project(
         self, project: ProjectCreate, token: Annotated[str, Depends(oauth2_scheme)]
     ) -> UnifiedResponse[ProjectRead]:
@@ -806,7 +830,7 @@ class ProjectsEndpoints:
                     name_prefix='',
                     frame_step=settings.FRAME_STEP
                 )
-                print(frames_filenames)
+                # print(frames_filenames)
                 filenames = ["video/" + f.split('/')[-1] for f in frames_filenames]
 
                 frames = [Frame(
