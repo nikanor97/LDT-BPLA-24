@@ -46,7 +46,7 @@ from src.db.projects.models import (
 from src.db.users.models import User
 from src.server.auth_utils import oauth2_scheme, get_user_id_from_token
 from src.server.common import UnifiedResponse, exc_to_str
-from src.server.constants import tag_translation, colors, tag_translation_eng_rus
+from src.server.constants import tag_translation, colors, tag_translation_eng_rus, label_map
 from src.server.projects.models import (
     FramesWithMarkupRead,
     ContentMarkupCreate,
@@ -966,54 +966,51 @@ class ProjectsEndpoints:
             frames: list[Frame] = await self._main_db_manager.projects.get_frames_with_markups(
                 session, content_id
             )
+            labels = await self._main_db_manager.projects.get_labels_by_project(
+                session, content.project_id
+            )
+            label_id_to_name = {label.id: label.name for label in labels}
         resp = [FramesWithMarkupRead.parse_obj(fr) for fr in frames]
 
+        yolov8_annotations = []
         if type(content) == Photo:
-            json_data = {
-                "photo_id": str(content.id),
-                "markups": [
-                    {
-                        "id": str(markup.id),
-                        "label_id": str(markup.label_id),
-                        "coord_top_left_x": float(markup.coord_top_left_x),
-                        "coord_top_left_y": float(markup.coord_top_left_y),
-                        "coord_bottom_right_x": float(markup.coord_bottom_right_x),
-                        "coord_bottom_right_y": float(markup.coord_bottom_right_y),
-                        "confidence": float(markup.confidence)
-                    } for markup in resp[0].markups
-                ]
-            }
-        elif type(content) == Video:
-            json_data = {
-                "video_id": str(content.id),
-                "frames": [
-                    {
-                        "frame_offset": frame.frame_offset,
-                        "markups": [
-                            {
-                                "id": str(markup.id),
-                                "label_id": str(markup.label_id),
-                                "coord_top_left_x": float(markup.coord_top_left_x),
-                                "coord_top_left_y": float(markup.coord_top_left_y),
-                                "coord_bottom_right_x": float(markup.coord_bottom_right_x),
-                                "coord_bottom_right_y": float(markup.coord_bottom_right_y),
-                                "confidence": float(markup.confidence)
-                            } for markup in frame.markups
-                        ]
-                    } for frame in resp
-                ]
-            }
+            for markup in resp[0].markups:
+                label_id = label_map[label_id_to_name[markup.label_id]]
+                coord_top_left_x = markup.coord_top_left_x
+                coord_top_left_y = markup.coord_top_left_y
+                coord_bottom_right_x = markup.coord_bottom_right_x
+                coord_bottom_right_y = markup.coord_bottom_right_y
 
-        # Конвертируем JSON в строку
-        json_data = json.dumps(json_data, indent=4, ensure_ascii=False)
+                # Вычисление центра и размеров
+                center_x = (coord_top_left_x + coord_bottom_right_x) / 2 / content.width
+                center_y = (coord_top_left_y + coord_bottom_right_y) / 2 / content.height
+                width = (coord_bottom_right_x - coord_top_left_x) / content.width
+                height = (coord_bottom_right_y - coord_top_left_y) / content.height
+
+                yolov8_annotations.append(f"{0} {label_id} {center_x} {center_y} {width} {height}")
+        elif type(content) == Video:
+            for frame in resp:
+                for markup in frame.markups:
+                    label_id = label_map[label_id_to_name[markup.label_id]]
+                    coord_top_left_x = markup.coord_top_left_x
+                    coord_top_left_y = markup.coord_top_left_y
+                    coord_bottom_right_x = markup.coord_bottom_right_x
+                    coord_bottom_right_y = markup.coord_bottom_right_y
+
+                    # Вычисление центра и размеров
+                    center_x = (coord_top_left_x + coord_bottom_right_x) / 2 / content.width
+                    center_y = (coord_top_left_y + coord_bottom_right_y) / 2 / content.height
+                    width = (coord_bottom_right_x - coord_top_left_x) / content.width
+                    height = (coord_bottom_right_y - coord_top_left_y) / content.height
+
+                    yolov8_annotations.append(f"{frame.frame_offset} {label_id} {center_x} {center_y} {width} {height}")
 
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
         async with aiofiles.open(temp_file.name, mode='w', encoding='utf-8') as f:
-            await f.write(json_data)
+            await f.write("\n".join(yolov8_annotations))
 
         # Используем FileResponse для отправки файла
-        return FileResponse(temp_file.name, media_type='application/json', filename='data.json')
-        # return FileResponse(temp_file.)
+        return FileResponse(temp_file.name, media_type='text/plain', filename='annotations.txt')
 
     async def change_content_status(
         self, content_id: uuid.UUID, new_status: VideoStatusOption

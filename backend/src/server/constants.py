@@ -56,6 +56,14 @@ tag_translation_eng_rus = {
     "fixed-wing-uav": "БПЛА самолетного типа",
 }
 
+label_map = {
+    "quadcopter_uav" : 0,
+    "airplane" : 1,
+    "helicopter": 2,
+    "bird" : 3,
+    "fixed-wing_uav" : 4
+}
+
 # tag_translation = {
 #     "Коридор внутри квартиры": "corridor",
 #     "Дверь": "door",
