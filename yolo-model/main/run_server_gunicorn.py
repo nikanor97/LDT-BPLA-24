@@ -13,8 +13,8 @@ from common.rabbitmq.connection_pool import ConnectionPool as AmqpConnectionPool
 from common.rabbitmq.consumer import Consumer, Subscription
 from common.rabbitmq.publisher import Publisher
 
-# from src.server.object_detection_processor import ObjectDetectionProcessor
-from src.server.object_detection_processor_async import ObjectDetectionProcessor
+from src.server.object_detection_processor import ObjectDetectionProcessor
+# from src.server.object_detection_processor_async import ObjectDetectionProcessor
 
 # 150 sec - 45 on async 1 gunicorn worker
 
@@ -48,7 +48,8 @@ def main():
     amqp_server = AMQPServer(
         publisher=publisher,
         message_processors={"to_yolo_model": yolo_model_processor},
-        detector=detector
+        detector=detector,
+        asyncronous=False
     )
 
     subscriptions = [

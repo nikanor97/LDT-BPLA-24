@@ -46,7 +46,8 @@ async def main(loop: asyncio.AbstractEventLoop) -> None:
     amqp_server = AMQPServer(
         publisher=publisher,
         message_processors={"to_yolo_model": yolo_model_processor},
-        detector=detector
+        detector=detector,
+        asyncronous=False
     )
 
     subscriptions = [
@@ -66,7 +67,7 @@ async def main(loop: asyncio.AbstractEventLoop) -> None:
     app = FastAPI()
     app.add_event_handler("startup", consumer.start)
 
-    config = uvicorn.Config(app, host="0.0.0.0", port=settings.APP_PORT)
+    config = uvicorn.Config(app, host="0.0.0.0", port=8345)
 
     server = uvicorn.Server(config)
     await server.serve()

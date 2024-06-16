@@ -57,12 +57,20 @@ class Server:
                 #         detector=self._kwargs["detector"],
                 #     )
                 # else:
-                processor(  # TODO: ASSSSSSYYYYYYYYNNNNNNCCCC
-                    data,
-                    publisher=self._publisher,
-                    main_db_manager=self._main_db_manager,
-                    **self._kwargs,
-                )
+                if self._kwargs['asyncronous']:
+                    await processor(
+                        data,
+                        publisher=self._publisher,
+                        main_db_manager=self._main_db_manager,
+                        **self._kwargs,
+                    )
+                else:
+                    processor(  # TODO: ASSSSSSYYYYYYYYNNNNNNCCCC
+                        data,
+                        publisher=self._publisher,
+                        main_db_manager=self._main_db_manager,
+                        **self._kwargs,
+                    )
 
         except:
             local_logger.exception("While proceeding message an exception occurred")

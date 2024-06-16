@@ -45,6 +45,7 @@ async def main(loop: asyncio.AbstractEventLoop) -> None:
         message_processors={
             "from_yolo_model": yolo_markup_processor,
         },
+        asyncronous=True
     )
 
     subscriptions = [
