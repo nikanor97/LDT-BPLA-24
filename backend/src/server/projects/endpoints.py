@@ -9,6 +9,7 @@ from decimal import Decimal
 from io import BytesIO
 from os.path import isfile, join
 from typing import Optional, Annotated
+from datetime import datetime
 
 import aiofiles
 import ffmpeg  # type: ignore
@@ -840,12 +841,14 @@ class ProjectsEndpoints:
                 base_video_frames_dir.mkdir(exist_ok=True)
                 video_frames_dir = base_video_frames_dir / video_name
                 video_frames_dir.mkdir(exist_ok=True)
+                start_time = datetime.now()
                 frames_filenames = extract_frames(
                     video_path=video_path,
                     output_folder=video_frames_dir,
                     name_prefix='',
                     frame_step=settings.FRAME_STEP
                 )
+                logger.info(f"Frames extracted in {(datetime.now() - start_time).seconds} seconds")
                 # print(frames_filenames)
                 filenames = ["video/" + f.split('/')[-1] for f in frames_filenames]
 
