@@ -50,8 +50,6 @@ export const Slice = createSlice({
             requestSuccess(state.content, action.payload),
         _getProjectContentError: (state)  =>
             requestError(state.content),
-        stopGetProjectContent: (state) =>
-            state,
     }   
 });
 export const PageActions = Slice.actions;

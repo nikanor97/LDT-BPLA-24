@@ -1,4 +1,4 @@
-import {call, cancel, delay, fork, put, race, take, takeEvery, takeLatest} from "typed-redux-saga";
+import {call, put, takeLatest} from "typed-redux-saga";
 import {PageActions} from '../Redux/Store';
 import {iActions} from '../Redux/types';
 import Api from '@root/Api';
@@ -40,28 +40,12 @@ const uploadContent = function*(action: PayloadAction<iActions.uploadContent>) {
     }
 }
 
-const getProjectContentLoop = function* (action: PayloadAction<iActions.getProjectContent>) {
-    while (true) {
-        try {
-            const {data}  = yield* call(Api.Projects.getProjectContent, action.payload)
-            yield* put(PageActions._getProjectContentSuccess(data.data));
-    
-        } catch (ex) {
-            yield* put(PageActions._getProjectContentError())
-        }
-        yield* delay(5000);
-    }
-}
-
-const getProjectContentFlow = function*() {
-    let loop;
-    while (true) {
-        const action = yield* race({
-            start: take(PageActions.getProjectContent),
-            stop: take(PageActions.stopGetProjectContent)
-        }) 
-        if (loop) yield* cancel(loop);
-        if (action.start) loop = yield* fork(getProjectContentLoop, action.start)
+const getProjectContent = function*(action: PayloadAction<iActions.getProjectContent>) {
+    try {
+        const {data}  = yield* call(Api.Projects.getProjectContent, action.payload)
+        yield* put(PageActions._getProjectContentSuccess(data.data));
+    } catch (ex) {
+        yield* put(PageActions._getProjectContentError())
     }
 }
 
@@ -69,5 +53,5 @@ export default function* () {
     yield* takeLatest(PageActions.getProject, getProject);
     yield* takeLatest(PageActions.deleteProject, deleteProject);
     yield* takeLatest(PageActions.uploadContent, uploadContent);
-    yield* fork(getProjectContentFlow);
+    yield* takeLatest(PageActions.getProjectContent, getProjectContent);
 }

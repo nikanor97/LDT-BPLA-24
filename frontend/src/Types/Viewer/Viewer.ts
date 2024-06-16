@@ -15,8 +15,7 @@ export type Status =
     'created' |
     'in_progress' |
     'approved' | 
-    'declined' |
-    'extracted';
+    'declined';
 
 
 export const isVideoItem = (item: Video.Item | Photo.Item | null | undefined): item is Video.Item => {

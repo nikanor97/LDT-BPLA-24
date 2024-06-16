@@ -3,6 +3,8 @@ import {TableProps} from "antd"
 import {Project} from '@root/Types';
 import moment from 'moment';
 import styles from './styles.module.scss';
+import StatusTag from '@root/Components/StatusTag/StatusTag';
+import {getStatusText, getStatusType} from '@root/Utils/Project/getStatus'
 
 type Columns = TableProps<Project.ItemFull>['columns']
 
@@ -38,6 +40,19 @@ export const useColumns = ():Columns => {
             dataIndex: ["msg_receiver"],
             title: "Контакт ответственного",
             key: "msg_receiver"
+        },
+        {
+            title: 'Статус',
+            dataIndex: ['status'],
+            key: 'status',
+            render: (value: Project.Status) => {
+                return (
+                    <StatusTag 
+                        text={getStatusText(value)}
+                        type={getStatusType(value)}
+                    />
+                )
+            }
         },
     ]
 }

@@ -41,7 +41,7 @@ const Markups = (props: iMarkups) => {
             
             const Group = new fabric.Group([
                 new fabric.Rect({
-                    top: 16,
+                    top:0,
                     left:0,
                     width: width,
                     height: height,
@@ -54,13 +54,13 @@ const Markups = (props: iMarkups) => {
                     width,
                     height: 24,
                     left: 0,
-                    top: top < 16 ? height + 16: 0,
+                    top:0,
                     fontSize: 14,
                     backgroundColor: color,                    
                 })
             ], {
                 selectable: false,
-                top: top < 16 ? top : top - 16,
+                top,
                 left
             })
             fabricRef.current?.add(Group);

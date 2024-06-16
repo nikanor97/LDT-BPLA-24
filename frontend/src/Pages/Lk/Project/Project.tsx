@@ -15,11 +15,8 @@ const Project = () => {
     const dispatch = useDispatch();
     
     useEffect(() => {
-        dispatch(PageActions.getProject(params.projectId));
-        dispatch(PageActions.getProjectContent({project_id: params.projectId}));
-        return () => {
-            dispatch(PageActions.stopGetProjectContent())
-        };
+        dispatch(PageActions.getProject(params.projectId))
+        dispatch(PageActions.getProjectContent({project_id: params.projectId}))
     }, []);
 
     return (

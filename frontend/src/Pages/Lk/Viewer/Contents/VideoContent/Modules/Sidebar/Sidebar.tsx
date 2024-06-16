@@ -5,7 +5,7 @@ import { useVideo } from '../../Hooks/useVideo';
 
 const Sidebar = () => {
     const video = useVideo();
-    
+
     return (
         <div className={styles.wrapper}>
             <div className={styles.title}>
