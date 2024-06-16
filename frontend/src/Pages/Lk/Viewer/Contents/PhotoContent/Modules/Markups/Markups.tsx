@@ -60,7 +60,7 @@ const Markups = (props: iMarkups) => {
                 })
             ], {
                 selectable: false,
-                top: top - 16,
+                top: top < 16 ? top : top - 16,
                 left
             })
             fabricRef.current?.add(Group);
