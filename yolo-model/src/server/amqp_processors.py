@@ -48,11 +48,35 @@ async def yolo_model_processor(data: dict, publisher: Publisher, main_db_manager
             ensure=False,
         )
     else:
-        kwargs['sync_publisher'].publish(
+        # Настройка соединения с RabbitMQ
+        credentials = pika.PlainCredentials('rmuser', 'rmpassword')
+        connection = pika.BlockingConnection(pika.ConnectionParameters('rabbit', 5672, '/', credentials))
+        channel = connection.channel()
+
+        # Включаем подтверждение доставки сообщений
+        channel.confirm_delivery()
+
+        # Объявляем очередь
+        channel.queue_declare(queue='to_yolo_model', durable=True)
+
+        # Объявляем обменник
+        exchange_name = "FromModels"
+        channel.exchange_declare(exchange=exchange_name, exchange_type='direct', durable=True)
+
+        sync_publisher = SyncPublisher(channel, exchange_name)
+
+        sync_publisher.publish(
             routing_key="from_yolo_model",
             exchange_name="FromModels",
             data=data_to_send,
             mandatory=True  # Включаем mandatory для гарантии доставки
         )
+
+        # kwargs['sync_publisher'].publish(
+        #     routing_key="from_yolo_model",
+        #     exchange_name="FromModels",
+        #     data=data_to_send,
+        #     mandatory=True  # Включаем mandatory для гарантии доставки
+        # )
     logger.info("Message sent")
     # logger.info(f"SENT message info: {message}")

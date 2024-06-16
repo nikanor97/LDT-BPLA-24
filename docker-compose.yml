@@ -60,13 +60,39 @@ services:
       - "${RABBIT_PORT_ON_HOST}:${RABBIT_PORT}"
       - "${RABBIT_UI_PORT_ON_HOST}:${RABBIT_UI_PORT}"
 
-  yolo-model:
+  yolo-model-0:
     build:
       context: yolo-model/
     hostname: yolo-model
     command: bash -c "poetry run python main/run_server.py"
 #    command: bash -c "poetry run gunicorn -w ${GUNICORN_WORKERS} -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${BACKEND_PORT} main.run_server_gunicorn:app"
 #    command: bash -c "poetry run gunicorn -w ${GUNICORN_WORKERS} -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8495 main.run_server_gunicorn:app"
+    volumes:
+      - ./yolo-model/src:/app/src
+      - ./yolo-model/models:/app/models
+      - ./yolo-model/main:/app/main
+      - backend-media:/app/media
+      - ./common:/app/common
+      - ./yolo-model/settings.py:/app/settings.py
+      - .env:/app/.env
+    restart: on-failure
+    depends_on:
+      - rabbit
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: [ '0' ]
+              capabilities: [ gpu ]
+
+  yolo-model-1:
+    build:
+      context: yolo-model/
+    hostname: yolo-model
+    command: bash -c "poetry run python main/run_server.py"
+    #    command: bash -c "poetry run gunicorn -w ${GUNICORN_WORKERS} -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${BACKEND_PORT} main.run_server_gunicorn:app"
+    #    command: bash -c "poetry run gunicorn -w ${GUNICORN_WORKERS} -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8495 main.run_server_gunicorn:app"
     volumes:
       - ./yolo-model/src:/app/src
       - ./yolo-model/models:/app/models
