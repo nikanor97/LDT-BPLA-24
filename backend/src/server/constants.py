@@ -28,28 +28,30 @@
 verification_tags = {
     "Регулярные объекты": [
         ("Птицы", "bird"),
-        ("Самолеты", "plane"),
+        ("Самолеты", "airplane"),
         ("Вертолеты", "helicopter"),
     ],
     "БПЛА": [
-        ("Квадракоптеры", "uav"),
+        ("Квадракоптеры", "quadcopter_uav"),
         ("БПЛА самолетного типа", "fixed-wing_uav"),
     ]
 }
 
 tag_translation = {
     "Птицы": "bird",
-    "Самолеты": "plane",
+    "Самолеты": "airplane",
     "Вертолеты": "helicopter",
-    "Квадракоптеры": "uav",
+    "Квадракоптеры": "quadcopter_uav",
     "БПЛА самолетного типа": "fixed-wing_uav",
 }
 
 tag_translation_eng_rus = {
     "bird": "Птица",
     "plane": "Самолет",
+    "airplane": "Самолет",
     "helicopter": "Вертолет",
     "uav": "Квадракоптер",
+    "quadcopter_uav": "Квадракоптер",
     "fixed-wing_uav": "БПЛА самолетного типа",
     "fixed-wing-uav": "БПЛА самолетного типа",
 }
