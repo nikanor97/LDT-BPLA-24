@@ -28,9 +28,6 @@ export declare namespace iActions {
 
     type getProjectStats = Api.iGetProjectStats;
 
-    type getFullStats = Api.iGetProjectFullStats;
-    type _getFullStatsSuccess = Api.oGetProjectFullStats;
-
     type uploadContent =  {
         params: Api.iUploadContent;
         onSuccess?: () => any; 

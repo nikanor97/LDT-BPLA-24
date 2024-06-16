@@ -2,10 +2,6 @@ import {User, Project, Viewer, Video, Photo} from '@root/Types';
 import {RcFile} from 'antd/es/upload';
 
 
-type FloorStat = {
-    floor: number;
-    value: number;
-}
 export declare namespace Api {
     type iGetProjects = User.Id;
     type oGetProjects = Project.Item[];
@@ -34,11 +30,11 @@ export declare namespace Api {
     }
     type oGetTags = Project.Tags.Item[];
     type iGetContentInfo = {
-        content_id: Viewer.Id;
+        content_id: Video.Item['content_id'] | Photo.Item['content_id'];
     }
     type oGetContentInfo = Video.Item
     type iGetContentFrames = {
-        content_id: Video.Id;
+        content_id: Video.Item['content_id'] | Photo.Item['content_id'];
     }
     type oGetContentFrames = Video.Frames.MarkupedItem[];
 
@@ -69,7 +65,7 @@ export declare namespace Api {
     }
 
     type iChangeContentStatus = {
-        content_id: Video.Id;
+        content_id: Video.Item['content_id'] | Photo.Item['content_id'];
         new_status: Video.Status;
     }
 
@@ -78,52 +74,7 @@ export declare namespace Api {
     type iGetProjectFullStats = {
         project_id: Project.Id;
     }
-    type oGetProjectFullStats = {
-        avg_floor: {
-            doors_pct: number,
-            trash_bool: boolean,
-            switch_total: number,
-            window_decor_pct: number,
-            radiator_pct: number,
-            kitchen_total: number,
-            toilet_pct: number,
-            bathtub_pct: number,
-            sink_pct: number,
-            floor: {
-                no_decor: number,
-                rough_decor: number,
-                finishing_decor: number
-            },
-            wall: {
-                no_decor: number,
-                rough_decor: number,
-                finishing_decor: number
-            },
-            ceiling: {
-                no_decor: number,
-                rough_decor: number,
-                finishing_decor: number
-            },
-            mop_floor: {
-                no_decor: number,
-                rough_decor: number,
-                finishing_decor: number
-            },
-            mop_wall: {
-                no_decor: number,
-                rough_decor: number,
-                finishing_decor: number
-            },
-            mop_ceiling: {
-                no_decor: number,
-                rough_decor: number,
-                finishing_decor: number
-            }
-        }
-        for_floor: {
-            finishing: FloorStat[];
-            no_decoration: FloorStat[]
-        }
-        
+    type iDownloadResult = {
+        content_id: Video.Item['content_id'] | Photo.Item['content_id'];
     }
 }
