@@ -1,4 +1,5 @@
 import asyncio
+import pika
 
 from fastapi import FastAPI
 
@@ -6,6 +7,7 @@ import settings
 import uvicorn
 import uvloop
 
+from common.rabbitmq.sync_publisher import SyncPublisher
 from src.server.amqp_processors import yolo_model_processor
 from common.rabbitmq.amqp import Server as AMQPServer
 
@@ -43,11 +45,30 @@ async def main(loop: asyncio.AbstractEventLoop) -> None:
         confidence_thresholds=settings.MODEL_CONFIDENCE_THRESHOLDS,
     )
 
+    # Настройка соединения с RabbitMQ
+    credentials = pika.PlainCredentials('rmuser', 'rmpassword')
+    connection = pika.BlockingConnection(pika.ConnectionParameters('rabbit', 5672, '/', credentials))
+    channel = connection.channel()
+
+    # Включаем подтверждение доставки сообщений
+    channel.confirm_delivery()
+
+    # Объявляем очередь
+    channel.queue_declare(queue='to_yolo_model', durable=True)
+
+    # Объявляем обменник
+    exchange_name = "FromModels"
+    channel.exchange_declare(exchange=exchange_name, exchange_type='direct', durable=True)
+
+    sync_publisher = SyncPublisher(channel, exchange_name)
+
     amqp_server = AMQPServer(
         publisher=publisher,
         message_processors={"to_yolo_model": yolo_model_processor},
         detector=detector,
-        asyncronous=False
+        asyncronous_consumer=True,
+        asyncronous_publisher=False,
+        sync_publisher=sync_publisher
     )
 
     subscriptions = [

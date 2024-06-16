@@ -5,27 +5,11 @@ from loguru import logger
 
 import settings
 from common.rabbitmq.publisher import Publisher
+from common.rabbitmq.sync_publisher import SyncPublisher
 import pika
 
 
-class SyncPublisher:
-    def __init__(self, channel, exchange):
-        self.channel = channel
-        self.exchange = exchange
-
-    def publish(self, routing_key, exchange_name, data, mandatory=False):
-        self.channel.basic_publish(
-            exchange=exchange_name,
-            routing_key=routing_key,
-            body=json.dumps(data),
-            properties=pika.BasicProperties(
-                delivery_mode=2,  # Make message persistent
-            ),
-            mandatory=mandatory
-        )
-
-
-def yolo_model_processor(data: dict, publisher: Publisher, main_db_manager: Any, **kwargs) -> None:
+async def yolo_model_processor(data: dict, publisher: Publisher, main_db_manager: Any, **kwargs) -> None:
     """Обработчик данных из очереди to_yolo_model."""
     logger.info(f"RECEIVED: {data}")
     logger.info(f"kwargs keys: {kwargs.keys()}")
@@ -56,35 +40,19 @@ def yolo_model_processor(data: dict, publisher: Publisher, main_db_manager: Any,
 
     logger.info(f"SENDING data: {data_to_send}")
 
-    # message = await publisher.publish(
-    #     routing_key="from_yolo_model",
-    #     exchange_name="FromModels",
-    #     data=data_to_send,
-    #     ensure=False,
-    # )
-
-    # Настройка соединения с RabbitMQ
-    credentials = pika.PlainCredentials('rmuser', 'rmpassword')
-    connection = pika.BlockingConnection(pika.ConnectionParameters('rabbit', 5672, '/', credentials))
-    channel = connection.channel()
-
-    # Включаем подтверждение доставки сообщений
-    channel.confirm_delivery()
-
-    # Объявляем очередь
-    channel.queue_declare(queue='to_yolo_model', durable=True)
-
-    # Объявляем обменник
-    exchange_name = "FromModels"
-    channel.exchange_declare(exchange=exchange_name, exchange_type='direct', durable=True)
-
-    publisher = SyncPublisher(channel, exchange_name)
-
-    publisher.publish(
-        routing_key="from_yolo_model",
-        exchange_name="FromModels",
-        data=data_to_send,
-        mandatory=True  # Включаем mandatory для гарантии доставки
-    )
+    if kwargs['asyncronous_publisher']:
+        await publisher.publish(
+            routing_key="from_yolo_model",
+            exchange_name="FromModels",
+            data=data_to_send,
+            ensure=False,
+        )
+    else:
+        kwargs['sync_publisher'].publish(
+            routing_key="from_yolo_model",
+            exchange_name="FromModels",
+            data=data_to_send,
+            mandatory=True  # Включаем mandatory для гарантии доставки
+        )
     logger.info("Message sent")
     # logger.info(f"SENT message info: {message}")

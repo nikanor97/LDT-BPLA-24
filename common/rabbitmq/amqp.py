@@ -57,7 +57,7 @@ class Server:
                 #         detector=self._kwargs["detector"],
                 #     )
                 # else:
-                if self._kwargs['asyncronous']:
+                if self._kwargs['asyncronous_consumer']:
                     await processor(
                         data,
                         publisher=self._publisher,
