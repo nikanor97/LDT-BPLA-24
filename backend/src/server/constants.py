@@ -42,7 +42,16 @@ tag_translation = {
     "Самолеты": "plane",
     "Вертолеты": "helicopter",
     "Квадракоптеры": "uav",
-    "БПЛА самолетного типа": "fixed-wing-uav",
+    "БПЛА самолетного типа": "fixed-wing_uav",
+}
+
+tag_translation_eng_rus = {
+    "bird": "Птицы",
+    "plane": "Самолеты",
+    "helicopter": "Вертолеты",
+    "uav": "Квадракоптеры",
+    "fixed-wing_uav": "БПЛА самолетного типа",
+    "fixed-wing-uav": "БПЛА самолетного типа",
 }
 
 # tag_translation = {

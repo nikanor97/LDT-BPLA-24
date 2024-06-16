@@ -45,7 +45,7 @@ from src.db.projects.models import (
 from src.db.users.models import User
 from src.server.auth_utils import oauth2_scheme, get_user_id_from_token
 from src.server.common import UnifiedResponse, exc_to_str
-from src.server.constants import tag_translation, colors
+from src.server.constants import tag_translation, colors, tag_translation_eng_rus
 from src.server.projects.models import (
     FramesWithMarkupRead,
     ContentMarkupCreate,
@@ -186,6 +186,21 @@ class ProjectsEndpoints:
                 labels = await self._main_db_manager.projects.get_labels_by_project(
                     session, project_id
                 )
+                return UnifiedResponse(data=labels)
+            except NoResultFound as e:
+                return UnifiedResponse(error=exc_to_str(e), status_code=404)
+
+    async def get_labels_by_project_TMP(
+        self, project_id: uuid.UUID
+    ) -> UnifiedResponse[list[Label]]:
+        async with self._main_db_manager.projects.make_autobegin_session() as session:
+            try:
+                labels = await self._main_db_manager.projects.get_labels_by_project(
+                    session, project_id
+                )
+                for idx, label in enumerate(labels):
+                    if label.name in tag_translation_eng_rus:
+                        labels[idx].name = tag_translation_eng_rus[label.name]
                 return UnifiedResponse(data=labels)
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)

@@ -64,7 +64,7 @@ class ProjectsRouter:
 
         self.router.add_api_route(
             path="/labels",
-            endpoint=self._projects_endpoints.get_labels_by_project,
+            endpoint=self._projects_endpoints.get_labels_by_project_TMP,
             response_model=UnifiedResponse[list[Label]],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],

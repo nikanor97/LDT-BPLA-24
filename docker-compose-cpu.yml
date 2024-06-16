@@ -76,7 +76,6 @@ services:
       - ./common:/app/common
       - ./yolo-model/settings.py:/app/settings.py
       - .env:/app/.env
-      - ./yolo-model/models:/app/models
     restart: on-failure
     depends_on:
       - rabbit
