@@ -29,16 +29,16 @@ services:
     hostname: backend
     command: bash -c "poetry run python main/run_server.py"
     volumes:
-      - ./backend/src:/code/src
-      - ./common:/code/common
-      - ./backend/main:/code/main
-      - ./backend/alembic:/code/alembic
-      - ./backend/data_samples:/code/data_samples
-      - ./backend/scripts:/code/scripts
-      - .env:/code/.env
-      - backend-media:/code/media
-      - ./backend/templates:/code/templates
-      - ./backend/settings.py:/code/settings.py
+      - ./backend/src:/app/src
+      - ./common:/app/common
+      - ./backend/main:/app/main
+      - ./backend/alembic:/app/alembic
+      - ./backend/data_samples:/app/data_samples
+      - ./backend/scripts:/app/scripts
+      - .env:/app/.env
+      - backend-media:/app/media
+      - ./backend/templates:/app/templates
+      - ./backend/settings.py:/app/settings.py
     ports:
       - "${BACKEND_PORT_ON_HOST}:${BACKEND_PORT}"
     restart: on-failure

@@ -68,6 +68,7 @@ from starlette.requests import Request
 from starlette.responses import Response, FileResponse, StreamingResponse
 from starlette.templating import Jinja2Templates
 
+from src.server.projects.video_utils import extract_frames
 
 # TODO: remove templates after testing
 templates = Jinja2Templates(directory="templates")
@@ -733,7 +734,8 @@ class ProjectsEndpoints:
             if content_type == ContentTypeOption.video:
                 video_id = uuid.uuid4()
                 if file.filename is not None:
-                    video_name = f'{".".join(file.filename.split(".")[:-1])}_{video_id}.mp4'
+                    filename = file.filename.replace(' ', '_')
+                    video_name = f'{".".join(filename.split(".")[:-1])}_{video_id}.mp4'
                 else:
                     video_name = f"{video_id}.mp4"
                 video_path = settings.MEDIA_DIR / "video" / video_name
@@ -769,44 +771,75 @@ class ProjectsEndpoints:
                     status=VideoStatusOption.created
                 )
 
-                frames_with_markups = ContentMarkupCreate(
-                    content_id=video_id,
-                    content_type=FrameContentTypeOption.video,
-                    frames=[FramesWithMarkupCreate(
-                        frame_offset=offset,
-                        markup_list=[MarkupListCreate(
-                            coord_top_left=(
-                                random.choice(range(1, video_.width // 2)),
-                                random.choice(range(1, video_.height // 2))
-                            ),
-                            coord_bottom_right=(
-                                random.choice(range(video_.width // 2, video_.width)),
-                                random.choice(range(video_.height // 2, video_.height))
-                            ),
-                            label_id=random.choice(labels_ids),
-                            confidence=Decimal(random.random())
-                        ) for _ in range(2)]
-                    ) for offset in range(video_.n_frames)]  # ДЕЛАЕМ ДЛЯ КАЖДОГО КАДРА
+                # frames_with_markups = ContentMarkupCreate(
+                #     content_id=video_id,
+                #     content_type=FrameContentTypeOption.video,
+                #     frames=[FramesWithMarkupCreate(
+                #         frame_offset=offset,
+                #         markup_list=[MarkupListCreate(
+                #             coord_top_left=(
+                #                 random.choice(range(1, video_.width // 2)),
+                #                 random.choice(range(1, video_.height // 2))
+                #             ),
+                #             coord_bottom_right=(
+                #                 random.choice(range(video_.width // 2, video_.width)),
+                #                 random.choice(range(video_.height // 2, video_.height))
+                #             ),
+                #             label_id=random.choice(labels_ids),
+                #             confidence=Decimal(random.random())
+                #         ) for _ in range(2)]
+                #     ) for offset in range(video_.n_frames)]  # ДЕЛАЕМ ДЛЯ КАЖДОГО КАДРА
+                # )
+                async with self._main_db_manager.projects.make_autobegin_session() as session:
+                    video = await self._main_db_manager.projects.create_video(
+                        session, video_
+                    )
+
+                video_path = settings.MEDIA_DIR / "video" / video_name
+                base_video_frames_dir = settings.MEDIA_DIR / "video" / "frames"
+                base_video_frames_dir.mkdir(exist_ok=True)
+                video_frames_dir = base_video_frames_dir / video_name
+                video_frames_dir.mkdir(exist_ok=True)
+                frames_filenames = extract_frames(
+                    video_path=video_path,
+                    output_folder=video_frames_dir,
+                    name_prefix='',
+                    frame_step=settings.FRAME_STEP
                 )
+                print(frames_filenames)
+                filenames = ["video/" + f.split('/')[-1] for f in frames_filenames]
 
-                video_.status = VideoStatusOption.extracted
+                frames = [Frame(
+                    content_id=video.id,
+                    content_type=FrameContentTypeOption.video,
+                    frame_offset=offset
+                ) for offset in range(len(filenames))]
 
-                try:
-                    async with self._main_db_manager.projects.make_autobegin_session() as session:
-                        video = await self._main_db_manager.projects.create_video(
-                            session, video_
-                        )
-                        await self._main_db_manager.projects.create_frames_with_markups(
-                            session, frames_with_markups
-                        )
-                except NoResultFound as e:
-                    return UnifiedResponse(error=exc_to_str(e), status_code=404)
+                async with self._main_db_manager.projects.make_autobegin_session() as session:
+                    session.add_all(frames)
+
+                for filename, frame in list(zip(frames_filenames, frames)):
+                    data_to_send = {
+                        "image_path": filename,
+                        "frame_id": str(frame.id),
+                        "project_id": str(project_id)
+                    }
+
+                    await self._publisher.publish(
+                        routing_key="to_yolo_model",
+                        exchange_name="ToModels",
+                        data={'data': data_to_send},
+                        ensure=False,
+                    )
+                logger.info(f"Message for video {video.id} sent to detector")
+
+                video_.status = VideoStatusOption.extracted  # TODO: статус только когда получили предсказания
 
                 # await self._get_clip_predictions(
                 #     video_name, video_id, video_, apartment.project_id
                 # )
 
-                content_items.append(Content.from_video(video, detected_count=2))  # TODO: проставлять РЕАЛЬНОЕ ЗНАЧЕНИЕ
+                # content_items.append(Content.from_video(video, detected_count=2))  # TODO: проставлять РЕАЛЬНОЕ ЗНАЧЕНИЕ
 
             elif content_type == ContentTypeOption.photo:
 
@@ -837,28 +870,6 @@ class ProjectsEndpoints:
                     project_id=project_id,
                     status=VideoStatusOption.created
                 )
-
-                # frames_with_markups = ContentMarkupCreate(
-                #     content_id=photo_id,
-                #     content_type=FrameContentTypeOption.photo,
-                #     frames=[FramesWithMarkupCreate(
-                #         frame_offset=0,  # 0 - для фото
-                #         markup_list=[
-                #         #     MarkupListCreate(
-                #         #     coord_top_left=(
-                #         #         random.choice(range(1, photo_.width // 2)),
-                #         #         random.choice(range(1, photo_.height // 2))
-                #         #     ),
-                #         #     coord_bottom_right=(
-                #         #         random.choice(range(photo_.width // 2, photo_.width)),
-                #         #         random.choice(range(photo_.height // 2, photo_.height))
-                #         #     ),
-                #         #     label_id=random.choice(labels_ids),
-                #         #     confidence=Decimal(random.random())
-                #         # ) for _ in range(3)
-                #         ]
-                #     )]
-                # )
 
                 photo_.status = VideoStatusOption.created  # TODO: статус только когда получили предсказания
 
