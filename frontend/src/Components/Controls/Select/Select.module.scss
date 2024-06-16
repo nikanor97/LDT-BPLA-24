@@ -1,0 +1,18 @@
+.select {
+    :global {
+        .ant-select-selector {
+            min-height: 42px;
+            .ant-select-selection-item {
+                line-height: 42px;
+            }
+            .ant-select-dropdown {
+                .ant-select-item-option {
+                    margin-bottom: 2px;
+                    &:last-child {
+                        margin-bottom: 0;
+                    }
+                }
+            }
+        }
+    }
+}

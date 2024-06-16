@@ -1,0 +1,50 @@
+.user {
+    display: flex;
+    padding: 12px 16px;
+    align-items: center;
+}
+.userInfo {
+    margin-left: 12px;
+    overflow: hidden;
+    max-width: 100%;
+}
+
+.name {
+    font-size: 18px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+.email {
+    font-size: 13px;
+    color: #a0a0a0;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.avatar {
+    min-width: 42px;
+    max-width: 42px;
+}
+
+.wrapper {
+    .menu {
+        background: unset;
+        box-shadow: unset;
+        border-top: 1px solid #ebebeb;
+        border-radius: unset;
+        :global {
+            .ant-dropdown-menu-item {
+                font-size: 15px;
+            }
+            .ant-dropdown-menu-item-icon {
+                font-size: 13px;
+            }
+        }
+        .logout {
+            color: #ff4d4f;
+            justify-content: center;
+        }
+    }
+}
+

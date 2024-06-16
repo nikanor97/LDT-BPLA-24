@@ -1,0 +1,25 @@
+.wrapper {
+    display: flex;
+    max-height: 48px;
+    min-height: 48px;
+    flex-wrap: nowrap;
+    padding: 8px 0px;
+    overflow: hidden;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.logo {
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+}
+
+.content {
+    flex-grow: 1;
+}
+
+.row {
+    align-items: center;
+    width: 100%;
+}

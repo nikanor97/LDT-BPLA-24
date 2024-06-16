@@ -1,0 +1,47 @@
+.wrapper {
+    display: flex;
+    align-items: center;
+    .btn {
+        font-size: 12px;
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #475467;
+        border-color: #DCDCE4;
+    }
+}
+
+.mainCol {
+    flex-grow: 1;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-grow: 1;
+    width: 100%;
+}
+
+.title {
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 20px;
+    color: #000000;
+    margin-left: 24px;
+    display: flex;
+    gap: 16px;
+}
+
+.apartNumber {
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+    margin-left: 24px;
+}
+
+.tag {
+    margin-left: 16px;
+}

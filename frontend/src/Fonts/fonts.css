@@ -1,0 +1,27 @@
+@font-face { 
+    font-family: "CoFo Sans";
+    src: url("CoFoSansRegular.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 400;
+}
+
+@font-face { 
+    font-family: "CoFo Sans";
+    src: url("CoFoSansMedium.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 500;
+}
+
+@font-face { 
+    font-family: "CoFo Sans";
+    src: url("CoFoSansBold.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 700;
+}
+
+@font-face { 
+    font-family: "CoFo Sans";
+    src: url("CoFoSansBlack.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 900;
+}

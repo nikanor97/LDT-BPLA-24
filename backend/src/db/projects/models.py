@@ -29,6 +29,7 @@ class VideoStatusOption(str, enum.Enum):
     extracted = "extracted"  # Video has gone through extraction
     approved = "approved"  # Video is approved by admin
     declined = "declined"  # Video is declined by admin
+    in_progress = "in_progress"  # Video is in progress
 
 
 # class ApartmentDecorationTypeOption(str, enum.Enum):

@@ -1,0 +1,30 @@
+.group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+}
+.frames {
+    font-size: 14px;
+    line-height: 16px;
+    color: #667085;
+    white-space: nowrap;
+}
+.title {
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 20px;
+    color: #101828;
+    margin-bottom: 6px;
+    
+}
+.color {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    margin-right: 8px;
+}
+
+.mainInfo {
+    display: flex;
+}

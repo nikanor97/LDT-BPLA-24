@@ -1,0 +1,19 @@
+.wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    background: #fff;
+}
+
+.content {
+    background: #F8F9FB;
+}

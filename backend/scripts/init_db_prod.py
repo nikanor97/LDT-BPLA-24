@@ -51,98 +51,6 @@ async def init_db():
     ue = UsersEndpoints(main_db_manager)
     pe = ProjectsEndpoints(main_db_manager, publisher)
 
-    # await ue.create_user(UserCreate(
-    #     name='Sergey', email='serbudnik', password='qwerty'
-    # ))
-    #
-    # await ue.create_user(UserCreate(
-    #     name='ivan', email='ivan@mail.ru', password='vano'
-    # ))
-    #
-    # await ue.create_user(UserCreate(
-    #     name='Artem', email='art.shakhov3@mail.ru', password='test'
-    # ))
-    #
-    # token_sergey = await ue.login_for_access_token(UserLogin(username='serbudnik', password='qwerty'))
-    # token_ivan = await ue.login_for_access_token(UserLogin(username='ivan@mail.ru', password='vano'))
-    # token_artem = await ue.login_for_access_token(UserLogin(username='art.shakhov3@mail.ru', password='test'))
-    #
-    # user_sergey = await ue.get_current_user(token_sergey.data.access_token)
-    # user_ivan = await ue.get_current_user(token_ivan.data.access_token)
-    # user_artem = await ue.get_current_user(token_artem.data.access_token)
-    #
-    # lorem_words = lorem_ipsum.split(' ')
-    #
-    # for i in range(3):  # max 10
-    #     uf = await pe.create_and_upload_project_document(UploadFile(
-    #         file=open(settings.BASE_DIR / 'data_samples' / 'данные по каждому дому - Лист1.csv', 'rb'),
-    #         filename='superfile.csv'
-    #     ))
-    #     # name = random.choice(lorem_words) + ' ' + random.choice(lorem_words) + '' + random.choice(lorem_words)
-    #     name = houses[i]
-    #     proj = await pe.create_project(ProjectCreate(
-    #         name=name,
-    #         description='nothing',
-    #         document_id=uf.data.id,
-    #         tags_ids=[],
-    #         verificators_ids=[user_sergey.data.id]
-    #     ), token_ivan.data.access_token)
-    #
-    #     # await pe.create_user_role(UserRoleBase(
-    #     #     user_id=user_sergey.data.id, project_id=proj.data.id, role_type='verificator'
-    #     # ))
-    #
-    # for i in range(1):
-    #     uf = await pe.create_and_upload_project_document(UploadFile(
-    #         file=open(settings.BASE_DIR / 'data_samples' / 'данные по каждому дому - Лист1.csv', 'rb'),
-    #         filename='superfile_for_artem.csv'
-    #     ))
-    #     name = 'artem' + ' ' + random.choice(lorem_words) + ' ' + random.choice(lorem_words)
-    #     proj = await pe.create_project(ProjectCreate(
-    #         name=name,
-    #         description='a project for testing video',
-    #         document_id=uf.data.id,
-    #         tags_ids=[],
-    #         verificators_ids=[user_ivan.data.id]
-    #     ), token_artem.data.access_token)
-    #
-    #     apartments = await pe.get_apartments_by_project(proj.data.id)
-    #
-    #     labels_base = [LabelBase(
-    #         name=label_name,
-    #         description=random.choice(lorem_words) + ' ' + random.choice(lorem_words),
-    #         color=color
-    #     ) for label_name, color in [('crap', colors[0]), ('ceiling', colors[1]), ('toilet', colors[2])]]
-    #     labels = await pe.create_labels(proj.data.id, labels_base)
-    #
-    #     for apartment in apartments.data:
-    #         video = await pe.create_and_upload_video(
-    #             name=random.choice(lorem_words),
-    #             description=random.choice(lorem_words) + ' ' + random.choice(lorem_words),
-    #             file=UploadFile(open(settings.BASE_DIR / 'data_samples' / 'sample_960x400_ocean_with_audio.mp4', 'rb')),
-    #             apartment_id=apartment.id,
-    #             token=token_artem.data.access_token,
-    #         )
-    #         video_markup = ContentMarkupCreate(
-    #             video_id=video.data.id,
-    #             frames=[FramesWithMarkupCreate(
-    #                 frame_offset=j,
-    #                 markup_list=[MarkupListCreate(
-    #                     coord_top_left=(
-    #                         random.randint(0, video.data.width // 2),
-    #                         random.randint(0, video.data.height // 2),
-    #                     ),
-    #                     coord_bottom_right=(
-    #                         random.randint(video.data.width // 2, video.data.width),
-    #                         random.randint(video.data.height // 2, video.data.height),
-    #                     ),
-    #                     label_id=m.id,
-    #                     confidence=random.random()
-    #                 ) for m in random.choices(labels.data, k=2)]
-    #             ) for j in random.choices(range(video.data.n_frames), k=video.data.n_frames)]
-    #         )
-    #         await pe.create_frames_with_markups(video_markup)
-
     tags_base = []
     for groupname, tagnames in verification_tags.items():
         for tagname in tagnames:
@@ -152,34 +60,6 @@ async def init_db():
             )
             tags_base.append(tag_base)
     tags = await pe.create_verification_tags(tags_base)
-
-    # tags_ids = [t.id for t in tags.data]
-    #
-    #
-    # uf = await pe.create_and_upload_project_document(UploadFile(
-    #     file=open(settings.BASE_DIR / 'data_samples' / 'данные по каждому дому - Лист1.csv', 'rb'),
-    #     filename='superfile_for_artem.csv'
-    # ))
-    # # name = 'artem' + ' ' + random.choice(lorem_words) + ' ' + random.choice(lorem_words)
-    # name = 'testing detection'
-    # proj = await pe.create_project(ProjectCreate(
-    #     name=name,
-    #     description='a project for testing video',
-    #     document_id=uf.data.id,
-    #     tags_ids=tags_ids,
-    #     verificators_ids=[user_ivan.data.id]
-    # ), token_ivan.data.access_token)
-    #
-    # labels = []
-    # for groupname, tagnames in verification_tags.items():
-    #     for tagname in tagnames:
-    #         label = LabelBase(
-    #             name=tagname[1],
-    #             description=tagname[0],
-    #             color=random.choice(colors)
-    #         )
-    #         labels.append(label)
-    # await pe.create_labels(proj.data.id, labels)
 
 
 if __name__ == "__main__":

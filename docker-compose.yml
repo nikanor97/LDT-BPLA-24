@@ -1,13 +1,14 @@
-version: "3.3"
+version: "3.8"
 services:
 
-#  frontend:
-#    stdin_open: true
-#    build:
-#      context: frontend/
-#    ports:
-#      - "${FRONTEND_PORT_ON_HOST}:${FRONTEND_PORT}"
-#    restart: on-failure
+  frontend:
+    stdin_open: true
+    build:
+      context: frontend/
+      target: PROD
+    ports:
+      - "${FRONTEND_PORT_ON_HOST}:${FRONTEND_PORT}"
+    restart: on-failure
 
   db:
     image: postgres:13-alpine
@@ -28,16 +29,16 @@ services:
     hostname: backend
     command: bash -c "poetry run python main/run_server.py"
     volumes:
-      - ./backend/src:/code/src
-      - ./common:/code/common
-      - ./backend/main:/code/main
-      - ./backend/alembic:/code/alembic
-      - ./backend/data_samples:/code/data_samples
-      - ./backend/scripts:/code/scripts
-      - .env:/code/.env
-      - backend-media:/code/media
-      - ./backend/templates:/code/templates
-      - ./backend/settings.py:/code/settings.py
+      - ./backend/src:/app/src
+      - ./common:/app/common
+      - ./backend/main:/app/main
+      - ./backend/alembic:/app/alembic
+      - ./backend/data_samples:/app/data_samples
+      - ./backend/scripts:/app/scripts
+      - .env:/app/.env
+      - backend-media:/app/media
+      - ./backend/templates:/app/templates
+      - ./backend/settings.py:/app/settings.py
     ports:
       - "${BACKEND_PORT_ON_HOST}:${BACKEND_PORT}"
     restart: on-failure
@@ -58,6 +59,59 @@ services:
     ports:
       - "${RABBIT_PORT_ON_HOST}:${RABBIT_PORT}"
       - "${RABBIT_UI_PORT_ON_HOST}:${RABBIT_UI_PORT}"
+
+  yolo-model-0:
+    build:
+      context: yolo-model/
+    hostname: yolo-model
+    command: bash -c "poetry run python main/run_server.py"
+#    command: bash -c "poetry run gunicorn -w ${GUNICORN_WORKERS} -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${BACKEND_PORT} main.run_server_gunicorn:app"
+#    command: bash -c "poetry run gunicorn -w ${GUNICORN_WORKERS} -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8495 main.run_server_gunicorn:app"
+    volumes:
+      - ./yolo-model/src:/app/src
+      - ./yolo-model/models:/app/models
+      - ./yolo-model/main:/app/main
+      - backend-media:/app/media
+      - ./common:/app/common
+      - ./yolo-model/settings.py:/app/settings.py
+      - .env:/app/.env
+    restart: on-failure
+    depends_on:
+      - rabbit
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: [ '0' ]
+              capabilities: [ gpu ]
+
+  yolo-model-1:
+    build:
+      context: yolo-model/
+    hostname: yolo-model
+    command: bash -c "poetry run python main/run_server.py"
+    #    command: bash -c "poetry run gunicorn -w ${GUNICORN_WORKERS} -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${BACKEND_PORT} main.run_server_gunicorn:app"
+    #    command: bash -c "poetry run gunicorn -w ${GUNICORN_WORKERS} -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8495 main.run_server_gunicorn:app"
+    volumes:
+      - ./yolo-model/src:/app/src
+      - ./yolo-model/models:/app/models
+      - ./yolo-model/main:/app/main
+      - backend-media:/app/media
+      - ./common:/app/common
+      - ./yolo-model/settings.py:/app/settings.py
+      - .env:/app/.env
+    restart: on-failure
+    depends_on:
+      - rabbit
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: [ '1' ]
+              capabilities: [ gpu ]
+
 
 volumes:
   backend-media:

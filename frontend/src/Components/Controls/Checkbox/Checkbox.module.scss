@@ -1,0 +1,21 @@
+
+
+.checkbox {
+    &:global {
+        &.ant-checkbox-wrapper {
+            line-height: 26px;
+        }
+    }
+    :global {
+        .ant-checkbox {
+            .ant-checkbox-inner {
+                width: 21px;
+                height: 21px;
+            }
+            input.ant-checkbox-input {
+                width: 21px;
+                height: 21px;
+            }
+        }
+    }
+}

@@ -9,6 +9,7 @@ from decimal import Decimal
 from io import BytesIO
 from os.path import isfile, join
 from typing import Optional, Annotated
+from datetime import datetime
 
 import aiofiles
 import ffmpeg  # type: ignore
@@ -45,7 +46,7 @@ from src.db.projects.models import (
 from src.db.users.models import User
 from src.server.auth_utils import oauth2_scheme, get_user_id_from_token
 from src.server.common import UnifiedResponse, exc_to_str
-from src.server.constants import tag_translation, colors
+from src.server.constants import tag_translation, colors, tag_translation_eng_rus, label_map
 from src.server.projects.models import (
     FramesWithMarkupRead,
     ContentMarkupCreate,
@@ -68,6 +69,7 @@ from starlette.requests import Request
 from starlette.responses import Response, FileResponse, StreamingResponse
 from starlette.templating import Jinja2Templates
 
+from src.server.projects.video_utils import extract_frames
 
 # TODO: remove templates after testing
 templates = Jinja2Templates(directory="templates")
@@ -188,6 +190,22 @@ class ProjectsEndpoints:
                 return UnifiedResponse(data=labels)
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
+
+    async def get_labels_by_project_TMP(
+        self, project_id: uuid.UUID
+    ) -> UnifiedResponse[list[Label]]:
+        async with self._main_db_manager.projects.make_autobegin_session() as session:
+            try:
+                labels = await self._main_db_manager.projects.get_labels_by_project(
+                    session, project_id
+                )
+            except NoResultFound as e:
+                return UnifiedResponse(error=exc_to_str(e), status_code=404)
+        for idx, label in enumerate(labels):
+            if label.name in tag_translation_eng_rus:
+                labels[idx].name = tag_translation_eng_rus[label.name]
+        return UnifiedResponse(data=labels)
+
 
     async def get_video(self, video_id: uuid.UUID) -> UnifiedResponse[Video]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
@@ -468,6 +486,30 @@ class ProjectsEndpoints:
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
+    # async def get_frames_with_markups(
+    #     self, content_id: uuid.UUID
+    # ) -> UnifiedResponse[list[FramesWithMarkupRead]]:
+    #     async with self._main_db_manager.projects.make_autobegin_session() as session:
+    #         try:
+    #             frames = await self._main_db_manager.projects.get_frames_with_markups(
+    #                 session, content_id
+    #             )
+    #             labels = await self._main_db_manager.projects.get_labels_by_project(
+    #                 session, frames[0].project_id
+    #             )
+    #             label_id_to_name = {label.id: label.name for label in labels}
+    #             for idx_frame, frame in enumerate(frames):
+    #                 for idx_markup, markup in enumerate(frame.markups):
+    #                     label_name = label_id_to_name[markup.label_id]
+    #                     if label_name not in label_map:
+    #                         continue
+    #                     if markup.confidence < confidence_thresholds[markup]:
+    #                         frames[idx_frame].markups[idx_markup].confidence = 0
+    #             resp = [FramesWithMarkupRead.parse_obj(fr) for fr in frames]
+    #             return UnifiedResponse(data=resp)
+    #         except NoResultFound as e:
+    #             return UnifiedResponse(error=exc_to_str(e), status_code=404)
+
     async def create_project(
         self, project: ProjectCreate, token: Annotated[str, Depends(oauth2_scheme)]
     ) -> UnifiedResponse[ProjectRead]:
@@ -733,7 +775,8 @@ class ProjectsEndpoints:
             if content_type == ContentTypeOption.video:
                 video_id = uuid.uuid4()
                 if file.filename is not None:
-                    video_name = f'{".".join(file.filename.split(".")[:-1])}_{video_id}.mp4'
+                    filename = file.filename.replace(' ', '_')
+                    video_name = f'{".".join(filename.split(".")[:-1])}_{video_id}.mp4'
                 else:
                     video_name = f"{video_id}.mp4"
                 video_path = settings.MEDIA_DIR / "video" / video_name
@@ -769,44 +812,78 @@ class ProjectsEndpoints:
                     status=VideoStatusOption.created
                 )
 
-                frames_with_markups = ContentMarkupCreate(
-                    content_id=video_id,
-                    content_type=FrameContentTypeOption.video,
-                    frames=[FramesWithMarkupCreate(
-                        frame_offset=offset,
-                        markup_list=[MarkupListCreate(
-                            coord_top_left=(
-                                random.choice(range(1, video_.width // 2)),
-                                random.choice(range(1, video_.height // 2))
-                            ),
-                            coord_bottom_right=(
-                                random.choice(range(video_.width // 2, video_.width)),
-                                random.choice(range(video_.height // 2, video_.height))
-                            ),
-                            label_id=random.choice(labels_ids),
-                            confidence=Decimal(random.random())
-                        ) for _ in range(2)]
-                    ) for offset in range(video_.n_frames)]  # ДЕЛАЕМ ДЛЯ КАЖДОГО КАДРА
+                # frames_with_markups = ContentMarkupCreate(
+                #     content_id=video_id,
+                #     content_type=FrameContentTypeOption.video,
+                #     frames=[FramesWithMarkupCreate(
+                #         frame_offset=offset,
+                #         markup_list=[MarkupListCreate(
+                #             coord_top_left=(
+                #                 random.choice(range(1, video_.width // 2)),
+                #                 random.choice(range(1, video_.height // 2))
+                #             ),
+                #             coord_bottom_right=(
+                #                 random.choice(range(video_.width // 2, video_.width)),
+                #                 random.choice(range(video_.height // 2, video_.height))
+                #             ),
+                #             label_id=random.choice(labels_ids),
+                #             confidence=Decimal(random.random())
+                #         ) for _ in range(2)]
+                #     ) for offset in range(video_.n_frames)]  # ДЕЛАЕМ ДЛЯ КАЖДОГО КАДРА
+                # )
+                async with self._main_db_manager.projects.make_autobegin_session() as session:
+                    video = await self._main_db_manager.projects.create_video(
+                        session, video_
+                    )
+
+                video_path = settings.MEDIA_DIR / "video" / video_name
+                base_video_frames_dir = settings.MEDIA_DIR / "video" / "frames"
+                base_video_frames_dir.mkdir(exist_ok=True)
+                video_frames_dir = base_video_frames_dir / video_name
+                video_frames_dir.mkdir(exist_ok=True)
+                start_time = datetime.now()
+                frames_filenames = extract_frames(
+                    video_path=video_path,
+                    output_folder=video_frames_dir,
+                    name_prefix='',
+                    frame_step=settings.FRAME_STEP
                 )
+                logger.info(f"Frames extracted in {(datetime.now() - start_time).seconds} seconds")
+                # print(frames_filenames)
+                filenames = ["video/" + f.split('/')[-1] for f in frames_filenames]
 
-                video_.status = VideoStatusOption.extracted
+                frames = [Frame(
+                    content_id=video.id,
+                    content_type=FrameContentTypeOption.video,
+                    frame_offset=offset
+                ) for offset in range(len(filenames))]
 
-                try:
-                    async with self._main_db_manager.projects.make_autobegin_session() as session:
-                        video = await self._main_db_manager.projects.create_video(
-                            session, video_
-                        )
-                        await self._main_db_manager.projects.create_frames_with_markups(
-                            session, frames_with_markups
-                        )
-                except NoResultFound as e:
-                    return UnifiedResponse(error=exc_to_str(e), status_code=404)
+                async with self._main_db_manager.projects.make_autobegin_session() as session:
+                    session.add_all(frames)
+
+                for filename, frame in list(zip(frames_filenames, frames)):
+                    data_to_send = {
+                        "image_path": filename,
+                        "frame_id": str(frame.id),
+                        "project_id": str(project_id),
+                        "frames_in_content": str(len(filenames)),
+                    }
+
+                    await self._publisher.publish(
+                        routing_key="to_yolo_model",
+                        exchange_name="ToModels",
+                        data={'data': data_to_send},
+                        ensure=False,
+                    )
+                logger.info(f"Message for video {video.id} sent to detector")
+
+                video_.status = VideoStatusOption.created
 
                 # await self._get_clip_predictions(
                 #     video_name, video_id, video_, apartment.project_id
                 # )
 
-                content_items.append(Content.from_video(video, detected_count=2))  # TODO: проставлять РЕАЛЬНОЕ ЗНАЧЕНИЕ
+                # content_items.append(Content.from_video(video, detected_count=2))  # TODO: проставлять РЕАЛЬНОЕ ЗНАЧЕНИЕ
 
             elif content_type == ContentTypeOption.photo:
 
@@ -838,36 +915,35 @@ class ProjectsEndpoints:
                     status=VideoStatusOption.created
                 )
 
-                frames_with_markups = ContentMarkupCreate(
-                    content_id=photo_id,
-                    content_type=FrameContentTypeOption.photo,
-                    frames=[FramesWithMarkupCreate(
-                        frame_offset=0,  # 0 - для фото
-                        markup_list=[MarkupListCreate(
-                            coord_top_left=(
-                                random.choice(range(1, photo_.width // 2)),
-                                random.choice(range(1, photo_.height // 2))
-                            ),
-                            coord_bottom_right=(
-                                random.choice(range(photo_.width // 2, photo_.width)),
-                                random.choice(range(photo_.height // 2, photo_.height))
-                            ),
-                            label_id=random.choice(labels_ids),
-                            confidence=Decimal(random.random())
-                        ) for _ in range(3)]
-                    )]
-                )
-
-                photo_.status = VideoStatusOption.extracted
+                photo_.status = VideoStatusOption.created
 
                 try:
                     async with self._main_db_manager.projects.make_autobegin_session() as session:
                         photo = await self._main_db_manager.projects.create_photo(
                             session, photo_
                         )
-                        await self._main_db_manager.projects.create_frames_with_markups(
-                            session, frames_with_markups
+                        frame = Frame(
+                            content_id=photo.id,
+                            content_type=FrameContentTypeOption.photo,
+                            frame_offset=0
                         )
+                        session.add(frame)
+
+                    data_to_send = {
+                        "image_path": f"photo/{photo_.source_url}",
+                        "frame_id": str(frame.id),
+                        "project_id": str(project_id),
+                        "frames_in_content": "1",
+                    }
+
+                    message = await self._publisher.publish(
+                        routing_key="to_yolo_model",
+                        exchange_name="ToModels",
+                        data={'data': data_to_send},
+                        ensure=False,
+                    )
+                    logger.info(f"Message for photo detection sent: {message}")
+
                 except NoResultFound as e:
                     return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
@@ -890,54 +966,51 @@ class ProjectsEndpoints:
             frames: list[Frame] = await self._main_db_manager.projects.get_frames_with_markups(
                 session, content_id
             )
+            labels = await self._main_db_manager.projects.get_labels_by_project(
+                session, content.project_id
+            )
+            label_id_to_name = {label.id: label.name for label in labels}
         resp = [FramesWithMarkupRead.parse_obj(fr) for fr in frames]
 
+        yolov8_annotations = []
         if type(content) == Photo:
-            json_data = {
-                "photo_id": str(content.id),
-                "markups": [
-                    {
-                        "id": str(markup.id),
-                        "label_id": str(markup.label_id),
-                        "coord_top_left_x": float(markup.coord_top_left_x),
-                        "coord_top_left_y": float(markup.coord_top_left_y),
-                        "coord_bottom_right_x": float(markup.coord_bottom_right_x),
-                        "coord_bottom_right_y": float(markup.coord_bottom_right_y),
-                        "confidence": float(markup.confidence)
-                    } for markup in resp[0].markups
-                ]
-            }
-        elif type(content) == Video:
-            json_data = {
-                "video_id": str(content.id),
-                "frames": [
-                    {
-                        "frame_offset": frame.frame_offset,
-                        "markups": [
-                            {
-                                "id": str(markup.id),
-                                "label_id": str(markup.label_id),
-                                "coord_top_left_x": float(markup.coord_top_left_x),
-                                "coord_top_left_y": float(markup.coord_top_left_y),
-                                "coord_bottom_right_x": float(markup.coord_bottom_right_x),
-                                "coord_bottom_right_y": float(markup.coord_bottom_right_y),
-                                "confidence": float(markup.confidence)
-                            } for markup in frame.markups
-                        ]
-                    } for frame in resp
-                ]
-            }
+            for markup in resp[0].markups:
+                label_id = label_map[label_id_to_name[markup.label_id]]
+                coord_top_left_x = markup.coord_top_left_x
+                coord_top_left_y = markup.coord_top_left_y
+                coord_bottom_right_x = markup.coord_bottom_right_x
+                coord_bottom_right_y = markup.coord_bottom_right_y
 
-        # Конвертируем JSON в строку
-        json_data = json.dumps(json_data, indent=4, ensure_ascii=False)
+                # Вычисление центра и размеров
+                center_x = (coord_top_left_x + coord_bottom_right_x) / 2 / content.width
+                center_y = (coord_top_left_y + coord_bottom_right_y) / 2 / content.height
+                width = (coord_bottom_right_x - coord_top_left_x) / content.width
+                height = (coord_bottom_right_y - coord_top_left_y) / content.height
+
+                yolov8_annotations.append(f"{0} {label_id} {center_x} {center_y} {width} {height}")
+        elif type(content) == Video:
+            for frame in resp:
+                for markup in frame.markups:
+                    label_id = label_map[label_id_to_name[markup.label_id]]
+                    coord_top_left_x = markup.coord_top_left_x
+                    coord_top_left_y = markup.coord_top_left_y
+                    coord_bottom_right_x = markup.coord_bottom_right_x
+                    coord_bottom_right_y = markup.coord_bottom_right_y
+
+                    # Вычисление центра и размеров
+                    center_x = (coord_top_left_x + coord_bottom_right_x) / 2 / content.width
+                    center_y = (coord_top_left_y + coord_bottom_right_y) / 2 / content.height
+                    width = (coord_bottom_right_x - coord_top_left_x) / content.width
+                    height = (coord_bottom_right_y - coord_top_left_y) / content.height
+
+                    yolov8_annotations.append(f"{frame.frame_offset} {label_id} {center_x} {center_y} {width} {height}")
 
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
         async with aiofiles.open(temp_file.name, mode='w', encoding='utf-8') as f:
-            await f.write(json_data)
+            await f.write("\n".join(yolov8_annotations))
 
         # Используем FileResponse для отправки файла
-        return FileResponse(temp_file.name, media_type='application/json', filename='data.json')
-
+        return FileResponse(temp_file.name, media_type='text/plain', filename='annotations.txt')
 
     async def change_content_status(
         self, content_id: uuid.UUID, new_status: VideoStatusOption
@@ -952,3 +1025,21 @@ class ProjectsEndpoints:
 
             res = Content.from_video_or_photo(content)
         return UnifiedResponse(data=res)
+
+    async def send_image_to_model_service(
+        self, image_path: str
+    ) -> Response:
+
+        data_to_send = {
+            "image_path": image_path,
+            "frame_id": str(uuid.uuid4())
+        }
+
+        message = await self._publisher.publish(
+            routing_key="to_yolo_model",
+            exchange_name="ToModels",
+            data={'data': data_to_send},
+            ensure=False,
+        )
+
+        return Response(content=str(message), media_type="application/json")

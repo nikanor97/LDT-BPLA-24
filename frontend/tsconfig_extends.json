@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "paths": {
+        "@root/*": ["src/*"],
+        "@components/*": ["src/Components/*"],
+        "@routes": ["src/Routes/Routes.ts"],
+        "@layouts": ["src/Layouts/index.tsx"],
+        "@pages/*": ["src/Pages/*"],
+        "@assets/*": ["src/Assets/*"],
+        "@containers/*": ["src/Containers/*"],
+        "@utils/*": ["src/Utils/*"],
+        "@redux/*": ["src/Redux/*"],
+        "@store": ["src/Redux/store.ts"],
+        "@api": ["src/Api/index"],
+        "@sagas": ["src/Sagas/root.ts"],
+        "@types": ["src/Types/index.ts"],
+        "@actions": ["src/Redux/actions.ts"],
+        "@modules/*": ["src/Modules/*"]
+        }
+    }
+}

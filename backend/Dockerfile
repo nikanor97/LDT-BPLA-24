@@ -7,8 +7,8 @@ ENV PYTHONPATH "${PYTHONPATH}:/code"
 
 RUN pip install pandas "poetry==$POETRY_VERSION"
 
-WORKDIR /code
-COPY . /code
+WORKDIR /app
+COPY . /app
 
 RUN apt update -y && apt install ffmpeg -y
 

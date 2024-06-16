@@ -64,7 +64,7 @@ class ProjectsRouter:
 
         self.router.add_api_route(
             path="/labels",
-            endpoint=self._projects_endpoints.get_labels_by_project,
+            endpoint=self._projects_endpoints.get_labels_by_project_TMP,
             response_model=UnifiedResponse[list[Label]],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
@@ -178,6 +178,13 @@ class ProjectsRouter:
             path="/download_detect_result",
             endpoint=self._projects_endpoints.download_detect_result,
             response_class=FileResponse,
+            methods=[METHOD.GET],
+            dependencies=[Depends(Auth(main_db_manager))],
+        )
+
+        self.router.add_api_route(
+            path="/send-image-to-model",
+            endpoint=self._projects_endpoints.send_image_to_model_service,
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
         )

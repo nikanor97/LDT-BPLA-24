@@ -1,0 +1,21 @@
+@import "./Fonts/fonts.css";
+
+body {
+    margin: 0;
+    font-family: 'CoFo Sans';
+    font-style: normal;
+    .ant-image-preview-img {
+        background: #fff;
+    }
+}
+
+a {
+    color: #43AED1;
+}
+
+a:hover {
+    color: #33849E;
+}
+
+$primaryColor: '#43AED1'
+
