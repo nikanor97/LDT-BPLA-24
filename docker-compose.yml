@@ -78,6 +78,14 @@ services:
     restart: on-failure
     depends_on:
       - rabbit
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: [ '1' ]
+              capabilities: [ gpu ]
+
 
 volumes:
   backend-media:
