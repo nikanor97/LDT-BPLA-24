@@ -5,6 +5,8 @@ import Logotype from '@root/Img/Logo.png';
 import {Row, Col} from 'antd';
 import UserAvatar from './Modules/UserAvatar/UserAvatar';
 import GridContainer from '@root/Components/GridContainer/GridContainer';
+import { Link } from 'react-router-dom';
+import routes from '@root/routes';
 
 type iHeader = {
     className?: string;
@@ -17,7 +19,7 @@ type iHeader = {
 const Header = (props: iHeader) => {
     const Logo = useMemo(() => {
         if (props.Logo) return props.Logo;
-        return <img style={{width: "146px", height: "32px"}} src={Logotype} alt="logo"/>
+        return <Link to={routes.main}><img style={{width: "146px", height: "32px"}} src={Logotype} alt="logo"/></Link>
     }, [props.Logo])
 
     const Content = useMemo(() => {

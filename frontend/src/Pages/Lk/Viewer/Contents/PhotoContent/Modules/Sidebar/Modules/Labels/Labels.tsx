@@ -4,6 +4,7 @@ import {usePhoto} from '../../../../Hooks/usePhoto';
 import {Collapse} from 'antd';
 import {useLabelsIntervals} from './Hooks/useLabelsIntervals';
 import CollapseHeader from './Modules/CollapseHeader/CollpaseHeader';
+import EmptyObject from '@root/Img/EmptyObjects.png'
 
 const Labels = () => {
     const labelsIntervals = useLabelsIntervals();
@@ -13,11 +14,25 @@ const Labels = () => {
 
     if (photo.status === 'created') {
         return (
-            <div className={styles.empty}>
+            <div className={styles.created}>
                 Детекция выполняется. Результаты будут доступны позже...
             </div>
         )
     }
+
+    if (labelsIntervals.length === 0) {
+        return (
+            <div className={styles.empty}>
+                <img className={styles.image} src={EmptyObject} alt='empty'/>
+                <span className={styles.text}>
+                    Объектов не обнаружено
+                </span>
+            </div>
+        )
+    }
+
+
+    console.log(labelsIntervals)
 
     return (
         <div className={styles.wrapper}>
@@ -27,7 +42,7 @@ const Labels = () => {
                         .map((interval, index) => {
                             if (!interval.label) return null;
                             return (
-                                <CollapseHeader interval={interval} />
+                                <CollapseHeader interval={interval} key={index}/>
                             )
                         })
                 }

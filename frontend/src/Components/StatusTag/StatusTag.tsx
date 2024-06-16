@@ -4,7 +4,7 @@ import styles from './StatusTag.module.scss';
 import classnames from 'classnames';
 
 
-export type StatusType = 'success' | 'default' | 'declined';
+export type StatusType = 'success' | 'default' | 'declined' | 'extracted';
 type iStatusTag = {
     text: string;
     type: StatusType;
@@ -16,6 +16,7 @@ const StatusTag = (props: iStatusTag) => {
         [styles.success]: props.type === 'success',
         [styles.default]: props.type === 'default',
         [styles.declined]: props.type === 'declined',
+        [styles.extracted]: props.type === 'extracted',
     })
     return (
         <div className={styles.tagWrapper}>
