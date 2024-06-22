@@ -26,6 +26,7 @@ const Markups = (props: iMarkups) => {
     const frame = useFrame();
     const [drawnRectangles, setDrawnRectangles] = useState<fabric.Rect[]>([]);
     const isShiftPressed = React.useRef(false);
+    const selectedLabel  = useSelector((state: PageState)=> state.Pages.LkViewer.photoMarkup.selectedLabel);
 
     const [recsInfo, setRecsInfo] = useState<newMarkup[]>([])
 
@@ -75,9 +76,9 @@ const Markups = (props: iMarkups) => {
                 top: offsetY,
                 width: 0,
                 height: 0,
-                stroke: 'black',
+                stroke:  getDefaultColor(selectedLabel?.color),
                 strokeWidth: 2,
-                fill: 'transparent',
+                fill: `${getDefaultColor(selectedLabel?.color)}15`,
                 hasControls: true,
                 lockScalingX: false,
                 lockScalingY: false,
@@ -108,7 +109,7 @@ const Markups = (props: iMarkups) => {
                         coord_top_left_y: rect.top ?? 0,
                         coord_bottom_right_x: offsetX,
                         coord_bottom_right_y: offsetY,
-                        label_id: "fff",
+                        label_id: selectedLabel?.id || "0",
                         frame_id: frame.id,
                 
                     }
@@ -122,7 +123,7 @@ const Markups = (props: iMarkups) => {
             rect = null;
         });
 
-    }, [drawnRectangles]);
+    }, [drawnRectangles, selectedLabel]);
 
     useEffect(()  => {
         if (drawnRectangles) {

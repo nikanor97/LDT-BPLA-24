@@ -8,6 +8,12 @@ const initialState: iState.Value = {
     playInterval: null,
     videoStatus: getShortState(),
     content_ids: getFullState(),
+    viewMode: "result",
+    photoMarkup: {
+        newMarkups: [],
+        changedMarkups: [],
+        selectedLabel: null
+    }
 };
 
 
@@ -61,6 +67,15 @@ export const Slice = createSlice({
             requestError(state.videoStatus),
 
         downloadResult: (state, action: PayloadAction<iActions.downloadResult>) => state,
+
+        setViewMode:  (state, action: PayloadAction<iActions.setViewMode>)  => {
+            state.viewMode = action.payload;
+        },
+        setSelectedLabel:  (state, action: PayloadAction<iActions.setSelectedLabel>)  => {
+            state.photoMarkup.selectedLabel = action.payload;
+        },
+        
+        
     }   
 });
 export const PageActions = Slice.actions;

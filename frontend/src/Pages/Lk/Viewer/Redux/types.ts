@@ -26,6 +26,12 @@ export declare namespace iState {
         playInterval: PlayInterval | null;
         videoStatus: RequestShortState;
         content_ids: RequestFullState<(Video.Item['content_id'] | Photo.Item['content_id'])[]>;
+        viewMode: "markup" | "result",
+        photoMarkup: {
+            newMarkups: Photo.Frames.Markup[],
+            changedMarkups: Photo.Frames.Markup[],
+            selectedLabel: Project.Label.Item | null;
+        }
     }
 }
 
@@ -49,6 +55,9 @@ export declare namespace iActions {
     type downloadResult = {
         content_id: (Video.Item['content_id'] | Photo.Item['content_id']);
     }
+
+    type setViewMode  = iState.Value['viewMode'];
+    type setSelectedLabel = Project.Label.Item;
 }
 
 export type PageState = PageStateGeneric<{

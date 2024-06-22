@@ -20,7 +20,7 @@ export const useColumns = ():Columns => {
             key:  'content_id',
             render: (value) => {
                 const momentValue = moment(value);
-                return momentValue.format('DD.MM.YYYY')
+                return momentValue.format('DD.MM.YYYY HH:mm') 
             }
         },
         {
