@@ -454,6 +454,7 @@ class ProjectsEndpoints:
                 session
             )
             res = [VerificationTagWithConfidence(
+                id=tag.id,
                 tagname=tag.tagname,
                 groupname=tag.groupname,
                 default_confidence=confidence_thresholds[label_map[tag_translation[tag.tagname]]]

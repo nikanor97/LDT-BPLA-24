@@ -270,6 +270,7 @@ class ProjectRead(ProjectBase):
 
 
 class VerificationTagWithConfidence(BaseModel):
+    id: uuid.UUID
     tagname: str
     groupname: str
     default_confidence: Decimal
