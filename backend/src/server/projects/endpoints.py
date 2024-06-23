@@ -632,9 +632,12 @@ class ProjectsEndpoints:
 
     async def get_projects_all_stats(
         self,
+        token: Annotated[str, Depends(oauth2_scheme)]
     ) -> UnifiedResponse[BplaProjectStats]:
+        user_id = get_user_id_from_token(token)
         async with self._main_db_manager.projects.make_autobegin_session() as session:
-            content = await self._main_db_manager.projects.get_all_content(session)
+            projects_with_users = await self._main_db_manager.projects.get_projects_with_users_ids(session, user_id)
+            content = await self._main_db_manager.projects.get_content_by_projects(session, [p.id for p in projects_with_users])
 
         photos = [c for c in content if type(c) == Photo]
         videos = [c for c in content if type(c) == Video]

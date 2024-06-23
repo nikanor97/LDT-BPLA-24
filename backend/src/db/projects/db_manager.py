@@ -209,6 +209,17 @@ class ProjectsDbManager(BaseDbManager):
         photos = (await session.execute(stmt)).scalars().all()
         return videos + photos
 
+    async def get_content_by_projects(
+        self,
+        session: AsyncSession,
+        project_ids: list[uuid.UUID]
+    ) -> list[Video | Photo]:
+        stmt = select(Video).where(col(Video.project_id).in_(project_ids))
+        videos = (await session.execute(stmt)).scalars().all()
+        stmt = select(Photo).where(col(Photo.project_id).in_(project_ids))
+        photos = (await session.execute(stmt)).scalars().all()
+        return videos + photos
+
     async def get_frame(self, session: AsyncSession, frame_id: uuid.UUID) -> Frame:
         return await Frame.by_id(session, frame_id)
 
