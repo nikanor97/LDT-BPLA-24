@@ -15,7 +15,10 @@ export declare namespace Api {
     type iCreateProject = {
         name: string;
         msg_receiver: string
-        tags_ids: string[];
+        tags: {
+            tag_id: string,
+            conf: 0 | 1 | null | undefined;
+        }[]
     }
     type oCreateProject = Project.Info;
 

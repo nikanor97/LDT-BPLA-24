@@ -28,7 +28,7 @@ export declare namespace iState {
         content_ids: RequestFullState<(Video.Item['content_id'] | Photo.Item['content_id'])[]>;
         viewMode: "markup" | "result",
         photoMarkup: {
-            newMarkups: Photo.Frames.Markup[],
+            newMarkups: Omit<Photo.Frames.Markup, "confidence">[],
             changedMarkups: Photo.Frames.Markup[],
             selectedLabel: Project.Label.Item | null;
         }
@@ -58,6 +58,7 @@ export declare namespace iActions {
 
     type setViewMode  = iState.Value['viewMode'];
     type setSelectedLabel = Project.Label.Item;
+    type setPhotoNewMarkups = iState.Value["photoMarkup"]["newMarkups"];
 }
 
 export type PageState = PageStateGeneric<{

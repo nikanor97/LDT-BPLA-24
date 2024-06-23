@@ -74,6 +74,10 @@ export const Slice = createSlice({
         setSelectedLabel:  (state, action: PayloadAction<iActions.setSelectedLabel>)  => {
             state.photoMarkup.selectedLabel = action.payload;
         },
+        setPhotoNewMarkups:  (state, action: PayloadAction<iActions.setPhotoNewMarkups>)  =>  {
+            state.photoMarkup.newMarkups  = action.payload;
+        },
+        
         
         
     }   

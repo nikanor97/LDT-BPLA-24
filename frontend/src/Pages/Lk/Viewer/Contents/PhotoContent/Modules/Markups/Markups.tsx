@@ -1,8 +1,9 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import styles from './Markups.module.scss';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { PageState } from '../../../../Redux/types';
+import { PageActions } from '../../../../Redux/Store';
 import { fabric } from 'fabric';
 import { usePhoto } from '../../Hooks/usePhoto';
 import { useFrame } from '../../Hooks/useFrame';
@@ -15,20 +16,19 @@ type iMarkups = {
     height: number;
 }
 
-type newMarkup = Omit<Markup, "id" | "confidence">;
+type newMarkup = Omit<Markup, "confidence">;
 
 const Markups = (props: iMarkups) => {
     const photo = usePhoto();
     const labels = useSelector((state: PageState) => state.Pages.LkViewer.labels.data);
     const frames = useSelector((state: PageState) => state.Pages.LkViewer.content.data?.frames);
+    const newMarkups = useSelector((state: PageState) => state.Pages.LkViewer.photoMarkup.newMarkups)
     const canvas = React.useRef<HTMLCanvasElement>(null);
     const fabricRef = React.useRef<fabric.Canvas>();
     const frame = useFrame();
-    const [drawnRectangles, setDrawnRectangles] = useState<fabric.Rect[]>([]);
     const isShiftPressed = React.useRef(false);
     const selectedLabel  = useSelector((state: PageState)=> state.Pages.LkViewer.photoMarkup.selectedLabel);
-
-    const [recsInfo, setRecsInfo] = useState<newMarkup[]>([])
+    const dispatch = useDispatch();
 
     useEffect(() => {
         if (!canvas.current) return;
@@ -62,7 +62,7 @@ const Markups = (props: iMarkups) => {
     }, [handleKeyDown, handleKeyUp]);
 
     useEffect(() => {
-        if (!fabricRef.current) return;
+        if (!fabricRef.current || !selectedLabel) return;
 
         let rect: fabric.Rect | null = null;
 
@@ -79,10 +79,10 @@ const Markups = (props: iMarkups) => {
                 stroke:  getDefaultColor(selectedLabel?.color),
                 strokeWidth: 2,
                 fill: `${getDefaultColor(selectedLabel?.color)}15`,
-                hasControls: true,
-                lockScalingX: false,
-                lockScalingY: false,
-                lockRotation: false,
+                // hasControls: true,
+                // lockScalingX: false,
+                // lockScalingY: false,
+                // lockRotation: false,
                 strokeUniform: true,
             });
         });
@@ -105,33 +105,56 @@ const Markups = (props: iMarkups) => {
             if (rect) {
                 if (frame) {
                     const recInfo: newMarkup  = {
-                        coord_top_left_x: rect.left ?? 0,
-                        coord_top_left_y: rect.top ?? 0,
-                        coord_bottom_right_x: offsetX,
-                        coord_bottom_right_y: offsetY,
+                        coord_top_left_x: (rect.left && rect.left / props.scale) ?? 0,
+                        coord_top_left_y: (rect.top && rect.top / props.scale) ?? 0,
+                        coord_bottom_right_x: offsetX / props.scale,
+                        coord_bottom_right_y: offsetY / props.scale,
                         label_id: selectedLabel?.id || "0",
                         frame_id: frame.id,
-                
+                        id: `${rect.left}${rect.top}${offsetX}${offsetY}${selectedLabel?.id}`
                     }
-                    setRecsInfo([...recsInfo, recInfo])
+                    dispatch(PageActions.setPhotoNewMarkups([...newMarkups, recInfo]))
                 }
-
-                console.log(recsInfo);
             
-                setDrawnRectangles([...drawnRectangles, rect]);
             }
             rect = null;
         });
 
-    }, [drawnRectangles, selectedLabel]);
+    }, [newMarkups, selectedLabel]);
+
 
     useEffect(()  => {
-        if (drawnRectangles) {
-            drawnRectangles.forEach((rect)  => {
+        if (!fabricRef.current || !labels) return;
+
+        if (newMarkups.length > 0) {
+            newMarkups.forEach((markup) => {
+                const label = labels[markup.label_id];
+                const width = Math.abs(markup.coord_bottom_right_x - markup.coord_top_left_x) * props.scale;
+                const height = Math.abs(markup.coord_bottom_right_y - markup.coord_top_left_y) * props.scale;
+                const top = markup.coord_top_left_y * props.scale;
+                const left = markup.coord_top_left_x * props.scale;
+                const color = getDefaultColor(label.color);
+    
+                const rect = new fabric.Rect({
+                    top: top,
+                    left: left,
+                    width: width,
+                    height: height,
+                    stroke: color,
+                    strokeWidth: 2,
+                    fill: `${color}15`,
+                    // hasControls: true,
+                    // lockScalingX: false,
+                    // lockScalingY: false,
+                    // lockRotation: false,
+                    strokeUniform: true,
+                    data: markup.frame_id
+                });
+    
                 fabricRef.current?.add(rect);
-            })
+            });
         }
-    }, [drawnRectangles])
+    }, [newMarkups])
 
     useEffect(() => {
         if (!fabricRef.current || !labels || !frame) return;
