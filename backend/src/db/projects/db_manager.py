@@ -551,9 +551,14 @@ class ProjectsDbManager(BaseDbManager):
         markups_to_delete: list[uuid.UUID],
         new_markups: list[FrameMarkup],
     ) -> list[FrameMarkup]:
-        stmt = select(Frame).where(Frame.id == frame_id)
-        frame = (await session.execute(stmt)).scalar_one()
-        frame.markups = [markup for markup in frame.markups if markup.id not in markups_to_delete]
-        session.add(frame)
+        # stmt = select(Frame).where(Frame.id == frame_id)
+        # frame = (await session.execute(stmt)).scalar_one()
+        stmt = select(FrameMarkup).where(col(FrameMarkup.id).in_(markups_to_delete))
+        frame_markups = (await session.execute(stmt)).scalars().all()
+        for frame_markup in frame_markups:
+            await session.delete(frame_markup)
+        await session.flush()
+        # frame.markups = [markup for markup in frame.markups if markup.id not in markups_to_delete]
+        # session.add(frame)
         session.add_all(new_markups)
         return new_markups
