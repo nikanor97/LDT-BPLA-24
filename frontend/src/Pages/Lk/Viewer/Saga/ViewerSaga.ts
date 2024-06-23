@@ -72,7 +72,6 @@ const sendPhotoMarkups = function*(action: PayloadAction<iActions.sendPhotoMarku
     try {
         yield* call(Api.Projects.sendPhotoMarkup, action.payload.frames);
         message.success("Данные для дообучения модели отправлены")
-        console.log('success')
         action.payload.onSuccess && action.payload.onSuccess();
         
     } catch (ex) {

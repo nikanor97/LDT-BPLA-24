@@ -74,7 +74,6 @@ const downloadResult = function* (action: PayloadAction<iActions.downloadResult>
         const data: BlobPart = response.data as unknown as BlobPart;
         if (!data) throw new Error("Ошибка скачивания документа");
         const docType = response.headers["content-type"];
-        console.log(docType);
         if (data) {
             const blob = new Blob([data]);
             const url = window.URL.createObjectURL(blob);
@@ -86,7 +85,6 @@ const downloadResult = function* (action: PayloadAction<iActions.downloadResult>
                 const filename = response.headers["content-disposition"]
                     .replace("attachment; filename=", "")
                     .replaceAll("\"", "");
-                console.log(filename);
                 link.setAttribute("download", decodeURIComponent(filename));
             }
             document.body.appendChild(link);
