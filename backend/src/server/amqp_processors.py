@@ -74,19 +74,6 @@ async def yolo_markup_processor(
             pass
         await session.flush()
 
-        content = await main_db_manager.projects.get_content_by_frame_id(session, frame_id)
-        project = await Project.by_id(session, project_id)
-
-        if content.notification_sent is False and project.msg_receiver is not None:
-            application = Application.builder().token(settings.TELEGRAM_TOKEN).build()
-            if isinstance(content, Video):
-                base_path = settings.MEDIA_DIR / "video"
-            else:
-                base_path = settings.MEDIA_DIR / "photo"
-            notification_success = await notify_user(application, project.msg_receiver, base_path / content.source_url)
-            if notification_success:
-                await main_db_manager.projects.set_notification_sent_status(session, content.id, status=True)
-
         labels: list[Label] = await main_db_manager.projects.get_labels_by_project(session, project_id)
 
     label_class_to_id = {label_map[label.name]: label.id for label in labels if label.name in label_map}
@@ -120,5 +107,18 @@ async def yolo_markup_processor(
             content.status = VideoStatusOption.in_progress
 
         session.add_all(frame_markup_items)
+
+        content = await main_db_manager.projects.get_content_by_frame_id(session, frame_id)
+        project = await Project.by_id(session, project_id)
+
+        if content.notification_sent is False and project.msg_receiver is not None:
+            application = Application.builder().token(settings.TELEGRAM_TOKEN).build()
+            if isinstance(content, Video):
+                base_path = settings.MEDIA_DIR / "video"
+            else:
+                base_path = settings.MEDIA_DIR / "photo"
+            notification_success = await notify_user(application, project.msg_receiver, base_path / content.source_url)
+            if notification_success:
+                await main_db_manager.projects.set_notification_sent_status(session, content.id, status=True)
 
     logger.info(f"New {len(frame_markup_items)} frame markup items created")
