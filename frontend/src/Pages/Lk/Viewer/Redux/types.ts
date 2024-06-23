@@ -3,6 +3,7 @@ import {PageStateGeneric} from '@root/Redux/store';
 import {Slice} from './Store';
 import {Api} from '@root/Api/Projects/types';
 import {Viewer, Video, Project, Photo} from '@root/Types';
+import { Markup } from "@root/Types/Photo/Frames";
 
 
 export declare namespace iState {
@@ -29,7 +30,7 @@ export declare namespace iState {
         viewMode: "markup" | "result",
         photoMarkup: {
             newMarkups: Omit<Photo.Frames.Markup, "confidence">[],
-            changedMarkups: Photo.Frames.Markup[],
+            changedMarkups: string[],
             selectedLabel: Project.Label.Item | null;
         }
     }
@@ -49,7 +50,9 @@ export declare namespace iActions {
     type updateVideoMeta = Partial<Video.Item>
 
     type setPlayInterval = iState.PlayInterval | null;
-    type changeContentStatus = Api.iChangeContentStatus;
+    type changeContentStatus = Api.iChangeContentStatus & {
+        onSuccess?: () => void
+    };
     type _changeContenttatusSuccess = Api.oChangeContentStatus;
     type setImageIndex = number;
     type downloadResult = {
@@ -59,6 +62,17 @@ export declare namespace iActions {
     type setViewMode  = iState.Value['viewMode'];
     type setSelectedLabel = Project.Label.Item;
     type setPhotoNewMarkups = iState.Value["photoMarkup"]["newMarkups"];
+    type deletePhotoNewMarkup = Photo.Frames.Markup["id"]
+    type deleteOldMarkups = Photo.Frames.Markup["id"]
+    type sendPhotoMarkups = {
+        frames: {
+            content_id: string;
+            frame_id: string;
+            new_markups: Omit<Markup, "confidence">[];
+            deleted_markups: string[];
+        }[],
+        onSuccess?: () => void
+    }
 }
 
 export type PageState = PageStateGeneric<{

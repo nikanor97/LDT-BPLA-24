@@ -48,10 +48,9 @@ export type ItemFull = {
 export declare namespace Tags {
     type Id = string;
     type Item = {
-        created_at: string;
         groupname: string;
         id: Id;
         tagname: string;
-        updated_at: string;
+        default_confidence: 0 | 1 | null;
     }
 }

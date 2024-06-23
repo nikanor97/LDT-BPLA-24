@@ -59,7 +59,7 @@ const Sidebar = () => {
                                         content_id: photo.content_id
                                     }));
                                 }}>
-                            Скачать результаты
+                                Скачать результаты
                             </Button>
                         )
                     }

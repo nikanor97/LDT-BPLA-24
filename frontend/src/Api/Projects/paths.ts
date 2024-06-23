@@ -16,5 +16,6 @@ export default {
     getProjectContent: '/v1/projects/content-by-project',
     getContentInfo: '/v1/projects/content-info',
     getContentIds: '/v1/projects/content-ids-by-project',
-    downloadResult: '/v1/projects/download_detect_result'
+    downloadResult: '/v1/projects/download_detect_result',
+    sendPhotoMarkups: '/v1/projects/send-photo-markup-to-project',
 }

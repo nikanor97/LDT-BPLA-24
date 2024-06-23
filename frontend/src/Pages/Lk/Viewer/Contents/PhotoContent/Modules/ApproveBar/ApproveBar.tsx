@@ -15,10 +15,28 @@ const ApproveBar = () => {
     const data = useSelector((state: PageState) => state.Pages.LkViewer.content.data?.info);
     const state = useSelector((state:PageState) => state.Pages.LkViewer.videoStatus);
     const viewMode = useSelector((state:PageState)  => state.Pages.LkViewer.viewMode);
+    const photoMarkup = useSelector((state:PageState)  => state.Pages.LkViewer.photoMarkup);
+    const frames = useSelector((state: PageState) => state.Pages.LkViewer.content.data?.frames);
     const {previousId, nextId} = useGetPrevAndNextIds();
     const history  = useHistory();
     const dispatch = useDispatch();
     if (!data) return null;
+
+    const goToNext  = ()  =>  {
+        if (nextId) {
+            dispatch(PageActions.getContentInfo({content_id: nextId}))
+            dispatch(PageActions.erasePhotoMarkup());
+            history.push(routes.lk.viewer(nextId))
+        }
+    };
+
+    const goToPrevious = ()  =>  {
+        if (previousId) {
+            dispatch(PageActions.getContentInfo({content_id: previousId}))
+            dispatch(PageActions.erasePhotoMarkup());
+            history.push(routes.lk.viewer(previousId))
+        }
+    }
 
     return (
         <div className={styles.wrapper}>
@@ -27,7 +45,21 @@ const ApproveBar = () => {
                     <Space size={12}>
                         <Button
                             onClick={() => {
-                                dispatch(PageActions.setViewMode(viewMode === "markup" ? "result" : "markup"))
+                                if (viewMode ===  "markup")  {
+                                    const sendData = [{
+                                        content_id: data.content_id,
+                                        frame_id: frames ? frames[0].id : "0",
+                                        new_markups: photoMarkup.newMarkups,
+                                        deleted_markups: photoMarkup.changedMarkups
+                                    }]
+                                    dispatch(PageActions.sendPhotoMarkups({
+                                        frames: sendData,
+                                        onSuccess: () => dispatch(PageActions.setViewMode("result"))
+                                    }))
+                                } else {
+                                    dispatch(PageActions.setViewMode("markup"))
+                                }
+
                             }}
                         >
                             {viewMode === "markup" ?  "Закончить разметку"  :  "Разметить"}
@@ -44,18 +76,19 @@ const ApproveBar = () => {
                                         }))
                                     }}
                                     danger>
-                            Отклонить
+                                    Отклонить
                                 </Button>
                                 <Button 
                                     onClick={() => {
                                         dispatch(PageActions.changeContentStatus({
                                             content_id: data.content_id,
-                                            new_status: 'approved'
+                                            new_status: 'approved',
+                                            onSuccess: goToNext
                                         }))
                                     }}
                                     loading={state.fetching}
                                     type="primary">
-                            Принять
+                                    Принять
                                 </Button>
                             </>
                         )}
@@ -64,24 +97,14 @@ const ApproveBar = () => {
                                 <Button
                                     disabled={!previousId}
                                     className={styles.iconButton}
-                                    onClick={() => {
-                                        if (previousId) {
-                                            dispatch(PageActions.getContentInfo({content_id: previousId}))
-                                            history.push(routes.lk.viewer(previousId))
-                                        }
-                                    }}
+                                    onClick={goToPrevious}
                                 >
                                     <Previous />
                                 </Button>
                                 <Button
                                     disabled={!nextId}
                                     className={styles.iconButton}
-                                    onClick={() => {
-                                        if (nextId) {
-                                            dispatch(PageActions.getContentInfo({content_id: nextId}))
-                                            history.push(routes.lk.viewer(nextId))
-                                        }
-                                    }}>
+                                    onClick={goToNext}>
                                     <Next />
                                 </Button>
                             </>

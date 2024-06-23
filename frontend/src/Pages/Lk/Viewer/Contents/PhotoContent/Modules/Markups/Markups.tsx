@@ -9,6 +9,7 @@ import { usePhoto } from '../../Hooks/usePhoto';
 import { useFrame } from '../../Hooks/useFrame';
 import { getDefaultColor } from '@root/Utils/Labels/getDefaultColor';
 import { Markup } from '@root/Types/Photo/Frames';
+import { Transform } from 'fabric/fabric-impl';
 
 type iMarkups = {
     scale: number;
@@ -22,7 +23,9 @@ const Markups = (props: iMarkups) => {
     const photo = usePhoto();
     const labels = useSelector((state: PageState) => state.Pages.LkViewer.labels.data);
     const frames = useSelector((state: PageState) => state.Pages.LkViewer.content.data?.frames);
-    const newMarkups = useSelector((state: PageState) => state.Pages.LkViewer.photoMarkup.newMarkups)
+    const newMarkups = useSelector((state: PageState) => state.Pages.LkViewer.photoMarkup.newMarkups);
+    const changedMarkups = useSelector((state: PageState) => state.Pages.LkViewer.photoMarkup.changedMarkups)
+    const sidebarMode = useSelector((state: PageState)  => state.Pages.LkViewer.viewMode);
     const canvas = React.useRef<HTMLCanvasElement>(null);
     const fabricRef = React.useRef<fabric.Canvas>();
     const frame = useFrame();
@@ -30,8 +33,43 @@ const Markups = (props: iMarkups) => {
     const selectedLabel  = useSelector((state: PageState)=> state.Pages.LkViewer.photoMarkup.selectedLabel);
     const dispatch = useDispatch();
 
+    var deleteIcon = "data:image/svg+xml,%3C%3Fxml version='1.0' encoding='utf-8'%3F%3E%3C!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'%3E%3Csvg version='1.1' id='Ebene_1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='595.275px' height='595.275px' viewBox='200 215 230 470' xml:space='preserve'%3E%3Ccircle style='fill:%23F44336;' cx='299.76' cy='439.067' r='218.516'/%3E%3Cg%3E%3Crect x='267.162' y='307.978' transform='matrix(0.7071 -0.7071 0.7071 0.7071 -222.6202 340.6915)' style='fill:white;' width='65.545' height='262.18'/%3E%3Crect x='266.988' y='308.153' transform='matrix(0.7071 0.7071 -0.7071 0.7071 398.3889 -83.3116)' style='fill:white;' width='65.544' height='262.179'/%3E%3C/g%3E%3C/svg%3E";
+
+    var img = document.createElement('img');
+    img.src = deleteIcon;
+
+    const deleteObject = (_: MouseEvent, transform: Transform) => {
+        let target = transform.target;
+
+        fabricRef.current?.remove(target);
+        if (target.data.new) {
+            dispatch(PageActions.deletePhotoNewMarkup(target.data.id));
+        } else {
+            dispatch(PageActions.deleteOldMarkups(target.data.id));
+        }
+        return true;
+    }
+
+    const renderIcon = (ctx: CanvasRenderingContext2D, left: number, top: number, styleOverride: any, fabricObject: fabric.Object) => {
+        var size = 24;
+        ctx.save();
+        ctx.translate(left, top);
+        ctx.rotate(fabric.util.degreesToRadians(fabricObject.angle ? fabricObject.angle : 0));
+        ctx.drawImage(img, -size/2, -size/2, size, size);
+        ctx.restore();
+    }
+
     useEffect(() => {
         if (!canvas.current) return;
+        fabric.Object.prototype.controls.deleteControl = new fabric.Control({
+            x: 0.5,
+            y: -0.4,
+            offsetY: 16,
+            cursorStyle: 'pointer',
+            mouseUpHandler: deleteObject,
+            render: renderIcon,
+        });
+        
 
         const result = new fabric.Canvas(canvas.current, {
             isDrawingMode: false // Disable default drawing mode
@@ -79,10 +117,6 @@ const Markups = (props: iMarkups) => {
                 stroke:  getDefaultColor(selectedLabel?.color),
                 strokeWidth: 2,
                 fill: `${getDefaultColor(selectedLabel?.color)}15`,
-                // hasControls: true,
-                // lockScalingX: false,
-                // lockScalingY: false,
-                // lockRotation: false,
                 strokeUniform: true,
             });
         });
@@ -144,14 +178,22 @@ const Markups = (props: iMarkups) => {
                     strokeWidth: 2,
                     fill: `${color}15`,
                     // hasControls: true,
-                    // lockScalingX: false,
-                    // lockScalingY: false,
-                    // lockRotation: false,
+                    lockScalingX: true,
+                    lockScalingY: true,
+                    lockRotation: true,
+                    lockMovementX: true,
+                    lockMovementY: true,
                     strokeUniform: true,
-                    data: markup.frame_id
+                    hasRotatingPoint: false,
+                    data: {
+                        frame_id: markup.frame_id,
+                        label_id: markup.label_id,
+                        id: markup.id,
+                        new: true
+                    }
                 });
-    
-                fabricRef.current?.add(rect);
+                const sameMarkup = fabricRef.current?.getObjects().filter((obj)  =>  obj.data?.id === markup.id);
+                if (sameMarkup && sameMarkup.length === 0) fabricRef.current?.add(rect);
             });
         }
     }, [newMarkups])
@@ -160,6 +202,7 @@ const Markups = (props: iMarkups) => {
         if (!fabricRef.current || !labels || !frame) return;
 
         frame.markups.forEach((markup) => {
+            if (changedMarkups.includes(markup.id)) return null;
             const label = labels[markup.label_id];
             const width = Math.abs(markup.coord_bottom_right_x - markup.coord_top_left_x) * props.scale;
             const height = Math.abs(markup.coord_bottom_right_y - markup.coord_top_left_y) * props.scale;
@@ -175,15 +218,23 @@ const Markups = (props: iMarkups) => {
                 stroke: color,
                 strokeWidth: 2,
                 fill: `${color}15`,
-                hasControls: true,
-                lockScalingX: false,
-                lockScalingY: false,
-                lockRotation: false,
+                // hasControls: true,
+                lockScalingX: true,
+                lockScalingY: true,
+                lockRotation: true,
+                lockMovementX: true,
+                lockMovementY: true,
                 strokeUniform: true,
-                data: frame.id
+                hasRotatingPoint: false,
+                data: {
+                    frame_id: frame.id,
+                    label_id: markup.label_id,
+                    id: markup.id,
+                    new: false
+                }
             });
-
-            fabricRef.current?.add(rect);
+            const sameMarkup = fabricRef.current?.getObjects().filter((obj)  =>  obj.data?.id === markup.id);
+            if (sameMarkup && sameMarkup.length === 0) fabricRef.current?.add(rect);
         });
     }, [labels, frame, props.scale]);
 
@@ -193,6 +244,22 @@ const Markups = (props: iMarkups) => {
             fabricRef.current.setHeight(props.height * props.scale);
         }
     }, [props.scale]);
+
+    useEffect(()  =>  {
+        if (fabricRef.current) {
+            if (sidebarMode === "markup") {
+                fabricRef.current.getObjects().forEach((obj)  =>  {
+                    obj.selectable = true;
+                })
+            } else {
+                fabricRef.current.getObjects().forEach((obj)  =>  {
+                    obj.selectable = false;
+                })
+            }
+            fabricRef.current.discardActiveObject();
+            fabricRef.current.renderAll();
+        }
+    }, [sidebarMode])
 
     if (!photo || !labels || !frames) return null;
 

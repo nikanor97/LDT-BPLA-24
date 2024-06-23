@@ -17,7 +17,7 @@ export const useLabelsIntervals = () => {
                 .reduce((acc, labelData) => {
                     if (acc.start === null || acc.current === null) {
                     //Запись первого значения
-
+                        
                         acc.buffer.push({
                             frame: labelData.frame,
                             markup: labelData.markup

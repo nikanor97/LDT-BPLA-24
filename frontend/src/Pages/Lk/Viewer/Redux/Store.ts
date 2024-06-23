@@ -74,12 +74,22 @@ export const Slice = createSlice({
         setSelectedLabel:  (state, action: PayloadAction<iActions.setSelectedLabel>)  => {
             state.photoMarkup.selectedLabel = action.payload;
         },
+        eraseSelectedLabel:  (state)  => {
+            state.photoMarkup.selectedLabel = initialState.photoMarkup.selectedLabel;
+        },
         setPhotoNewMarkups:  (state, action: PayloadAction<iActions.setPhotoNewMarkups>)  =>  {
             state.photoMarkup.newMarkups  = action.payload;
         },
-        
-        
-        
+        deletePhotoNewMarkup: (state, action: PayloadAction<iActions.deletePhotoNewMarkup>) => {
+            state.photoMarkup.newMarkups = state.photoMarkup.newMarkups.filter(markup => markup.id !== action.payload);
+        },
+        erasePhotoMarkup: (state)  =>  {
+            state.photoMarkup = initialState.photoMarkup;
+        },
+        deleteOldMarkups: (state, action: PayloadAction<iActions.deleteOldMarkups>) => {
+            state.photoMarkup.changedMarkups.push(action.payload);
+        },
+        sendPhotoMarkups: (state, action: PayloadAction<iActions.sendPhotoMarkups>)  => state
     }   
 });
 export const PageActions = Slice.actions;

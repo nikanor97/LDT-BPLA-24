@@ -1,5 +1,5 @@
 import { Project } from '@root/Types'
-import React from 'react'
+import React, { useEffect } from 'react'
 import classnames from 'classnames'
 import { useDispatch, useSelector } from 'react-redux'
 import {PageActions} from '../../../../../../../../Redux/Store';
@@ -18,6 +18,12 @@ const Label = (props: LabelProps) => {
     const className = classnames(styles.wrapper, {
         [styles.selected]: selectedLabel?.id === props.label.id
     })
+
+    useEffect(()  =>  {
+        return () => {
+            dispatch(PageActions.eraseSelectedLabel())
+        }
+    }, []);
 
     return (
         <div

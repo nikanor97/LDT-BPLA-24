@@ -3,6 +3,7 @@ import {PageActions} from '../Redux/Store';
 import {iActions} from '../Redux/types';
 import Api from '@root/Api';
 import {PayloadAction} from "@reduxjs/toolkit";
+import { message } from "antd";
 
 
 const getProject = function*(action: PayloadAction<iActions.getProject>) {
@@ -65,9 +66,41 @@ const getProjectContentFlow = function*() {
     }
 }
 
+const downloadResult = function* (action: PayloadAction<iActions.downloadResult>) {
+    const {payload} = action;
+
+    try {
+        const response = yield* call(Api.Projects.downloadResult, payload.content_ids);
+        const data: BlobPart = response.data as unknown as BlobPart;
+        if (!data) throw new Error("Ошибка скачивания документа");
+        const docType = response.headers["content-type"];
+        console.log(docType);
+        if (data) {
+            const blob = new Blob([data]);
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            if (docType === "application/zip") {
+                link.setAttribute("download", "Results.zip");
+            } else {
+                const filename = response.headers["content-disposition"]
+                    .replace("attachment; filename=", "")
+                    .replaceAll("\"", "");
+                console.log(filename);
+                link.setAttribute("download", decodeURIComponent(filename));
+            }
+            document.body.appendChild(link);
+            link.click();
+        }
+    } catch (error) {
+        message.error("Ошибка скачивания документа");
+    }
+};
+
 export default function* () {
     yield* takeLatest(PageActions.getProject, getProject);
     yield* takeLatest(PageActions.deleteProject, deleteProject);
     yield* takeLatest(PageActions.uploadContent, uploadContent);
+    yield* takeLatest(PageActions.downloadResult, downloadResult)
     yield* fork(getProjectContentFlow);
 }

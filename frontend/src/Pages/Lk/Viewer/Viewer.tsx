@@ -20,6 +20,9 @@ const Viewer:App.Page = () => {
 
     useEffect(() => {
         dispatch(PageActions.getContentInfo({content_id: params.contentId}))
+        return () => {
+            dispatch(PageActions.erasePhotoMarkup());
+        }
     }, []);
 
     useEffect(() => {

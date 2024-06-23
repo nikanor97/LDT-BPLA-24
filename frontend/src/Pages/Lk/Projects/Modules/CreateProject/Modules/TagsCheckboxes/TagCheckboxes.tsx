@@ -52,6 +52,23 @@ const TagCheckboxes = (props: iTagCheckboxes) => {
                                                 const values = Array.from(new Set([...value, ...tagsIds]))
                                                 props.onChange(values);
                                             }
+                                            const tagsArr = tags.map((item) => {
+                                                return ({
+                                                    tag_id: item.id,
+                                                    conf: item.default_confidence
+                                                })
+                                            });
+                                            tagsArr.forEach((tag) => {
+                                                const find = props.tagsArray.find(
+                                                    item => item.tag_id === tag.tag_id
+                                                );
+                                                if (find) {
+                                                    return null;
+                                                } else {
+                                                    props.setTags && props.setTags((previous) => [...previous, tag]);
+                                                }
+                                            })
+
                                         }}
                                         className={styles.checkAll}>
                                         Выбрать все
@@ -91,14 +108,14 @@ const TagCheckboxes = (props: iTagCheckboxes) => {
                                                         <>
                                                             <span className={styles.confText}>Конфиденс: <Hint title={"Введите число от 0 до 1"} /></span>
                                                             <InputNumber
-                                                                defaultValue={0}
+                                                                defaultValue={tag.default_confidence || 0}
                                                                 min={0}
                                                                 max={1}
                                                                 step={0.05}
                                                                 onChange={(value) => {
                                                                     const myNextList = [...props.tagsArray];
                                                                     const changeTag = myNextList.find(
-                                                                    item => item.tag_id === tag.id
+                                                                        item => item.tag_id === tag.id
                                                                     );
                                                                     if (changeTag) {
                                                                         changeTag.conf = value;
@@ -109,7 +126,7 @@ const TagCheckboxes = (props: iTagCheckboxes) => {
                                                                             conf: value
                                                                         }]);
                                                                     }
-                                                            }}/>
+                                                                }}/>
                                                         </>
                                                     )}
 
