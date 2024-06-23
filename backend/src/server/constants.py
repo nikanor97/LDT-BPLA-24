@@ -64,6 +64,14 @@ label_map = {
     "fixed-wing_uav" : 4
 }
 
+confidence_thresholds = {
+    0: 0.5,
+    1: 0.3,  # может, 0.4
+    2: 0.3,
+    3: 0.3,
+    4: 0.4,
+}
+
 # tag_translation = {
 #     "Коридор внутри квартиры": "corridor",
 #     "Дверь": "door",

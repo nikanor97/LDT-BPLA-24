@@ -27,7 +27,7 @@ from src.server.projects.models import (
     ProjectsStats,
     ProjectWithUsers,
     BplaProjectStats,
-    Content,
+    Content, VerificationTagWithConfidence,
 )
 
 
@@ -97,7 +97,7 @@ class ProjectsRouter:
         self.router.add_api_route(
             path="/verification-tags",
             endpoint=self._projects_endpoints.get_all_verification_tags,
-            response_model=UnifiedResponse[list[VerificationTag]],
+            response_model=UnifiedResponse[list[VerificationTagWithConfidence]],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
         )

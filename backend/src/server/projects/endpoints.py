@@ -48,7 +48,7 @@ from src.db.projects.models import (
 from src.db.users.models import User
 from src.server.auth_utils import oauth2_scheme, get_user_id_from_token
 from src.server.common import UnifiedResponse, exc_to_str
-from src.server.constants import tag_translation, colors, tag_translation_eng_rus, label_map
+from src.server.constants import tag_translation, colors, tag_translation_eng_rus, label_map, confidence_thresholds
 from src.server.projects.models import (
     FramesWithMarkupRead,
     ContentMarkupCreate,
@@ -65,7 +65,7 @@ from src.server.projects.models import (
     ProjectScoresForFloor,
     ProjectScores,
     ScoreMapItemWithLabels, BplaProjectStats, Content, ContentTypeOption, ProjectContentTypeOption,
-    FramesWithMarkupCreate, MarkupListCreate, FrameMarkupReadMassive,
+    FramesWithMarkupCreate, MarkupListCreate, FrameMarkupReadMassive, VerificationTagWithConfidence,
 )
 from starlette.requests import Request
 from starlette.responses import Response, FileResponse, StreamingResponse
@@ -448,12 +448,17 @@ class ProjectsEndpoints:
 
     async def get_all_verification_tags(
         self,
-    ) -> UnifiedResponse[list[VerificationTag]]:
+    ) -> UnifiedResponse[list[VerificationTagWithConfidence]]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             tags = await self._main_db_manager.projects.get_all_verification_tags(
                 session
             )
-        return UnifiedResponse(data=tags)
+            res = [VerificationTagWithConfidence(
+                tagname=tag.tagname,
+                groupname=tag.groupname,
+                default_confidence=confidence_thresholds[label_map[tag_translation[tag.tagname]]]
+            ) for tag in tags]
+        return UnifiedResponse(data=res)
 
     async def write_gps(
         self, video_id: uuid.UUID, gps_coords: GpsCoords

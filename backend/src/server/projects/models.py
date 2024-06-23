@@ -269,6 +269,12 @@ class ProjectRead(ProjectBase):
     updated_at: datetime
 
 
+class VerificationTagWithConfidence(BaseModel):
+    tagname: str
+    groupname: str
+    default_confidence: Decimal
+
+
 class Content(BaseModel):
     project_id: uuid.UUID
     content_type: ContentTypeOption
