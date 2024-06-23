@@ -39,6 +39,7 @@ services:
       - backend-media:/app/media
       - ./backend/templates:/app/templates
       - ./backend/settings.py:/app/settings.py
+      - ./backend/users.json:/app/users.json
     ports:
       - "${BACKEND_PORT_ON_HOST}:${BACKEND_PORT}"
     restart: on-failure

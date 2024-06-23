@@ -10,7 +10,7 @@ import os
 import settings
 
 # Файл для хранения пользователей
-USERS_FILE = 'users.json'
+USERS_FILE = settings.BASE_DIR / 'users.json'
 
 
 # Функция для загрузки пользователей из файла
@@ -38,6 +38,7 @@ async def start(update: Update, context: CallbackContext) -> None:
 # Функция для отправки уведомлений
 async def notify_user(application: Application, username, image_path) -> bool:
     users = load_users()
+    print(users)
     if username in users:
         chat_id = users[username]
         if os.path.exists(image_path):
