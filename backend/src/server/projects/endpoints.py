@@ -2,6 +2,7 @@ import io
 import json
 import os
 import random
+import re
 import tempfile
 import uuid
 from collections import Counter, defaultdict
@@ -311,19 +312,60 @@ class ProjectsEndpoints:
                 data, status_code=206, headers=headers, media_type="video/mp4"
             )
 
-    async def get_video_file(self, video_id: uuid.UUID):
+    # async def get_video_file(self, video_id: uuid.UUID):
+    #     try:
+    #         async with self._main_db_manager.projects.make_autobegin_session() as session:
+    #             video_db = await self._main_db_manager.projects.get_video(
+    #                 session, video_id
+    #             )
+    #             # TODO: make source_url not None in models and remove type ignore bolow
+    #             video_src = settings.MEDIA_DIR / "video" / video_db.source_url  # type: ignore
+    #             os.makedirs(settings.MEDIA_DIR / "video", exist_ok=True)
+    #     except NoResultFound as e:
+    #         raise HTTPException(status_code=404, detail=e.args)
+    #
+    #     return FileResponse(video_src, media_type="video/mp4")
+
+    async def get_video_file(self, video_id: uuid.UUID, request: Request):
         try:
             async with self._main_db_manager.projects.make_autobegin_session() as session:
-                video_db = await self._main_db_manager.projects.get_video(
-                    session, video_id
-                )
-                # TODO: make source_url not None in models and remove type ignore bolow
+                video_db = await self._main_db_manager.projects.get_video(session, video_id)
+                # TODO: make source_url not None in models and remove type ignore below
                 video_src = settings.MEDIA_DIR / "video" / video_db.source_url  # type: ignore
                 os.makedirs(settings.MEDIA_DIR / "video", exist_ok=True)
         except NoResultFound as e:
             raise HTTPException(status_code=404, detail=e.args)
 
-        return FileResponse(video_src, media_type="video/mp4")
+        file_size = os.path.getsize(video_src)
+        range_header = request.headers.get('Range')
+        if range_header:
+            range_match = re.search(r'bytes=(\d+)-(\d+)?', range_header)
+            if range_match:
+                start = int(range_match.group(1))
+                end = range_match.group(2)
+                if end is None:
+                    end = file_size - 1
+                else:
+                    end = int(end)
+                chunk_size = (end - start) + 1
+
+                with open(video_src, 'rb') as video_file:
+                    video_file.seek(start)
+                    data = video_file.read(chunk_size)
+
+                headers = {
+                    'Content-Range': f'bytes {start}-{end}/{file_size}',
+                    'Accept-Ranges': 'bytes',
+                    'Content-Length': str(chunk_size),
+                    'Content-Type': 'video/mp4',
+                }
+                return Response(content=data, status_code=206, headers=headers)
+
+        headers = {
+            'Content-Length': str(file_size),
+            'Content-Type': 'video/mp4',
+        }
+        return FileResponse(video_src, headers=headers)
 
     async def streaming_example(self, video_id: uuid.UUID, request: Request):
         try:
