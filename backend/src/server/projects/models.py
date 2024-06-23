@@ -276,6 +276,22 @@ class VerificationTagWithConfidence(BaseModel):
     default_confidence: Decimal
 
 
+class ChangeMarkupsOnFrameNewMarkup(BaseModel):
+    label_id: uuid.UUID
+    frame_id: uuid.UUID
+    coord_top_left_x: Decimal
+    coord_top_left_y: Decimal
+    coord_bottom_right_x: Decimal
+    coord_bottom_right_y: Decimal
+
+
+class ChangeMarkupsOnFrame(BaseModel):
+    content_id: uuid.UUID
+    deleted_markups: list[uuid.UUID]
+    frame_id: uuid.UUID
+    new_markups: list[ChangeMarkupsOnFrameNewMarkup]
+
+
 class Content(BaseModel):
     project_id: uuid.UUID
     content_type: ContentTypeOption

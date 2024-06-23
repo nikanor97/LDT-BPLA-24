@@ -189,6 +189,14 @@ class ProjectsRouter:
             dependencies=[Depends(Auth(main_db_manager))],
         )
 
+        self.router.add_api_route(
+            path="/update-markups-for-frame",
+            endpoint=self._projects_endpoints.send_image_to_model_service,
+            # response_model=UnifiedResponse[list[FrameMarkup]],
+            methods=[METHOD.POST],
+            dependencies=[Depends(Auth(main_db_manager))],
+        )
+
 
 
 

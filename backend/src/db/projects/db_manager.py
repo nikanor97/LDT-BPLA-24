@@ -529,3 +529,31 @@ class ProjectsDbManager(BaseDbManager):
         content.status = status
         session.add(content)
         return content
+
+    async def set_notification_sent_status(
+        self,
+        session: AsyncSession,
+        content_id: uuid.UUID,
+        status: bool,
+    ) -> Photo | Video:
+        try:
+            content = await Video.by_id(session, content_id)
+        except NoResultFound:
+            content = await Photo.by_id(session, content_id)
+        content.notification_sent = status
+        session.add(content)
+        return content
+
+    async def update_markups_for_frame(
+        self,
+        session: AsyncSession,
+        frame_id: uuid.UUID,
+        markups_to_delete: list[uuid.UUID],
+        new_markups: list[FrameMarkup],
+    ) -> list[FrameMarkup]:
+        stmt = select(Frame).where(Frame.id == frame_id)
+        frame = (await session.execute(stmt)).scalar_one()
+        frame.markups = [markup for markup in frame.markups if markup.id not in markups_to_delete]
+        session.add(frame)
+        session.add_all(new_markups)
+        return new_markups

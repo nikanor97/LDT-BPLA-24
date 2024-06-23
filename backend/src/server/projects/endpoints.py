@@ -66,6 +66,7 @@ from src.server.projects.models import (
     ProjectScores,
     ScoreMapItemWithLabels, BplaProjectStats, Content, ContentTypeOption, ProjectContentTypeOption,
     FramesWithMarkupCreate, MarkupListCreate, FrameMarkupReadMassive, VerificationTagWithConfidence,
+    ChangeMarkupsOnFrameNewMarkup, ChangeMarkupsOnFrame,
 )
 from starlette.requests import Request
 from starlette.responses import Response, FileResponse, StreamingResponse
@@ -1068,3 +1069,24 @@ class ProjectsEndpoints:
         )
 
         return Response(content=str(message), media_type="application/json")
+
+    async def update_markup_for_frame(
+        self,
+        data: list[ChangeMarkupsOnFrame],
+    ):
+        async with self._main_db_manager.projects.make_autobegin_session() as session:
+            for data_item in data:
+                new_markups = [FrameMarkup(
+                    frame_id=data_item.frame_id,
+                    label_id=raw_markup.label_id,
+                    coord_top_left_x=raw_markup.coord_top_left_x,
+                    coord_top_left_y=raw_markup.coord_top_left_y,
+                    coord_bottom_right_x=raw_markup.coord_bottom_right_x,
+                    coord_bottom_right_y=raw_markup.coord_bottom_right_y,
+                    confidence=Decimal(1),
+                    created_by_model=False,
+                ) for raw_markup in data_item.new_markups]
+                markups = await self._main_db_manager.projects.update_markups_for_frame(
+                    session, data_item.frame_id, data_item.deleted_markups, new_markups
+                )
+        return Response(content="Markups updated")
