@@ -1,3 +1,3 @@
-export const getDefaultColor = (color?: string) => {
+export const getDefaultColor = (color?: string | undefined) => {
     return color || '#333333';
 }

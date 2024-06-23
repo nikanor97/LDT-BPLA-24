@@ -3,6 +3,7 @@ import {PageStateGeneric} from '@root/Redux/store';
 import {Slice} from './Store';
 import {Api} from '@root/Api/Projects/types';
 import {Video, Photo} from '@root/Types';
+import React from "react";
 
 export declare namespace iState {
     type Value = {
@@ -13,6 +14,7 @@ export declare namespace iState {
         }
         uploadContent: RequestFullState<Api.oUploadContent>;
         content: RequestFullState<Array<Video.Item | Photo.Item> | null>
+        selectedContent: React.Key[],
     }
 }
 
@@ -37,6 +39,10 @@ export declare namespace iActions {
 
     type getProjectContent  = Api.iGetProjectContent;
     type _getProjectContentSuccess = Api.oGetProjectContent;
+    type setSelectedContent = React.Key[];
+    type downloadResult = {
+        content_ids: React.Key[];
+    }
 }
 
 export type PageState = PageStateGeneric<{
