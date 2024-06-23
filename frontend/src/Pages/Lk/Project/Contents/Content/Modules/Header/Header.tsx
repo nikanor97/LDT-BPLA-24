@@ -10,12 +10,13 @@ import {getStatusText, getStatusType} from '@root/Utils/Project/getStatus'
 import {declinationOfNumber} from '@root/Utils/Normalize/declinationOfNumber';
 import {Button, Popconfirm, Space, message} from 'antd';
 import {PageActions} from '../../../../Redux/Store';
-import {UploadOutlined, DeleteOutlined} from '@ant-design/icons';
+import {UploadOutlined, DeleteOutlined, DownloadOutlined} from '@ant-design/icons';
 import routes from '@root/routes';
 
 
 const Header = () => {
     const project = useSelector((state:PageState) => state.Pages.LkProject.getProject.data);
+    const selectedContent = useSelector((state:PageState)  => state.Pages.LkProject.selectedContent);
     const dispatch = useDispatch();
     const history  =  useHistory();
 
@@ -44,13 +45,29 @@ const Header = () => {
                 </div>
                 <div className={styles.rightCol}>
                     <Space size={18}>
+                        {selectedContent.length > 0 && (
+                            <>
+                                <span>Выбрано объектов: {selectedContent.length}</span>
+                                <Button 
+                                    onClick={() => {
+                                        dispatch(PageActions.downloadResult({
+                                            content_ids: selectedContent
+                                        }))
+                                    }}
+                                    icon={<DownloadOutlined />}
+                                    type="primary">
+                                    Скачать результаты
+                                </Button>
+                            </>
+                        )}
+
                         <Button 
                             onClick={() => {
                                 dispatch(PageActions.openUploadDrawer())
                             }}
                             icon={<UploadOutlined />}
                             type="primary">
-                            Загрузить
+                            Загрузить контент
                         </Button>
                         <Popconfirm
                             placement="bottom"

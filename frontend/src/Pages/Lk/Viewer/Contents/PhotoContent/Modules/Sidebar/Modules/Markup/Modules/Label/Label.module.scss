@@ -1,0 +1,30 @@
+.color {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+}
+.title {
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 20px;
+    color: #101828;
+    
+}
+.wrapper {
+    border: 1px solid #E2E7ED;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.selected {
+    background-color: #F1F9FC;
+    border-color: #43AED1;
+}
+
+.info {
+    display: flex;
+    gap: 16px;
+}

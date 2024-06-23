@@ -58,12 +58,24 @@ const getContentInfo = function*(action: PayloadAction<iActions.getContentInfo>)
 
 const changeContentStatus = function*(action: PayloadAction<iActions.changeContentStatus>) {
     try {
-        const {data} = yield* call(Api.Projects.changeContentStatus, action.payload)
-        yield* put(PageActions._changeContentStatusSuccess(data.data))
+        const {data} = yield* call(Api.Projects.changeContentStatus, action.payload);
+        yield* put(PageActions._changeContentStatusSuccess(data.data));
         yield* put(PageActions.getContentInfo({content_id: action.payload.content_id}))
+        action.payload.onSuccess && action.payload.onSuccess();
         
     } catch (ex) {
         yield* put(PageActions._changeContentStatusError())
+    }
+}
+
+const sendPhotoMarkups = function*(action: PayloadAction<iActions.sendPhotoMarkups>) {
+    try {
+        yield* call(Api.Projects.sendPhotoMarkup, action.payload.frames);
+        message.success("Данные для дообучения модели отправлены")
+        action.payload.onSuccess && action.payload.onSuccess();
+        
+    } catch (ex) {
+        message.error("Произошла ошибка при отправке данных о доразметке");
     }
 }
 
@@ -71,7 +83,7 @@ const downloadResult = function* (action: PayloadAction<iActions.downloadResult>
     const {payload} = action;
 
     try {
-        const response = yield* call(Api.Projects.downloadResult, payload);
+        const response = yield* call(Api.Projects.downloadResult, [payload.content_id]);
         const data: BlobPart = response.data as unknown as BlobPart;
         if (!data) throw new Error("Ошибка скачивания документа");
         const blob = new Blob([data]);
@@ -94,4 +106,5 @@ export default function* () {
     yield* takeLatest(PageActions.getContentIds, getContentIds);
     yield* takeLatest(PageActions.changeContentStatus, changeContentStatus);
     yield* takeLatest(PageActions.downloadResult, downloadResult);
+    yield* takeLatest(PageActions.sendPhotoMarkups, sendPhotoMarkups);
 }

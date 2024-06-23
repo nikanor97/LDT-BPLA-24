@@ -15,7 +15,10 @@ export declare namespace Api {
     type iCreateProject = {
         name: string;
         msg_receiver: string
-        tags_ids: string[];
+        tags: {
+            tag_id: string,
+            conf: 0 | 1 | null | undefined;
+        }[]
     }
     type oCreateProject = Project.Info;
 
@@ -74,7 +77,12 @@ export declare namespace Api {
     type iGetProjectFullStats = {
         project_id: Project.Id;
     }
-    type iDownloadResult = {
-        content_id: Video.Item['content_id'] | Photo.Item['content_id'];
-    }
+    type iDownloadResult = React.Key[];
+    type iSendPhotoMarkup = {
+        content_id: string;
+        frame_id: string;
+        new_markups: Omit<Photo.Frames.Markup, "confidence">[];
+        deleted_markups: string[];
+    }[]
+    type oSendPhotoMarkup  = any;
 }

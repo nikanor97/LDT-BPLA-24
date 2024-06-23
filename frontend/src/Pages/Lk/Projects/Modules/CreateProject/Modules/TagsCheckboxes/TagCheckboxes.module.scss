@@ -24,3 +24,19 @@
         margin-bottom: 0;
     }
 }
+
+.checkboxZone {
+    display: flex;
+    flex-direction: column;
+    :global {
+        .ant-form-item {
+            margin-bottom: 0;
+        }
+    }
+}
+
+.confText {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
