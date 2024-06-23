@@ -561,4 +561,5 @@ class ProjectsDbManager(BaseDbManager):
         # frame.markups = [markup for markup in frame.markups if markup.id not in markups_to_delete]
         # session.add(frame)
         session.add_all(new_markups)
+        await session.flush()
         return new_markups
