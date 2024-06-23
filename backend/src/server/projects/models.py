@@ -60,12 +60,14 @@ class UserRoleWithProjectRead(UserRoleBase):
     project: Optional[Project]
 
 
-class ProjectCreate(ProjectBase):
-    tags_ids: list[uuid.UUID]  # ids of VerificationTags
-    # verificators_ids: list[
-    #     uuid.UUID
-    # ]  # ids of verificator users that will be attached to the project
+class ProjectCreateTag(BaseModel):
+    tag_id: uuid.UUID
+    conf: Optional[Decimal]
 
+
+class ProjectCreate(ProjectBase):
+    # tags_ids: list[uuid.UUID]  # ids of VerificationTags
+    tags: list[ProjectCreateTag]
 
 # class ProjectRead(ProjectBase):
 #     id: uuid.UUID

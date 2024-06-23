@@ -288,6 +288,7 @@ class ProjectTag(ProjectsDataSQLModel, TimeStampWithIdMixin, table=True):
     )
     project_id: uuid.UUID = Field(foreign_key="projects.id", index=True)
     tag_id: uuid.UUID = Field(foreign_key="verification_tags.id", index=True)
+    confidence_threshold: Decimal | None = Field(nullable=True)
     tag: VerificationTag = Relationship()
     project: "Project" = Relationship()
 

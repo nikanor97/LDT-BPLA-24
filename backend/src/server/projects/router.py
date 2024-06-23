@@ -178,7 +178,7 @@ class ProjectsRouter:
             path="/download_detect_result",
             endpoint=self._projects_endpoints.download_detect_result,
             response_class=FileResponse,
-            methods=[METHOD.GET],
+            methods=[METHOD.POST],
             dependencies=[Depends(Auth(main_db_manager))],
         )
 

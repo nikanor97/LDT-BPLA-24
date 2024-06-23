@@ -149,6 +149,7 @@ def upgrade_projects() -> None:
         sa.Column('id', sqlmodel.sql.sqltypes.GUID(), nullable=False),
         sa.Column('project_id', sqlmodel.sql.sqltypes.GUID(), nullable=False),
         sa.Column('tag_id', sqlmodel.sql.sqltypes.GUID(), nullable=False),
+        sa.Column('confidence_threshold', sa.Numeric(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False),
         sa.Column('updated_at', sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ),
