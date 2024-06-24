@@ -14,6 +14,7 @@ from common.rabbitmq.publisher import Publisher
 from src.db.exceptions import ResourceAlreadyExists
 from src.db.main_db_manager import MainDbManager
 from src.db.projects.models import FrameMarkup, VerificationTag, Label, LabelBase, VideoStatusOption, Video, Project
+from src.server.constants import tag_translation_eng_rus
 from src.server.telegram_bot import notify_user
 
 # quadcopter_uav
@@ -79,6 +80,7 @@ async def yolo_markup_processor(
         await session.flush()
 
         labels: list[Label] = await main_db_manager.projects.get_labels_by_project(session, project_id)
+        label_by_id = {label.id: label for label in labels}
 
     label_class_to_id = {label_map[label.name]: label.id for label in labels if label.name in label_map}
 
@@ -166,7 +168,8 @@ async def yolo_markup_processor(
 
                             # Добавляем текст с confidence, если он есть
                             if confidence is not None:
-                                text = f"Conf: {confidence:.2f}"
+                                label_name = tag_translation_eng_rus[label_by_id[annotation['label_id']].name]
+                                text = f"{label_name}: {confidence:.2f}"
                                 draw.text((top_left[0], top_left[1] - 10), text, fill="red")
 
                     annotations = [fm.dict() for fm in frame_markup_items]
