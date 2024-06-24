@@ -186,7 +186,11 @@ async def yolo_markup_processor(
                             temp_image_path = tmp_file.name
                             image.save(temp_image_path)
 
-                            notification_success = await notify_user(application, project.msg_receiver, temp_image_path)
+                            caption = "Обнаружен объект!"
+                            for fm in frame_markup_items:
+                                caption += f"\n{label_by_id[fm.label_id].name}: {fm.confidence:.2f}"
+
+                            notification_success = await notify_user(application, project.msg_receiver, temp_image_path, caption)
                             # if notification_success:
 
     if data["type"] == "video":

@@ -36,14 +36,14 @@ async def start(update: Update, context: CallbackContext) -> None:
     await update.message.reply_text('Привет! Я бот для уведомлений. Отправьте /notify для получения уведомлений.')
 
 # Функция для отправки уведомлений
-async def notify_user(application: Application, username, image_path) -> bool:
+async def notify_user(application: Application, username, image_path, caption) -> bool:
     users = load_users()
     print(users)
     if username in users:
         chat_id = users[username]
         if os.path.exists(image_path):
             with open(image_path, 'rb') as image_file:
-                await application.bot.send_photo(chat_id=chat_id, photo=InputFile(image_file), caption='Обнаружен объект!')
+                await application.bot.send_photo(chat_id=chat_id, photo=InputFile(image_file), caption=caption)
                 return True
         else:
             logger.error(f"Изображение по пути {image_path} не найдено.")
