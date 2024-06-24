@@ -83,7 +83,7 @@ const CreateProject = () => {
                         label={
                             <div className={styles.label}>
                                 Контакт ответственного
-                                <Hint title={() => "Контакт ответственного лица в Telegram, для оповещения о детекции объектов"}/>
+                                <Hint title={() => <span>Контакт ответственного лица в Telegram, для оповещения о детекции объектов.<br /> Чтобы получать сообщения, зайдите в @autonomous_tech_bot и нажмите /start.</span>}/>
                             </div>}>
                         <Input  placeholder="Введите ник в телеграме @name" />
                     </Form.Item>

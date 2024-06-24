@@ -12,7 +12,7 @@ type LabelProps = {
 }
 
 const Label = (props: LabelProps) => {
-    const selectedLabel  = useSelector((state: PageState)=> state.Pages.LkViewer.photoMarkup.selectedLabel);
+    const selectedLabel  = useSelector((state: PageState)=> state.Pages.LkViewer.selectedLabel);
     const dispatch = useDispatch();
 
     const className = classnames(styles.wrapper, {
