@@ -1,8 +1,11 @@
 import ast
 import json
+import tempfile
 from collections import defaultdict
 from uuid import UUID
 
+from PIL import Image
+from PIL import ImageDraw
 from loguru import logger
 from telegram.ext import Application
 
@@ -144,7 +147,38 @@ async def yolo_markup_processor(
                         base_path = settings.MEDIA_DIR / "video"
                     else:
                         base_path = settings.MEDIA_DIR / "photo"
-                    notification_success = await notify_user(application, project.msg_receiver, base_path / content.source_url)
-                    # if notification_success:
+
+                    image_path = base_path / content.source_url
+                    # Открыть изображение
+                    image = Image.open(image_path)
+                    draw = ImageDraw.Draw(image)
+
+                    # Функция для добавления разметки
+                    def add_annotations(image: Image, annotations: list[dict]):
+                        draw = ImageDraw.Draw(image)
+                        for annotation in annotations:
+                            top_left = (annotation["coord_top_left_x"], annotation["coord_top_left_y"])
+                            bottom_right = (annotation["coord_bottom_right_x"], annotation["coord_bottom_right_y"])
+                            confidence = annotation.get("confidence", None)
+
+                            # Рисуем прямоугольник
+                            draw.rectangle([top_left, bottom_right], outline="red", width=2)
+
+                            # Добавляем текст с confidence, если он есть
+                            if confidence is not None:
+                                text = f"Conf: {confidence:.2f}"
+                                draw.text((top_left[0], top_left[1] - 10), text, fill="red")
+
+                    annotations = [fm.dict() for fm in frame_markup_items]
+
+                    # Добавить разметку к изображению
+                    add_annotations(image, annotations)
+
+                    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp_file:
+                        temp_image_path = tmp_file.name
+                        image.save(temp_image_path)
+
+                        notification_success = await notify_user(application, project.msg_receiver, temp_image_path)
+                        # if notification_success:
 
     logger.info(f"New {len(frame_markup_items)} frame markup items created")
