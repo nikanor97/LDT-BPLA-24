@@ -9,11 +9,12 @@ const initialState: iState.Value = {
     videoStatus: getShortState(),
     content_ids: getFullState(),
     viewMode: "result",
+    selectedLabel: null,
     photoMarkup: {
         newMarkups: [],
         changedMarkups: [],
-        selectedLabel: null
-    }
+    },
+    videoMarkup: [],
 };
 
 
@@ -72,10 +73,10 @@ export const Slice = createSlice({
             state.viewMode = action.payload;
         },
         setSelectedLabel:  (state, action: PayloadAction<iActions.setSelectedLabel>)  => {
-            state.photoMarkup.selectedLabel = action.payload;
+            state.selectedLabel = action.payload;
         },
         eraseSelectedLabel:  (state)  => {
-            state.photoMarkup.selectedLabel = initialState.photoMarkup.selectedLabel;
+            state.selectedLabel = initialState.selectedLabel;
         },
         setPhotoNewMarkups:  (state, action: PayloadAction<iActions.setPhotoNewMarkups>)  =>  {
             state.photoMarkup.newMarkups  = action.payload;
@@ -89,7 +90,20 @@ export const Slice = createSlice({
         deleteOldMarkups: (state, action: PayloadAction<iActions.deleteOldMarkups>) => {
             state.photoMarkup.changedMarkups.push(action.payload);
         },
-        sendPhotoMarkups: (state, action: PayloadAction<iActions.sendPhotoMarkups>)  => state
+        sendPhotoMarkups: (state, action: PayloadAction<iActions.sendPhotoMarkups>) => state,
+        addVideoNewMarkup: (state, action: PayloadAction<iActions.addVideoNewMarkup>)   => {
+            const existFrame = state.videoMarkup.find((item) => item.frame_id = action.payload.frame_id);
+            if (existFrame) {
+                existFrame.new_markups.push(action.payload.new_markup)
+            } else {
+                state.videoMarkup.push({
+                    frame_id: action.payload.frame_id,
+                    content_id: action.payload.content_id,
+                    new_markups: [action.payload.new_markup],
+                    deleted_markups: [],
+                })
+            }
+        }
     }   
 });
 export const PageActions = Slice.actions;
