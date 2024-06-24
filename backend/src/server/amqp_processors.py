@@ -186,9 +186,12 @@ async def yolo_markup_processor(
                             temp_image_path = tmp_file.name
                             image.save(temp_image_path)
 
-                            caption = "Обнаружен объект!"
+                            if len(frame_markup_items) == 1:
+                                caption = "Обнаружен объект!"
+                            else:
+                                caption = "Обнаружены объекты!"
                             for fm in frame_markup_items:
-                                caption += f"\n{label_by_id[fm.label_id].name}: {fm.confidence:.2f}"
+                                caption += f"\n{tag_translation_eng_rus[label_by_id[fm.label_id].name]}: {fm.confidence:.2f}"
 
                             notification_success = await notify_user(application, project.msg_receiver, temp_image_path, caption)
                             # if notification_success:
