@@ -560,6 +560,9 @@ class ProjectsEndpoints:
     ) -> UnifiedResponse[ProjectRead]:
 
         proj = ProjectBase.parse_obj(project)
+        if proj.msg_receiver is not None:
+            if proj.msg_receiver[0] == '@':
+                proj.msg_receiver = proj.msg_receiver[1:]
         user_id = get_user_id_from_token(token)
 
         # Checking whether user with user_id exists
