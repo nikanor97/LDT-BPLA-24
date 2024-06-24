@@ -112,13 +112,14 @@ async def yolo_markup_processor(
         project = await Project.by_id(session, project_id)
 
         if content.notification_sent is False and project.msg_receiver is not None:
+            await main_db_manager.projects.set_notification_sent_status(session, content.id, status=True)
+            await session.flush()
             application = Application.builder().token(settings.TELEGRAM_TOKEN).build()
             if isinstance(content, Video):
                 base_path = settings.MEDIA_DIR / "video"
             else:
                 base_path = settings.MEDIA_DIR / "photo"
             notification_success = await notify_user(application, project.msg_receiver, base_path / content.source_url)
-            if notification_success:
-                await main_db_manager.projects.set_notification_sent_status(session, content.id, status=True)
+            # if notification_success:
 
     logger.info(f"New {len(frame_markup_items)} frame markup items created")
