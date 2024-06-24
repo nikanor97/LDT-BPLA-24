@@ -30,9 +30,9 @@ async def yolo_model_processor(data: dict, publisher: Publisher, main_db_manager
         # model, str(settings.MEDIA_DIR / data["video_url"])
     )
 
-    if data["type"] == "video":
-        Path(settings.MEDIA_DIR / data["image_path"]).unlink()
-    Path(settings.MEDIA_DIR / (".".join(data["image_path"].split('.')[:-1]) + ".txt")).unlink()
+    # if data["type"] == "video":
+    #     Path(settings.MEDIA_DIR / data["image_path"]).unlink()
+    # Path(settings.MEDIA_DIR / (".".join(data["image_path"].split('.')[:-1]) + ".txt")).unlink()
 
     data_to_send = {
         "data": {
@@ -40,6 +40,8 @@ async def yolo_model_processor(data: dict, publisher: Publisher, main_db_manager
             "frame_id": data["frame_id"],
             "project_id": data["project_id"],
             "frames_in_content": data["frames_in_content"],
+            "image_path": data["image_path"],
+            "type": data["type"]
             # "frame_markup_id": data["frame_markup_id"],
         },
     }
