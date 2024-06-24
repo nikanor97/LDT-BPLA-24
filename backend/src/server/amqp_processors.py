@@ -1,8 +1,12 @@
 import ast
 import json
+import tempfile
 from collections import defaultdict
+from pathlib import Path
 from uuid import UUID
 
+from PIL import Image
+from PIL import ImageDraw
 from loguru import logger
 from telegram.ext import Application
 
@@ -11,6 +15,7 @@ from common.rabbitmq.publisher import Publisher
 from src.db.exceptions import ResourceAlreadyExists
 from src.db.main_db_manager import MainDbManager
 from src.db.projects.models import FrameMarkup, VerificationTag, Label, LabelBase, VideoStatusOption, Video, Project
+from src.server.constants import tag_translation_eng_rus
 from src.server.telegram_bot import notify_user
 
 # quadcopter_uav
@@ -76,6 +81,7 @@ async def yolo_markup_processor(
         await session.flush()
 
         labels: list[Label] = await main_db_manager.projects.get_labels_by_project(session, project_id)
+        label_by_id = {label.id: label for label in labels}
 
     label_class_to_id = {label_map[label.name]: label.id for label in labels if label.name in label_map}
 
@@ -120,6 +126,8 @@ async def yolo_markup_processor(
             session, [t[0].id for t in tags]
         )
         tag_id_to_confidence = {t[0].id: t[1] for t in tags}
+        print(label_to_verification_tag_mapping)
+        print(tags)
 
 
         # frame_id_to_markups: defaultdict[UUID, list[FrameMarkupReadMassive]] = defaultdict(list)
@@ -134,17 +142,55 @@ async def yolo_markup_processor(
         # resp = [FramesWithMarkupRead(**fr.dict(), markups=frame_id_to_markups[fr.id]) for fr in frames]
 
         for markup in markups:
-            verification_tag_id = label_to_verification_tag_mapping[label_class_to_id[markup[4]]]
-            if verification_tag_id in tag_id_to_confidence and markup[5] >= tag_id_to_confidence[verification_tag_id]:
-                if content.notification_sent is False and project.msg_receiver is not None:
-                    await main_db_manager.projects.set_notification_sent_status(session, content.id, status=True)
-                    await session.flush()
-                    application = Application.builder().token(settings.TELEGRAM_TOKEN).build()
-                    if isinstance(content, Video):
-                        base_path = settings.MEDIA_DIR / "video"
-                    else:
-                        base_path = settings.MEDIA_DIR / "photo"
-                    notification_success = await notify_user(application, project.msg_receiver, base_path / content.source_url)
-                    # if notification_success:
+            if label_class_to_id[markup[4]] in label_to_verification_tag_mapping:
+                verification_tag_id = label_to_verification_tag_mapping[label_class_to_id[markup[4]]]
+                if verification_tag_id in tag_id_to_confidence and markup[5] >= tag_id_to_confidence[verification_tag_id]:
+                    if content.notification_sent is False and project.msg_receiver is not None:
+                        print("\n\n\nINSIDE\n\n\n")
+                        await main_db_manager.projects.set_notification_sent_status(session, content.id, status=True)
+                        await session.flush()
+                        application = Application.builder().token(settings.TELEGRAM_TOKEN).build()
+                        if isinstance(content, Video):
+                            image_path = settings.MEDIA_DIR / data["image_path"]
+                        else:
+                            image_path = settings.MEDIA_DIR / data["image_path"]
+
+                        # image_path = base_path / content.source_url
+                        # Открыть изображение
+                        image = Image.open(image_path)
+                        draw = ImageDraw.Draw(image)
+
+                        # Функция для добавления разметки
+                        def add_annotations(image: Image, annotations: list[dict]):
+                            draw = ImageDraw.Draw(image)
+                            for annotation in annotations:
+                                top_left = (annotation["coord_top_left_x"], annotation["coord_top_left_y"])
+                                bottom_right = (annotation["coord_bottom_right_x"], annotation["coord_bottom_right_y"])
+                                confidence = annotation.get("confidence", None)
+
+                                # Рисуем прямоугольник
+                                draw.rectangle([top_left, bottom_right], outline="red", width=2)
+
+                                # Добавляем текст с confidence, если он есть
+                                if confidence is not None:
+                                    label_name = label_by_id[annotation['label_id']].name
+                                    text = f"{label_name}: {confidence:.2f}"
+                                    draw.text((top_left[0], top_left[1] - 10), text, fill="red")
+
+                        annotations = [fm.dict() for fm in frame_markup_items]
+
+                        # Добавить разметку к изображению
+                        add_annotations(image, annotations)
+
+                        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp_file:
+                            temp_image_path = tmp_file.name
+                            image.save(temp_image_path)
+
+                            notification_success = await notify_user(application, project.msg_receiver, temp_image_path)
+                            # if notification_success:
+
+    if data["type"] == "video":
+        Path(settings.MEDIA_DIR / data["image_path"]).unlink()
+    Path(settings.MEDIA_DIR / (".".join(data["image_path"].split('.')[:-1]) + ".txt")).unlink()
 
     logger.info(f"New {len(frame_markup_items)} frame markup items created")
