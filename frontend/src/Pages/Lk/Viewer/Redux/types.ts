@@ -28,11 +28,17 @@ export declare namespace iState {
         videoStatus: RequestShortState;
         content_ids: RequestFullState<(Video.Item['content_id'] | Photo.Item['content_id'])[]>;
         viewMode: "markup" | "result",
+        selectedLabel: Project.Label.Item | null;
         photoMarkup: {
             newMarkups: Omit<Photo.Frames.Markup, "confidence">[],
             changedMarkups: string[],
-            selectedLabel: Project.Label.Item | null;
         }
+        videoMarkup: {
+            content_id: string,
+            deleted_markups: string[];
+            frame_id: string,
+            new_markups: Omit<Video.Frames.Markup, "confidence">[],
+        }[]
     }
 }
 
@@ -62,8 +68,22 @@ export declare namespace iActions {
     type setViewMode  = iState.Value['viewMode'];
     type setSelectedLabel = Project.Label.Item;
     type setPhotoNewMarkups = iState.Value["photoMarkup"]["newMarkups"];
-    type deletePhotoNewMarkup = Photo.Frames.Markup["id"]
-    type deleteOldMarkups = Photo.Frames.Markup["id"]
+    type deletePhotoNewMarkup = Photo.Frames.Markup["id"];
+    type deleteOldMarkups = Photo.Frames.Markup["id"];
+
+    type addVideoNewMarkup = {
+        frame_id: string,
+        content_id: string,
+        new_markup: Omit<Video.Frames.Markup, "confidence">
+    };
+    type deleteVideoNewMarkup = {
+        frame_id: string,
+        markup: Video.Frames.Markup['id']
+    };
+    type addDeletedMarkup = {
+        frame_id: string,
+        markup: Video.Frames.Markup['id']
+    }
     type sendPhotoMarkups = {
         frames: {
             content_id: string;

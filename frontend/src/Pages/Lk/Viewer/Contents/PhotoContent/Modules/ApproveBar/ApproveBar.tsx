@@ -54,7 +54,14 @@ const ApproveBar = () => {
                                     }]
                                     dispatch(PageActions.sendPhotoMarkups({
                                         frames: sendData,
-                                        onSuccess: () => dispatch(PageActions.setViewMode("result"))
+                                        onSuccess: () => {
+                                            dispatch(PageActions.setViewMode("result"));
+                                            dispatch(PageActions.erasePhotoMarkup());
+                                            dispatch(PageActions.getContentInfo({
+                                                content_id: data.content_id
+                                            }));
+                                        }
+
                                     }))
                                 } else {
                                     dispatch(PageActions.setViewMode("markup"))
