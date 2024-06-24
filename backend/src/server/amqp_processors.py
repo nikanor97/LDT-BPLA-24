@@ -168,7 +168,7 @@ async def yolo_markup_processor(
 
                             # Добавляем текст с confidence, если он есть
                             if confidence is not None:
-                                label_name = tag_translation_eng_rus[label_by_id[annotation['label_id']].name]
+                                label_name = label_by_id[annotation['label_id']].name
                                 text = f"{label_name}: {confidence:.2f}"
                                 draw.text((top_left[0], top_left[1] - 10), text, fill="red")
 
