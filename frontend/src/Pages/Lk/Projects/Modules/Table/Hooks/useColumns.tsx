@@ -16,7 +16,7 @@ export const useColumns = ():Columns => {
         },
         {
             dataIndex: ['created_at'],
-            title: 'Дата загрузки',
+            title: 'Время создания',
             key: 'created_at',
             render: (value: string) => {
                 const momentVal = moment(value);

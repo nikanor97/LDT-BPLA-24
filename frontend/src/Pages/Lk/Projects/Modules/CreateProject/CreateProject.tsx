@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Drawer, Form, Button, message} from 'antd';
 import {useDispatch, useSelector} from 'react-redux';
 import {Input} from '@root/Components/Controls';
@@ -10,11 +10,16 @@ import TagCheckboxes from './Modules/TagsCheckboxes/TagCheckboxes'
 import styles from './CreateProject.module.scss';
 import Hint from '@root/Components/Hint/Hint';
 
+export type Tag = {
+    tag_id: string,
+    conf: 0 | 1 | null
+}
 
 const CreateProject = () => {
     const visible = useSelector((state:PageState) => state.Pages.LkProjects.createDrawer.visible);
     const user = useSelector((state: PageState) => state.User.Info.data);
     const state = useSelector((state:PageState) => state.Pages.LkProjects.create);
+    const [tags, setTags] = useState<Tag[]>([])
     const [form] = Form.useForm<iForm>();
     const dispatch = useDispatch();
 
@@ -42,8 +47,13 @@ const CreateProject = () => {
                 <Form 
                     onFinish={(values) => {
                         if (!user) return;
+                        const data = {
+                            name: values.name,
+                            tags: tags,
+                            msg_receiver: values.msg_receiver,
+                        }
                         dispatch(PageActions.createProject({
-                            params: values,
+                            params: data,
                             onSuccess: () => {
                                 dispatch(PageActions.closeCreateProject());
                                 dispatch(PageActions.getProjects());
@@ -66,14 +76,14 @@ const CreateProject = () => {
                         name="tags_ids"
                         rules={[required]}
                         label="Объекты детекции">
-                        <TagCheckboxes className={styles.checkboxes} />
+                        <TagCheckboxes className={styles.checkboxes} setTags={setTags} tagsArray={tags}/>
                     </Form.Item>
                     <Form.Item 
                         name="msg_receiver"
                         label={
                             <div className={styles.label}>
                                 Контакт ответственного
-                                <Hint title={() => "Контакт ответственного лица в Telegram, для оповещения о детекции объектов"}/>
+                                <Hint title={() => <span>Контакт ответственного лица в Telegram, для оповещения о детекции объектов.<br /> Чтобы получать сообщения, зайдите в @autonomous_tech_bot и нажмите /start.</span>}/>
                             </div>}>
                         <Input  placeholder="Введите ник в телеграме @name" />
                     </Form.Item>

@@ -51,8 +51,7 @@ export const Slice = createSlice({
         _getProjectsStatsSuccess: (state, action: PayloadAction<iActions._getProjectsStatsSuccess>) => 
             requestSuccess(state.statistics, action.payload),
         _getProjectsStatsError: (state) => 
-            requestSuccess(state.statistics),
-            
+            requestSuccess(state.statistics),    
     }   
 });
 export const PageActions = Slice.actions;

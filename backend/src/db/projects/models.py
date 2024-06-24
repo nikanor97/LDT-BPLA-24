@@ -196,6 +196,7 @@ class FrameMarkupBase(ProjectsDataSQLModel):
     coord_bottom_right_y: Decimal = Field(nullable=True)
 
     confidence: Optional[Decimal] = Field(nullable=True)
+    created_by_model: bool = Field(nullable=False, default=True)
 
 
 class FrameMarkup(FrameMarkupBase, TimeStampWithIdMixin, table=True):
@@ -288,6 +289,7 @@ class ProjectTag(ProjectsDataSQLModel, TimeStampWithIdMixin, table=True):
     )
     project_id: uuid.UUID = Field(foreign_key="projects.id", index=True)
     tag_id: uuid.UUID = Field(foreign_key="verification_tags.id", index=True)
+    confidence_threshold: Decimal | None = Field(nullable=True)
     tag: VerificationTag = Relationship()
     project: "Project" = Relationship()
 
@@ -337,6 +339,7 @@ class VideoBase(ProjectsDataSQLModel):
         )
     )
     project_id: Optional[uuid.UUID] = Field(foreign_key="projects.id", nullable=True)
+    notification_sent: bool = Field(default=False)
     # apartment_id: uuid.UUID = Field(foreign_key="apartments.id", nullable=False)
 
 
@@ -366,6 +369,7 @@ class PhotoBase(ProjectsDataSQLModel):
         )
     )
     project_id: Optional[uuid.UUID] = Field(foreign_key="projects.id", nullable=True)
+    notification_sent: bool = Field(default=False)
 
 
 class Photo(PhotoBase, TimeStampWithIdMixin, table=True):

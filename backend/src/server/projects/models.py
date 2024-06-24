@@ -60,12 +60,14 @@ class UserRoleWithProjectRead(UserRoleBase):
     project: Optional[Project]
 
 
-class ProjectCreate(ProjectBase):
-    tags_ids: list[uuid.UUID]  # ids of VerificationTags
-    # verificators_ids: list[
-    #     uuid.UUID
-    # ]  # ids of verificator users that will be attached to the project
+class ProjectCreateTag(BaseModel):
+    tag_id: uuid.UUID
+    conf: Optional[Decimal]
 
+
+class ProjectCreate(ProjectBase):
+    # tags_ids: list[uuid.UUID]  # ids of VerificationTags
+    tags: list[ProjectCreateTag]
 
 # class ProjectRead(ProjectBase):
 #     id: uuid.UUID
@@ -265,6 +267,29 @@ class ProjectRead(ProjectBase):
     # verificators: Optional[list[User]]
     created_at: datetime
     updated_at: datetime
+
+
+class VerificationTagWithConfidence(BaseModel):
+    id: uuid.UUID
+    tagname: str
+    groupname: str
+    default_confidence: Decimal
+
+
+class ChangeMarkupsOnFrameNewMarkup(BaseModel):
+    label_id: uuid.UUID
+    frame_id: uuid.UUID
+    coord_top_left_x: Decimal
+    coord_top_left_y: Decimal
+    coord_bottom_right_x: Decimal
+    coord_bottom_right_y: Decimal
+
+
+class ChangeMarkupsOnFrame(BaseModel):
+    content_id: uuid.UUID
+    deleted_markups: list[uuid.UUID]
+    frame_id: uuid.UUID
+    new_markups: list[ChangeMarkupsOnFrameNewMarkup]
 
 
 class Content(BaseModel):

@@ -70,15 +70,17 @@ export default {
     getMyProjects: () =>
         axios.get<Api.oGetMyProjects>(paths.getMyProjects),
     downloadResult: (params: Api.iDownloadResult) => {
-        return axios.get(
+        return axios.post(
             paths.downloadResult,
+            params,
             {
-                params,
                 responseType: "blob"
-
             }
         );
     },
     changeContentStatus: (params: Api.iChangeContentStatus) => 
         axios.post<Api.oChangeContentStatus>(`${paths.changeContentStatus}${qs.stringify(params, {addQueryPrefix: true})}`),
+    sendPhotoMarkup: (params: Api.iSendPhotoMarkup)  => {
+        axios.post<Api.oSendPhotoMarkup>(paths.sendPhotoMarkups, params)
+    }
 }

@@ -1,13 +1,17 @@
 import ast
 import json
+from collections import defaultdict
 from uuid import UUID
 
 from loguru import logger
+from telegram.ext import Application
 
+import settings
 from common.rabbitmq.publisher import Publisher
 from src.db.exceptions import ResourceAlreadyExists
 from src.db.main_db_manager import MainDbManager
-from src.db.projects.models import FrameMarkup, VerificationTag, Label, LabelBase, VideoStatusOption, Video
+from src.db.projects.models import FrameMarkup, VerificationTag, Label, LabelBase, VideoStatusOption, Video, Project
+from src.server.telegram_bot import notify_user
 
 # quadcopter_uav
 # airplane
@@ -98,12 +102,49 @@ async def yolo_markup_processor(
         content_frames_counter = kwargs['content_frames_counter']
         content_frames_counter[content.id] += 1
 
-        print(content_frames_counter)
         if content_frames_counter[content.id] == frames_in_content:
             content.status = VideoStatusOption.extracted
         else:
             content.status = VideoStatusOption.in_progress
 
         session.add_all(frame_markup_items)
+
+        content = await main_db_manager.projects.get_content_by_frame_id(session, frame_id)
+        project = await Project.by_id(session, project_id)
+
+        tags = await main_db_manager.projects.get_tags_by_project(
+            session, project_id
+        )
+        label_to_verification_tag_mapping: dict[
+            UUID, UUID] = await main_db_manager.projects.get_label_to_verification_tag_mapping(
+            session, [t[0].id for t in tags]
+        )
+        tag_id_to_confidence = {t[0].id: t[1] for t in tags}
+
+
+        # frame_id_to_markups: defaultdict[UUID, list[FrameMarkupReadMassive]] = defaultdict(list)
+        # # TODO: ненужная логика. надо пересмотреть подход с verification_tag и лейблами
+        # for idx, frame in enumerate(frames):
+        #     for idx_markup, markup in enumerate(frame.markups):
+        #         if markup.label_id in label_to_verification_tag_mapping:
+        #             verification_tag_id = label_to_verification_tag_mapping[markup.label_id]
+        #             if verification_tag_id in tag_id_to_confidence and markup.confidence >= tag_id_to_confidence[
+        #                 verification_tag_id]:
+        #                 frame_id_to_markups[frame.id].append(FrameMarkupReadMassive(**markup.dict()))
+        # resp = [FramesWithMarkupRead(**fr.dict(), markups=frame_id_to_markups[fr.id]) for fr in frames]
+
+        for markup in markups:
+            verification_tag_id = label_to_verification_tag_mapping[label_class_to_id[markup[4]]]
+            if verification_tag_id in tag_id_to_confidence and markup[5] >= tag_id_to_confidence[verification_tag_id]:
+                if content.notification_sent is False and project.msg_receiver is not None:
+                    await main_db_manager.projects.set_notification_sent_status(session, content.id, status=True)
+                    await session.flush()
+                    application = Application.builder().token(settings.TELEGRAM_TOKEN).build()
+                    if isinstance(content, Video):
+                        base_path = settings.MEDIA_DIR / "video"
+                    else:
+                        base_path = settings.MEDIA_DIR / "photo"
+                    notification_success = await notify_user(application, project.msg_receiver, base_path / content.source_url)
+                    # if notification_success:
 
     logger.info(f"New {len(frame_markup_items)} frame markup items created")

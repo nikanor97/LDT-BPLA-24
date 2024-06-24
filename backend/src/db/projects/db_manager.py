@@ -1,5 +1,6 @@
 import uuid
 from collections import defaultdict
+from decimal import Decimal
 from typing import Optional
 
 from sqlalchemy.exc import NoResultFound
@@ -208,6 +209,17 @@ class ProjectsDbManager(BaseDbManager):
         photos = (await session.execute(stmt)).scalars().all()
         return videos + photos
 
+    async def get_content_by_projects(
+        self,
+        session: AsyncSession,
+        project_ids: list[uuid.UUID]
+    ) -> list[Video | Photo]:
+        stmt = select(Video).where(col(Video.project_id).in_(project_ids))
+        videos = (await session.execute(stmt)).scalars().all()
+        stmt = select(Photo).where(col(Photo.project_id).in_(project_ids))
+        photos = (await session.execute(stmt)).scalars().all()
+        return videos + photos
+
     async def get_frame(self, session: AsyncSession, frame_id: uuid.UUID) -> Frame:
         return await Frame.by_id(session, frame_id)
 
@@ -272,6 +284,14 @@ class ProjectsDbManager(BaseDbManager):
         self, session: AsyncSession, project_id: uuid.UUID
     ) -> Project:
         return await Project.by_id(session, project_id)
+
+    async def get_project_id_by_content_id(
+        self, session: AsyncSession, content_id: uuid.UUID
+    ) -> uuid.UUID:
+        try:
+            return (await Video.by_id(session, content_id)).project_id
+        except NoResultFound:
+            return (await Photo.by_id(session, content_id)).project_id
 
     async def get_user_roles(
         self,
@@ -388,12 +408,14 @@ class ProjectsDbManager(BaseDbManager):
         return tags
 
     async def create_project_tags(
-        self, session: AsyncSession, project_id: uuid.UUID, tags_ids: set[uuid.UUID]
+        self, session: AsyncSession, project_id: uuid.UUID, tags: list[tuple[uuid.UUID, Optional[float]]]
     ) -> list[ProjectTag]:
         """
         Will add new project tags. If some already exist it'll be OK
         :returns newly created project tags
         """
+        tags_ids = set([tag_id for tag_id, _ in tags])
+        tag_id_to_confidence = {tag_id: conf for tag_id, conf in tags}
         await Project.by_id(session, project_id)
         await self.get_verification_tags(session, tags_ids)
 
@@ -409,9 +431,11 @@ class ProjectsDbManager(BaseDbManager):
         # new_tags = (await session.execute(stmt)).scalars().all()
 
         # new_project_tags = [ProjectTag(project_id=project_id, tag_id=tag.id, tag=tag) for tag in new_tags]
-        new_project_tags = [
-            ProjectTag(project_id=project_id, tag_id=tag_id) for tag_id in new_tags_ids
-        ]
+        new_project_tags = [ProjectTag(
+            project_id=project_id,
+            tag_id=tag_id,
+            confidence_threshold=tag_id_to_confidence[tag_id]
+        ) for tag_id in new_tags_ids]
         session.add_all(new_project_tags)
         return new_project_tags
 
@@ -419,7 +443,7 @@ class ProjectsDbManager(BaseDbManager):
         self,
         session: AsyncSession,
         project_id: uuid.UUID,
-    ) -> list[VerificationTag]:
+    ) -> list[tuple[VerificationTag, Decimal]]:
         await Project.by_id(session, project_id)
         stmt = (
             select(ProjectTag)
@@ -427,9 +451,30 @@ class ProjectsDbManager(BaseDbManager):
             .options(selectinload(ProjectTag.tag))
         )
         project_tags: list[ProjectTag] = (await session.execute(stmt)).scalars().all()
-        tags = [pt.tag for pt in project_tags]
+        tags = [(pt.tag, pt.confidence_threshold) for pt in project_tags]
 
         return tags
+
+    async def get_label_to_verification_tag_mapping(
+        self,
+        session: AsyncSession,
+        verification_tag_ids: list[uuid.UUID]
+    ) -> dict[uuid.UUID, uuid.UUID]:
+        # TODO: метод надо переделывать. Не обязательно tagname должен быть в description у лейбла
+        stmt = select(VerificationTag).where(col(VerificationTag.id).in_(verification_tag_ids))
+        tags = (await session.execute(stmt)).scalars().all()
+        tagnames = [tag.tagname for tag in tags]
+        tag_id_by_tagname = {tag.tagname: tag.id for tag in tags}
+
+        stmt = (
+            select(Label)
+            .where(col(Label.description).in_(tagnames))
+        )
+        labels = (await session.execute(stmt)).scalars().all()
+        verification_tag_id_by_label_id: dict[uuid.UUID, uuid.UUID] = dict()
+        for label in labels:
+            verification_tag_id_by_label_id[label.id] = tag_id_by_tagname[label.description]
+        return verification_tag_id_by_label_id
 
     async def write_gps_coords(
         self, session: AsyncSession, video_id: uuid.UUID, gps_coords: GpsCoords
@@ -495,3 +540,37 @@ class ProjectsDbManager(BaseDbManager):
         content.status = status
         session.add(content)
         return content
+
+    async def set_notification_sent_status(
+        self,
+        session: AsyncSession,
+        content_id: uuid.UUID,
+        status: bool,
+    ) -> Photo | Video:
+        try:
+            content = await Video.by_id(session, content_id)
+        except NoResultFound:
+            content = await Photo.by_id(session, content_id)
+        content.notification_sent = status
+        session.add(content)
+        return content
+
+    async def update_markups_for_frame(
+        self,
+        session: AsyncSession,
+        frame_id: uuid.UUID,
+        markups_to_delete: list[uuid.UUID],
+        new_markups: list[FrameMarkup],
+    ) -> list[FrameMarkup]:
+        # stmt = select(Frame).where(Frame.id == frame_id)
+        # frame = (await session.execute(stmt)).scalar_one()
+        stmt = select(FrameMarkup).where(col(FrameMarkup.id).in_(markups_to_delete))
+        frame_markups = (await session.execute(stmt)).scalars().all()
+        for frame_markup in frame_markups:
+            await session.delete(frame_markup)
+        await session.flush()
+        # frame.markups = [markup for markup in frame.markups if markup.id not in markups_to_delete]
+        # session.add(frame)
+        session.add_all(new_markups)
+        await session.flush()
+        return new_markups

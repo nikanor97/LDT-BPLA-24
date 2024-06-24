@@ -27,7 +27,7 @@ from src.server.projects.models import (
     ProjectsStats,
     ProjectWithUsers,
     BplaProjectStats,
-    Content,
+    Content, VerificationTagWithConfidence,
 )
 
 
@@ -97,7 +97,7 @@ class ProjectsRouter:
         self.router.add_api_route(
             path="/verification-tags",
             endpoint=self._projects_endpoints.get_all_verification_tags,
-            response_model=UnifiedResponse[list[VerificationTag]],
+            response_model=UnifiedResponse[list[VerificationTagWithConfidence]],
             methods=[METHOD.GET],
             dependencies=[Depends(Auth(main_db_manager))],
         )
@@ -178,7 +178,7 @@ class ProjectsRouter:
             path="/download_detect_result",
             endpoint=self._projects_endpoints.download_detect_result,
             response_class=FileResponse,
-            methods=[METHOD.GET],
+            methods=[METHOD.POST],
             dependencies=[Depends(Auth(main_db_manager))],
         )
 
@@ -186,6 +186,14 @@ class ProjectsRouter:
             path="/send-image-to-model",
             endpoint=self._projects_endpoints.send_image_to_model_service,
             methods=[METHOD.GET],
+            dependencies=[Depends(Auth(main_db_manager))],
+        )
+
+        self.router.add_api_route(
+            path="/update-markups-for-frame",
+            endpoint=self._projects_endpoints.update_markup_for_frame,
+            # response_model=UnifiedResponse[list[FrameMarkup]],
+            methods=[METHOD.POST],
             dependencies=[Depends(Auth(main_db_manager))],
         )
 

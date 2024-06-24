@@ -1,0 +1,11 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    padding: 0 24px 24px 24px;
+    overflow-y: auto;
+    .labels {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+}

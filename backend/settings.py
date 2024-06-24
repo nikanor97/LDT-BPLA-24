@@ -37,6 +37,8 @@ APP_PORT = int(getenv("BACKEND_PORT", 8090))
 BASE_DIR = Path(__file__).parent
 MEDIA_DIR = BASE_DIR / "media"
 MEDIA_DIR.mkdir(exist_ok=True)
+# Директория - вольюм для медиафайлов
+(BASE_DIR.parent / "media").mkdir(exist_ok=True)
 
 SECRET_KEY = getenv(
     "SECRET_KEY", "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
@@ -61,3 +63,5 @@ RABBIT_SSL = getenv("RABBIT_SSL", "False").lower() in ("true", "1", "t")
 
 FRAME_STEP = int(getenv("FRAME_STEP", "5"))
 VIDEO_FRAMING_WORKERS = int(getenv("VIDEO_FRAMING_WORKERS", 4))
+
+TELEGRAM_TOKEN = getenv("TELEGRAM_TOKEN")

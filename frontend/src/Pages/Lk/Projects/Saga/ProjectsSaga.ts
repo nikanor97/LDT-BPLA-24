@@ -4,7 +4,6 @@ import {iActions} from '../Redux/types';
 import Api from '@root/Api';
 import { PayloadAction } from "@reduxjs/toolkit";
 
-
 const getMyProjects = function*() {
     try {
         const {data} = yield* call(Api.Projects.getMyProjects)
@@ -43,9 +42,6 @@ const getProjectsStats = function*() {
         yield* put(PageActions._getProjectsStatsError());
     }
 }
-
-
-
 
 export default function* () {
     yield* takeLatest(PageActions.getProjects, getMyProjects)

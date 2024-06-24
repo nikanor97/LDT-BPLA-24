@@ -2,8 +2,10 @@ import io
 import json
 import os
 import random
+import re
 import tempfile
 import uuid
+import zipfile
 from collections import Counter, defaultdict
 from decimal import Decimal
 from io import BytesIO
@@ -46,7 +48,7 @@ from src.db.projects.models import (
 from src.db.users.models import User
 from src.server.auth_utils import oauth2_scheme, get_user_id_from_token
 from src.server.common import UnifiedResponse, exc_to_str
-from src.server.constants import tag_translation, colors, tag_translation_eng_rus, label_map
+from src.server.constants import tag_translation, colors, tag_translation_eng_rus, label_map, confidence_thresholds
 from src.server.projects.models import (
     FramesWithMarkupRead,
     ContentMarkupCreate,
@@ -63,7 +65,8 @@ from src.server.projects.models import (
     ProjectScoresForFloor,
     ProjectScores,
     ScoreMapItemWithLabels, BplaProjectStats, Content, ContentTypeOption, ProjectContentTypeOption,
-    FramesWithMarkupCreate, MarkupListCreate,
+    FramesWithMarkupCreate, MarkupListCreate, FrameMarkupReadMassive, VerificationTagWithConfidence,
+    ChangeMarkupsOnFrameNewMarkup, ChangeMarkupsOnFrame,
 )
 from starlette.requests import Request
 from starlette.responses import Response, FileResponse, StreamingResponse
@@ -311,19 +314,60 @@ class ProjectsEndpoints:
                 data, status_code=206, headers=headers, media_type="video/mp4"
             )
 
-    async def get_video_file(self, video_id: uuid.UUID):
+    # async def get_video_file(self, video_id: uuid.UUID):
+    #     try:
+    #         async with self._main_db_manager.projects.make_autobegin_session() as session:
+    #             video_db = await self._main_db_manager.projects.get_video(
+    #                 session, video_id
+    #             )
+    #             # TODO: make source_url not None in models and remove type ignore bolow
+    #             video_src = settings.MEDIA_DIR / "video" / video_db.source_url  # type: ignore
+    #             os.makedirs(settings.MEDIA_DIR / "video", exist_ok=True)
+    #     except NoResultFound as e:
+    #         raise HTTPException(status_code=404, detail=e.args)
+    #
+    #     return FileResponse(video_src, media_type="video/mp4")
+
+    async def get_video_file(self, video_id: uuid.UUID, request: Request):
         try:
             async with self._main_db_manager.projects.make_autobegin_session() as session:
-                video_db = await self._main_db_manager.projects.get_video(
-                    session, video_id
-                )
-                # TODO: make source_url not None in models and remove type ignore bolow
+                video_db = await self._main_db_manager.projects.get_video(session, video_id)
+                # TODO: make source_url not None in models and remove type ignore below
                 video_src = settings.MEDIA_DIR / "video" / video_db.source_url  # type: ignore
                 os.makedirs(settings.MEDIA_DIR / "video", exist_ok=True)
         except NoResultFound as e:
             raise HTTPException(status_code=404, detail=e.args)
 
-        return FileResponse(video_src, media_type="video/mp4")
+        file_size = os.path.getsize(video_src)
+        range_header = request.headers.get('Range')
+        if range_header:
+            range_match = re.search(r'bytes=(\d+)-(\d+)?', range_header)
+            if range_match:
+                start = int(range_match.group(1))
+                end = range_match.group(2)
+                if end is None:
+                    end = file_size - 1
+                else:
+                    end = int(end)
+                chunk_size = (end - start) + 1
+
+                with open(video_src, 'rb') as video_file:
+                    video_file.seek(start)
+                    data = video_file.read(chunk_size)
+
+                headers = {
+                    'Content-Range': f'bytes {start}-{end}/{file_size}',
+                    'Accept-Ranges': 'bytes',
+                    'Content-Length': str(chunk_size),
+                    'Content-Type': 'video/mp4',
+                }
+                return Response(content=data, status_code=206, headers=headers)
+
+        headers = {
+            'Content-Length': str(file_size),
+            'Content-Type': 'video/mp4',
+        }
+        return FileResponse(video_src, headers=headers)
 
     async def streaming_example(self, video_id: uuid.UUID, request: Request):
         try:
@@ -405,12 +449,18 @@ class ProjectsEndpoints:
 
     async def get_all_verification_tags(
         self,
-    ) -> UnifiedResponse[list[VerificationTag]]:
+    ) -> UnifiedResponse[list[VerificationTagWithConfidence]]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             tags = await self._main_db_manager.projects.get_all_verification_tags(
                 session
             )
-        return UnifiedResponse(data=tags)
+            res = [VerificationTagWithConfidence(
+                id=tag.id,
+                tagname=tag.tagname,
+                groupname=tag.groupname,
+                default_confidence=confidence_thresholds[label_map[tag_translation[tag.tagname]]]
+            ) for tag in tags]
+        return UnifiedResponse(data=res)
 
     async def write_gps(
         self, video_id: uuid.UUID, gps_coords: GpsCoords
@@ -481,40 +531,38 @@ class ProjectsEndpoints:
                 frames = await self._main_db_manager.projects.get_frames_with_markups(
                     session, content_id
                 )
-                resp = [FramesWithMarkupRead.parse_obj(fr) for fr in frames]
+                project_id = await self._main_db_manager.projects.get_project_id_by_content_id(
+                    session, content_id
+                )
+                tags = await self._main_db_manager.projects.get_tags_by_project(
+                    session, project_id
+                )
+                label_to_verification_tag_mapping: dict[uuid.UUID, uuid.UUID] = await self._main_db_manager.projects.get_label_to_verification_tag_mapping(
+                    session, [t[0].id for t in tags]
+                )
+                tag_id_to_confidence = {t[0].id: t[1] for t in tags}
+                frame_id_to_markups: defaultdict[uuid.UUID, list[FrameMarkupReadMassive]] = defaultdict(list)
+                # TODO: ненужная логика. надо пересмотреть подход с verification_tag и лейблами
+                for idx, frame in enumerate(frames):
+                    for idx_markup, markup in enumerate(frame.markups):
+                        if markup.label_id in label_to_verification_tag_mapping:
+                            verification_tag_id = label_to_verification_tag_mapping[markup.label_id]
+                            if verification_tag_id in tag_id_to_confidence and markup.confidence >= tag_id_to_confidence[verification_tag_id]:
+                                frame_id_to_markups[frame.id].append(FrameMarkupReadMassive(**markup.dict()))
+                resp = [FramesWithMarkupRead(**fr.dict(), markups=frame_id_to_markups[fr.id]) for fr in frames]
+
                 return UnifiedResponse(data=resp)
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
-
-    # async def get_frames_with_markups(
-    #     self, content_id: uuid.UUID
-    # ) -> UnifiedResponse[list[FramesWithMarkupRead]]:
-    #     async with self._main_db_manager.projects.make_autobegin_session() as session:
-    #         try:
-    #             frames = await self._main_db_manager.projects.get_frames_with_markups(
-    #                 session, content_id
-    #             )
-    #             labels = await self._main_db_manager.projects.get_labels_by_project(
-    #                 session, frames[0].project_id
-    #             )
-    #             label_id_to_name = {label.id: label.name for label in labels}
-    #             for idx_frame, frame in enumerate(frames):
-    #                 for idx_markup, markup in enumerate(frame.markups):
-    #                     label_name = label_id_to_name[markup.label_id]
-    #                     if label_name not in label_map:
-    #                         continue
-    #                     if markup.confidence < confidence_thresholds[markup]:
-    #                         frames[idx_frame].markups[idx_markup].confidence = 0
-    #             resp = [FramesWithMarkupRead.parse_obj(fr) for fr in frames]
-    #             return UnifiedResponse(data=resp)
-    #         except NoResultFound as e:
-    #             return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
     async def create_project(
         self, project: ProjectCreate, token: Annotated[str, Depends(oauth2_scheme)]
     ) -> UnifiedResponse[ProjectRead]:
 
         proj = ProjectBase.parse_obj(project)
+        if proj.msg_receiver is not None:
+            if proj.msg_receiver[0] == '@':
+                proj.msg_receiver = proj.msg_receiver[1:]
         user_id = get_user_id_from_token(token)
 
         # Checking whether user with user_id exists
@@ -530,12 +578,13 @@ class ProjectsEndpoints:
                 )
 
                 await self._main_db_manager.projects.create_project_tags(
-                    session, new_project.id, project.tags_ids
+                    session, new_project.id, [(pt.tag_id, pt.conf) for pt in project.tags]
                 )
 
                 tags = await self._main_db_manager.projects.get_tags_by_project(
                     session, new_project.id
                 )
+                tags = [tag[0] for tag in tags]
 
                 labels = []
                 for idx, (tag_rus, tag_eng) in enumerate(tag_translation.items()):
@@ -586,9 +635,12 @@ class ProjectsEndpoints:
 
     async def get_projects_all_stats(
         self,
+        token: Annotated[str, Depends(oauth2_scheme)]
     ) -> UnifiedResponse[BplaProjectStats]:
+        user_id = get_user_id_from_token(token)
         async with self._main_db_manager.projects.make_autobegin_session() as session:
-            content = await self._main_db_manager.projects.get_all_content(session)
+            projects_with_users = await self._main_db_manager.projects.get_projects_with_users_ids(session, user_id)
+            content = await self._main_db_manager.projects.get_content_by_projects(session, [p.id for p in projects_with_users])
 
         photos = [c for c in content if type(c) == Photo]
         videos = [c for c in content if type(c) == Video]
@@ -670,6 +722,7 @@ class ProjectsEndpoints:
                 tags = await self._main_db_manager.projects.get_tags_by_project(
                     session, project_id
                 )
+                tags = [tag[0] for tag in tags]
 
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
@@ -812,25 +865,6 @@ class ProjectsEndpoints:
                     status=VideoStatusOption.created
                 )
 
-                # frames_with_markups = ContentMarkupCreate(
-                #     content_id=video_id,
-                #     content_type=FrameContentTypeOption.video,
-                #     frames=[FramesWithMarkupCreate(
-                #         frame_offset=offset,
-                #         markup_list=[MarkupListCreate(
-                #             coord_top_left=(
-                #                 random.choice(range(1, video_.width // 2)),
-                #                 random.choice(range(1, video_.height // 2))
-                #             ),
-                #             coord_bottom_right=(
-                #                 random.choice(range(video_.width // 2, video_.width)),
-                #                 random.choice(range(video_.height // 2, video_.height))
-                #             ),
-                #             label_id=random.choice(labels_ids),
-                #             confidence=Decimal(random.random())
-                #         ) for _ in range(2)]
-                #     ) for offset in range(video_.n_frames)]  # ДЕЛАЕМ ДЛЯ КАЖДОГО КАДРА
-                # )
                 async with self._main_db_manager.projects.make_autobegin_session() as session:
                     video = await self._main_db_manager.projects.create_video(
                         session, video_
@@ -867,6 +901,7 @@ class ProjectsEndpoints:
                         "frame_id": str(frame.id),
                         "project_id": str(project_id),
                         "frames_in_content": str(len(filenames)),
+                        "type": "video"
                     }
 
                     await self._publisher.publish(
@@ -878,12 +913,6 @@ class ProjectsEndpoints:
                 logger.info(f"Message for video {video.id} sent to detector")
 
                 video_.status = VideoStatusOption.created
-
-                # await self._get_clip_predictions(
-                #     video_name, video_id, video_, apartment.project_id
-                # )
-
-                # content_items.append(Content.from_video(video, detected_count=2))  # TODO: проставлять РЕАЛЬНОЕ ЗНАЧЕНИЕ
 
             elif content_type == ContentTypeOption.photo:
 
@@ -934,6 +963,7 @@ class ProjectsEndpoints:
                         "frame_id": str(frame.id),
                         "project_id": str(project_id),
                         "frames_in_content": "1",
+                        "type": "photo"
                     }
 
                     message = await self._publisher.publish(
@@ -947,70 +977,72 @@ class ProjectsEndpoints:
                 except NoResultFound as e:
                     return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
-                # await self._get_clip_predictions(
-                #     video_name, video_id, video_, apartment.project_id
-                # )
-
-                content_items.append(Content.from_photo(photo, detected_count=3))  # TODO: проставлять РЕАЛЬНОЕ ЗНАЧЕНИЕ
+                content_items.append(Content.from_photo(photo, detected_count=0))  # TODO: проставлять РЕАЛЬНОЕ ЗНАЧЕНИЕ
 
         return UnifiedResponse(data=content_items)
 
     async def download_detect_result(
         self,
-        content_id: uuid.UUID,
+        content_ids: list[uuid.UUID],
     ) -> FileResponse:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
-            content: Photo | Video = await self._main_db_manager.projects.get_content(
-                session, content_id
-            )
-            frames: list[Frame] = await self._main_db_manager.projects.get_frames_with_markups(
-                session, content_id
-            )
-            labels = await self._main_db_manager.projects.get_labels_by_project(
-                session, content.project_id
-            )
-            label_id_to_name = {label.id: label.name for label in labels}
-        resp = [FramesWithMarkupRead.parse_obj(fr) for fr in frames]
+            temp_files = []
+            for content_id in content_ids:
+                content: Photo | Video = await self._main_db_manager.projects.get_content(session, content_id)
+                frames: list[Frame] = await self._main_db_manager.projects.get_frames_with_markups(session, content_id)
+                labels = await self._main_db_manager.projects.get_labels_by_project(session, content.project_id)
+                label_id_to_name = {label.id: label.name for label in labels}
+                resp = [FramesWithMarkupRead.parse_obj(fr) for fr in frames]
 
-        yolov8_annotations = []
-        if type(content) == Photo:
-            for markup in resp[0].markups:
-                label_id = label_map[label_id_to_name[markup.label_id]]
-                coord_top_left_x = markup.coord_top_left_x
-                coord_top_left_y = markup.coord_top_left_y
-                coord_bottom_right_x = markup.coord_bottom_right_x
-                coord_bottom_right_y = markup.coord_bottom_right_y
+                yolov8_annotations = []
+                if isinstance(content, Photo):
+                    for markup in resp[0].markups:
+                        label_id = label_map[label_id_to_name[markup.label_id]]
+                        coord_top_left_x = markup.coord_top_left_x
+                        coord_top_left_y = markup.coord_top_left_y
+                        coord_bottom_right_x = markup.coord_bottom_right_x
+                        coord_bottom_right_y = markup.coord_bottom_right_y
 
-                # Вычисление центра и размеров
-                center_x = (coord_top_left_x + coord_bottom_right_x) / 2 / content.width
-                center_y = (coord_top_left_y + coord_bottom_right_y) / 2 / content.height
-                width = (coord_bottom_right_x - coord_top_left_x) / content.width
-                height = (coord_bottom_right_y - coord_top_left_y) / content.height
+                        # Вычисление центра и размеров
+                        center_x = (coord_top_left_x + coord_bottom_right_x) / 2 / content.width
+                        center_y = (coord_top_left_y + coord_bottom_right_y) / 2 / content.height
+                        width = (coord_bottom_right_x - coord_top_left_x) / content.width
+                        height = (coord_bottom_right_y - coord_top_left_y) / content.height
 
-                yolov8_annotations.append(f"{0} {label_id} {center_x} {center_y} {width} {height}")
-        elif type(content) == Video:
-            for frame in resp:
-                for markup in frame.markups:
-                    label_id = label_map[label_id_to_name[markup.label_id]]
-                    coord_top_left_x = markup.coord_top_left_x
-                    coord_top_left_y = markup.coord_top_left_y
-                    coord_bottom_right_x = markup.coord_bottom_right_x
-                    coord_bottom_right_y = markup.coord_bottom_right_y
+                        yolov8_annotations.append(f"{label_id} {center_x} {center_y} {width} {height}")
+                elif isinstance(content, Video):
+                    for frame in resp:
+                        for markup in frame.markups:
+                            label_id = label_map[label_id_to_name[markup.label_id]]
+                            coord_top_left_x = markup.coord_top_left_x
+                            coord_top_left_y = markup.coord_top_left_y
+                            coord_bottom_right_x = markup.coord_bottom_right_x
+                            coord_bottom_right_y = markup.coord_bottom_right_y
 
-                    # Вычисление центра и размеров
-                    center_x = (coord_top_left_x + coord_bottom_right_x) / 2 / content.width
-                    center_y = (coord_top_left_y + coord_bottom_right_y) / 2 / content.height
-                    width = (coord_bottom_right_x - coord_top_left_x) / content.width
-                    height = (coord_bottom_right_y - coord_top_left_y) / content.height
+                            # Вычисление центра и размеров
+                            center_x = (coord_top_left_x + coord_bottom_right_x) / 2 / content.width
+                            center_y = (coord_top_left_y + coord_bottom_right_y) / 2 / content.height
+                            width = (coord_bottom_right_x - coord_top_left_x) / content.width
+                            height = (coord_bottom_right_y - coord_top_left_y) / content.height
 
-                    yolov8_annotations.append(f"{frame.frame_offset} {label_id} {center_x} {center_y} {width} {height}")
+                            yolov8_annotations.append(
+                                f"{frame.frame_offset} {label_id} {center_x} {center_y} {width} {height}")
 
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
-        async with aiofiles.open(temp_file.name, mode='w', encoding='utf-8') as f:
-            await f.write("\n".join(yolov8_annotations))
+                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".txt")
+                async with aiofiles.open(temp_file.name, mode='w', encoding='utf-8') as f:
+                    await f.write("\n".join(yolov8_annotations))
+                temp_files.append((content.name, temp_file.name))
 
-        # Используем FileResponse для отправки файла
-        return FileResponse(temp_file.name, media_type='text/plain', filename='annotations.txt')
+            if len(temp_files) == 1:
+                filename = '.'.join(temp_files[0][0].split('.')[:-1])
+                return FileResponse(temp_files[0][1], media_type='text/plain', filename=f"{filename}.txt")
+            else:
+                zip_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
+                with zipfile.ZipFile(zip_temp_file.name, 'w') as zipf:
+                    for title, file_path in temp_files:
+                        filename = '.'.join(title.split('.')[:-1])
+                        zipf.write(file_path, arcname=f"{filename}.txt")
+                return FileResponse(zip_temp_file.name, media_type='application/zip', filename='annotations.zip')
 
     async def change_content_status(
         self, content_id: uuid.UUID, new_status: VideoStatusOption
@@ -1043,3 +1075,24 @@ class ProjectsEndpoints:
         )
 
         return Response(content=str(message), media_type="application/json")
+
+    async def update_markup_for_frame(
+        self,
+        data: list[ChangeMarkupsOnFrame],
+    ):
+        async with self._main_db_manager.projects.make_autobegin_session() as session:
+            for data_item in data:
+                new_markups = [FrameMarkup(
+                    frame_id=data_item.frame_id,
+                    label_id=raw_markup.label_id,
+                    coord_top_left_x=raw_markup.coord_top_left_x,
+                    coord_top_left_y=raw_markup.coord_top_left_y,
+                    coord_bottom_right_x=raw_markup.coord_bottom_right_x,
+                    coord_bottom_right_y=raw_markup.coord_bottom_right_y,
+                    confidence=Decimal(1),
+                    created_by_model=False,
+                ) for raw_markup in data_item.new_markups]
+                markups = await self._main_db_manager.projects.update_markups_for_frame(
+                    session, data_item.frame_id, data_item.deleted_markups, new_markups
+                )
+        return Response(content="Markups updated")

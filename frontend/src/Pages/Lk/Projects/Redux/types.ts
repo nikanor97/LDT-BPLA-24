@@ -4,6 +4,7 @@ import {Slice} from './Store';
 import {Api} from '@root/Api/Projects/types';
 import {Api as UserApi} from '@root/Api/User/types';
 import { RcFile } from "antd/es/upload";
+import { Photo, Video } from "@root/Types";
 
 
 export declare namespace iState {

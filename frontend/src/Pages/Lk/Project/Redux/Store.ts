@@ -10,6 +10,7 @@ const initialState: iState.Value = {
         visible: false
     },
     uploadContent: getFullState(),
+    selectedContent: []
 };
 
 
@@ -52,6 +53,13 @@ export const Slice = createSlice({
             requestError(state.content),
         stopGetProjectContent: (state) =>
             state,
+        setSelectedContent: (state, action: PayloadAction<iActions.setSelectedContent>) => {
+            state.selectedContent = action.payload;
+        },
+        eraseSelectedContent: (state)  =>  {
+            state.selectedContent = initialState.selectedContent;
+        },
+        downloadResult: (state, action: PayloadAction<iActions.downloadResult>) => state,
     }   
 });
 export const PageActions = Slice.actions;

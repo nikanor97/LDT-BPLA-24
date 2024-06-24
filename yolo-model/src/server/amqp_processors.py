@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import Any
 
 from loguru import logger
@@ -28,6 +29,10 @@ async def yolo_model_processor(data: dict, publisher: Publisher, main_db_manager
         filename=str(settings.MEDIA_DIR / data["image_path"]),
         # model, str(settings.MEDIA_DIR / data["video_url"])
     )
+
+    if data["type"] == "video":
+        Path(settings.MEDIA_DIR / data["image_path"]).unlink()
+    Path(settings.MEDIA_DIR / (".".join(data["image_path"].split('.')[:-1]) + ".txt")).unlink()
 
     data_to_send = {
         "data": {

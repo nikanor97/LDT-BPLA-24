@@ -8,6 +8,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    
 }
 .topBar {
     padding: 12px 16px;
@@ -32,4 +33,39 @@
         border: 1px solid $primaryColor;
         border-radius: 4px;
     }
+}
+
+.desc {
+    padding: 8px 24px 24px 24px;
+    .content {
+        border: 1px solid #D0D5DD;
+        border-radius: 8px;
+        background-color: #F9FAFB;
+        padding: 16px;
+        display: flex;
+        gap: 8px;
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 20px;
+        svg {
+            width: 24px;
+            height: 24px;
+        }
+        ol {
+            padding-left: 20px;
+            margin: 0;
+        }
+    }
+    .text {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+.markupsTitle {
+    margin-bottom: 8px;
+    padding: 0 24px;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 18px;
 }

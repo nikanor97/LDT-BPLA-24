@@ -8,6 +8,13 @@ const initialState: iState.Value = {
     playInterval: null,
     videoStatus: getShortState(),
     content_ids: getFullState(),
+    viewMode: "result",
+    selectedLabel: null,
+    photoMarkup: {
+        newMarkups: [],
+        changedMarkups: [],
+    },
+    videoMarkup: [],
 };
 
 
@@ -61,6 +68,42 @@ export const Slice = createSlice({
             requestError(state.videoStatus),
 
         downloadResult: (state, action: PayloadAction<iActions.downloadResult>) => state,
+
+        setViewMode:  (state, action: PayloadAction<iActions.setViewMode>)  => {
+            state.viewMode = action.payload;
+        },
+        setSelectedLabel:  (state, action: PayloadAction<iActions.setSelectedLabel>)  => {
+            state.selectedLabel = action.payload;
+        },
+        eraseSelectedLabel:  (state)  => {
+            state.selectedLabel = initialState.selectedLabel;
+        },
+        setPhotoNewMarkups:  (state, action: PayloadAction<iActions.setPhotoNewMarkups>)  =>  {
+            state.photoMarkup.newMarkups  = action.payload;
+        },
+        deletePhotoNewMarkup: (state, action: PayloadAction<iActions.deletePhotoNewMarkup>) => {
+            state.photoMarkup.newMarkups = state.photoMarkup.newMarkups.filter(markup => markup.id !== action.payload);
+        },
+        erasePhotoMarkup: (state)  =>  {
+            state.photoMarkup = initialState.photoMarkup;
+        },
+        deleteOldMarkups: (state, action: PayloadAction<iActions.deleteOldMarkups>) => {
+            state.photoMarkup.changedMarkups.push(action.payload);
+        },
+        sendPhotoMarkups: (state, action: PayloadAction<iActions.sendPhotoMarkups>) => state,
+        addVideoNewMarkup: (state, action: PayloadAction<iActions.addVideoNewMarkup>)   => {
+            const existFrame = state.videoMarkup.find((item) => item.frame_id = action.payload.frame_id);
+            if (existFrame) {
+                existFrame.new_markups.push(action.payload.new_markup)
+            } else {
+                state.videoMarkup.push({
+                    frame_id: action.payload.frame_id,
+                    content_id: action.payload.content_id,
+                    new_markups: [action.payload.new_markup],
+                    deleted_markups: [],
+                })
+            }
+        }
     }   
 });
 export const PageActions = Slice.actions;
