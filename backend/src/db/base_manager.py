@@ -73,7 +73,7 @@ class BaseDbManager:
     def from_connect_str(
         cls: Type[DbT],
         connect_str: str,
-        pool_size: int = 5,
+        pool_size: int = 50,
         json_serializer: Optional[Callable[..., str]] = None,
         json_deserializer: Optional[Callable[..., Any]] = None,
     ) -> DbT:
