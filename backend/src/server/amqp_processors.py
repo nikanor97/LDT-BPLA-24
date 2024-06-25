@@ -119,11 +119,7 @@ async def yolo_markup_processor(
 
         # content_frames_counter = kwargs['content_frames_counter']
         # content_frames_counter[content.id] += 1
-        frames_counter = redis_client.get(str(content.id))
-        if frames_counter is None:
-            redis_client.set(str(content.id), 1)
-        else:
-            redis_client.set(str(content.id), int(frames_counter) + 1)
+        redis_client.incr(str(content.id))
 
         print(redis_client.get(str(content.id)), frames_in_content)
         if redis_client.get(str(content.id)) == frames_in_content:
