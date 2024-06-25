@@ -117,12 +117,9 @@ async def yolo_markup_processor(
     async with main_db_manager.projects.make_autobegin_session() as session:
         content = await main_db_manager.projects.get_content_by_frame_id(session, frame_id)
 
-        # content_frames_counter = kwargs['content_frames_counter']
-        # content_frames_counter[content.id] += 1
         redis_client.incr(str(content.id))
 
         frames_counter = int(redis_client.get(str(content.id)).decode())
-        print(frames_counter, frames_in_content)
         if frames_counter == frames_in_content:
             content.status = VideoStatusOption.extracted
         else:

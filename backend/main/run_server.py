@@ -55,7 +55,6 @@ async def main(loop: asyncio.AbstractEventLoop) -> None:
             tags_base.append(tag_base)
     tags = await pe.create_verification_tags(tags_base)
 
-    content_frames_counter: defaultdict = defaultdict(int)
     redis_client = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
 
     amqp_server = AMQPServer(
@@ -65,7 +64,6 @@ async def main(loop: asyncio.AbstractEventLoop) -> None:
             "from_yolo_model": yolo_markup_processor,
         },
         asyncronous_consumer=True,
-        content_frames_counter=content_frames_counter,
         redis_client=redis_client
     )
 
