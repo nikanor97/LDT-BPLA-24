@@ -105,10 +105,10 @@ class ProjectsDbManager(BaseDbManager):
         session: AsyncSession,
         project_id: uuid.UUID
     ) -> list[Video | Photo]:
-        stmt = select(Video).where(Video.project_id == project_id)
-        videos = (await session.execute(stmt)).scalars().all()
-        stmt = select(Photo).where(Photo.project_id == project_id)
+        stmt = select(Photo).where(Photo.project_id == project_id).order_by(Photo.name)
         photos = (await session.execute(stmt)).scalars().all()
+        stmt = select(Video).where(Video.project_id == project_id).order_by(Video.name)
+        videos = (await session.execute(stmt)).scalars().all()
         return videos + photos
 
     async def get_content_by_projects(
