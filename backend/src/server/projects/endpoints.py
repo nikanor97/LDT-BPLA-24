@@ -367,17 +367,22 @@ class ProjectsEndpoints:
         for user in users:
             users_by_ids[user.id] = user
 
-        projects_with_users: list[ProjectWithUsers] = []
-        for project_with_users_ids in projects_with_users_ids:
-            author = users_by_ids[project_with_users_ids.author_id]
-            content_type = project_id_to_content_type[project_with_users_ids.id]
-            project_with_users = ProjectWithUsers(
-                author=author,
-                content_type=content_type,
-                detected_count=project_id_to_detected_count[project_with_users_ids.id],
-                **project_with_users_ids.dict(),
-            )
-            projects_with_users.append(project_with_users)
+        async with self._main_db_manager.projects.make_autobegin_session() as session:
+            projects_with_users: list[ProjectWithUsers] = []
+            for project_with_users_ids in projects_with_users_ids:
+                author = users_by_ids[project_with_users_ids.author_id]
+                content_type = project_id_to_content_type[project_with_users_ids.id]
+                content_with_markups_count = await self._main_db_manager.projects.get_content_with_markups_count_by_project(
+                    session, project_with_users_ids.id
+                )
+                total_markup_count = sum([c[1] for c in content_with_markups_count])
+                project_with_users = ProjectWithUsers(
+                    author=author,
+                    content_type=content_type,
+                    detected_count=total_markup_count,
+                    **project_with_users_ids.dict(),
+                )
+                projects_with_users.append(project_with_users)
 
         return UnifiedResponse(data=projects_with_users)
 
@@ -438,13 +443,15 @@ class ProjectsEndpoints:
     ) -> UnifiedResponse[list[Content]]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                items = await self._main_db_manager.projects.get_content_by_project(
+                items_with_cnt = await self._main_db_manager.projects.get_content_with_markups_count_by_project(
                     session, project_id
                 )
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
-        content_items: list[Content] = [Content.from_video_or_photo(item, detected_count=0) for item in items]
+        content_items: list[Content] = [
+            Content.from_video_or_photo(item, detected_count=markup_cnt) for item, markup_cnt in items_with_cnt
+        ]
         return UnifiedResponse(data=content_items)
 
     async def get_content_ids_by_project(
