@@ -346,7 +346,7 @@ class ProjectsDbManager(BaseDbManager):
         for user_role in user_roles:
             user_roles_by_project_id[user_role.project_id].append(user_role)
 
-        stmt = select(Project).where(col(Project.id).in_(projects_ids))
+        stmt = select(Project).where(col(Project.id).in_(projects_ids) & Project.is_deleted == False)
         projects: list[Project] = (await session.execute(stmt)).scalars().all()
 
         project_by_id: dict[uuid.UUID, Project] = dict()
