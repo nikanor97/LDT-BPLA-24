@@ -21,7 +21,7 @@ from src.server.server import make_server_app
 from common.rabbitmq.amqp import Server as AMQPServer
 
 
-async def main() -> FastAPI:
+def main() -> FastAPI:
 
     run_migrations()
 
@@ -53,7 +53,7 @@ async def main() -> FastAPI:
                 groupname=groupname
             )
             tags_base.append(tag_base)
-    tags = await pe.create_verification_tags(tags_base)
+    # tags = await pe.create_verification_tags(tags_base)
 
     content_frames_counter: defaultdict = defaultdict(int)
 
