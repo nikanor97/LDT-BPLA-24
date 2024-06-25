@@ -4,6 +4,7 @@ import tempfile
 from collections import defaultdict
 from pathlib import Path
 from uuid import UUID
+import aiofiles.os
 
 from PIL import Image
 from PIL import ImageDraw
@@ -123,6 +124,7 @@ async def yolo_markup_processor(
             content.status = VideoStatusOption.in_progress
 
         session.add_all(frame_markup_items)
+        # тут обновлять еще счетчик маркапов в объектах контента
 
         content = await main_db_manager.projects.get_content_by_frame_id(session, frame_id)
         project = await Project.by_id(session, project_id)
@@ -174,7 +176,9 @@ async def yolo_markup_processor(
                             # if notification_success:
 
     if data["type"] == "video":
-        Path(settings.MEDIA_DIR / data["image_path"]).unlink()
-    Path(settings.MEDIA_DIR / (".".join(data["image_path"].split('.')[:-1]) + ".txt")).unlink()
+        # Path(settings.MEDIA_DIR / data["image_path"]).unlink()
+        await aiofiles.os.remove(settings.MEDIA_DIR / data["image_path"])
+    # Path(settings.MEDIA_DIR / (".".join(data["image_path"].split('.')[:-1]) + ".txt")).unlink()
+    await aiofiles.os.remove(settings.MEDIA_DIR / (".".join(data["image_path"].split('.')[:-1]) + ".txt"))
 
     logger.info(f"New {len(frame_markup_items)} frame markup items created")
