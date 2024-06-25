@@ -140,10 +140,12 @@ async def yolo_markup_processor(
         )
         tag_id_to_confidence = {t[0].id: t[1] for t in tags}
 
+        n_new_markups = 0
         for markup in markups:
             if label_class_to_id[markup[4]] in label_to_verification_tag_mapping:
                 verification_tag_id = label_to_verification_tag_mapping[label_class_to_id[markup[4]]]
                 if verification_tag_id in tag_id_to_confidence and markup[5] >= tag_id_to_confidence[verification_tag_id]:
+                    n_new_markups += 1
                     if content.notification_sent is False and project.msg_receiver is not None:
                         await main_db_manager.projects.set_notification_sent_status(session, content.id, status=True)
                         await session.flush()
@@ -179,6 +181,7 @@ async def yolo_markup_processor(
 
                             notification_success = await notify_user(application, project.msg_receiver, temp_image_path, caption)
                             # if notification_success:
+        await main_db_manager.projects.increase_content_detected_cnt(session, content.id, n_new_markups)
 
     if data["type"] == "video":
         # Path(settings.MEDIA_DIR / data["image_path"]).unlink()

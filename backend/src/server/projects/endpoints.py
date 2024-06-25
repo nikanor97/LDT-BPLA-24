@@ -344,16 +344,16 @@ class ProjectsEndpoints:
         async with self._main_db_manager.users.make_autobegin_session() as session:
             users = await self._main_db_manager.users.get_users(session, users_ids)
 
-        project_id_to_detected_count: dict[uuid.UUID, int] = dict()
+        # project_id_to_detected_count: dict[uuid.UUID, int] = dict()
         project_id_to_content_type: dict[uuid.UUID, ProjectContentTypeOption] = dict()
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             for pwu in projects_with_users_ids:
                 content = await self._main_db_manager.projects.get_content_by_project(
                     session, pwu.id
                 )
-                project_id_to_detected_count[pwu.id] = len(
-                    [c for c in content if c.status != VideoStatusOption.created]
-                )
+                # project_id_to_detected_count[pwu.id] = len(
+                #     [c for c in content if c.status != VideoStatusOption.created]
+                # )
                 videos = [c for c in content if type(c) == Video]
                 photos = [c for c in content if type(c) == Photo]
                 if len(videos) > 0 and len(photos) > 0:
@@ -374,14 +374,16 @@ class ProjectsEndpoints:
             for project_with_users_ids in projects_with_users_ids:
                 author = users_by_ids[project_with_users_ids.author_id]
                 content_type = project_id_to_content_type[project_with_users_ids.id]
-                content_with_markups_count = await self._main_db_manager.projects.get_content_with_markups_count_by_project(
-                    session, project_with_users_ids.id
-                )
-                total_markup_count = sum([c[1] for c in content_with_markups_count])
+                content = await self._main_db_manager.projects.get_content_by_project(session, project_with_users_ids.id)
+                # content_with_markups_count = await self._main_db_manager.projects.get_content_with_markups_count_by_project(
+                #     session, project_with_users_ids.id
+                # )
+                # total_markup_count = sum([c[1] for c in content_with_markups_count])
+                replace_none_with_zero = lambda x: 0 if x is None else x
                 project_with_users = ProjectWithUsers(
                     author=author,
                     content_type=content_type,
-                    detected_count=total_markup_count,
+                    detected_count=sum([replace_none_with_zero(c.detected_cnt) for c in content]),
                     **project_with_users_ids.dict(),
                 )
                 projects_with_users.append(project_with_users)
@@ -436,7 +438,8 @@ class ProjectsEndpoints:
                 )
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
-        res = Content.from_video_or_photo(content, detected_count=0)
+        detected_cnt = content.detected_cnt if content.detected_cnt is not None else 0
+        res = Content.from_video_or_photo(content, detected_count=detected_cnt)
         return UnifiedResponse(data=res)
 
     async def get_content_by_project(
@@ -445,14 +448,21 @@ class ProjectsEndpoints:
     ) -> UnifiedResponse[list[Content]]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
-                items_with_cnt = await self._main_db_manager.projects.get_content_with_markups_count_by_project(
+                # items_with_cnt = await self._main_db_manager.projects.get_content_with_markups_count_by_project(
+                #     session, project_id
+                # )
+                items = await self._main_db_manager.projects.get_content_by_project(
                     session, project_id
                 )
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
+        replace_none_with_zero = lambda x: 0 if x is None else x
         content_items: list[Content] = [
-            Content.from_video_or_photo(item, detected_count=markup_cnt) for item, markup_cnt in items_with_cnt
+            Content.from_video_or_photo(
+                item,
+                detected_count=replace_none_with_zero(item.detected_cnt)
+            ) for item in items
         ]
         return UnifiedResponse(data=content_items)
 
