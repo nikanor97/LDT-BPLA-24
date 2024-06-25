@@ -551,7 +551,7 @@ class ProjectsEndpoints:
                 video_frames_dir = base_video_frames_dir / video_name
                 video_frames_dir.mkdir(exist_ok=True)
                 start_time = datetime.now()
-                frames_filenames = extract_frames(
+                frames_filenames = await extract_frames(
                     video_path=video_path,
                     output_folder=video_frames_dir,
                     name_prefix='',
