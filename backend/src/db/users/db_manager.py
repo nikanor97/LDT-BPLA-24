@@ -19,10 +19,6 @@ from src.db.users.models import (
 from src.server.auth_utils import verify_password, get_password_hash, TokenKind
 
 
-# TODO: Replace all "create" method with session.add cause otherwise in case
-#  of several creations some objects can be created and others will fail (non-transactional behaviour)
-
-
 class UsersDbManager(BaseDbManager):
     async def create_user(self, session: AsyncSession, user: UserBase) -> User:
         existing_user = (

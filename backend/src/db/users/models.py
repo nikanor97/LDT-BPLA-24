@@ -26,9 +26,6 @@ class UserBase(UsersSQLModel):
 
 class User(UserBase, TimeStampWithIdMixin, table=True):
     __tablename__ = "users"
-    # roles: list["UserRole"] = Relationship(
-    #     back_populates="user", sa_relationship_kwargs={"lazy": "selectin"}
-    # )
 
 
 class UserTokenBase(UsersSQLModel):

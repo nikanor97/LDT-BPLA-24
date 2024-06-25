@@ -12,5 +12,4 @@ WORKDIR /app
 COPY . /app
 
 RUN poetry config installer.max-workers 10
-RUN poetry install # --without device
-#RUN pip install -r requirements.txt
+RUN poetry install

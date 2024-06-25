@@ -18,12 +18,6 @@ from src.db.projects.models import FrameMarkup, VerificationTag, Label, LabelBas
 from src.server.constants import tag_translation_eng_rus
 from src.server.telegram_bot import notify_user
 
-# quadcopter_uav
-# airplane
-# helicopter
-# bird
-# fixed-wing_uav
-# SHIT
 
 label_map = {
     "quadcopter_uav" : 0,
@@ -50,11 +44,26 @@ confidence_thresholds = {
 }
 
 
+def add_annotations(image: Image, annotations: list[dict], label_by_id: dict[UUID, Label]):
+    draw = ImageDraw.Draw(image)
+    for annotation in annotations:
+        top_left = (annotation["coord_top_left_x"], annotation["coord_top_left_y"])
+        bottom_right = (annotation["coord_bottom_right_x"], annotation["coord_bottom_right_y"])
+        confidence = annotation.get("confidence", None)
+
+        # Рисуем прямоугольник
+        draw.rectangle([top_left, bottom_right], outline="red", width=2)
+
+        # Добавляем текст с confidence, если он есть
+        if confidence is not None:
+            label_name = label_by_id[annotation['label_id']].name
+            text = f"{label_name}: {confidence:.2f}"
+            draw.text((top_left[0], top_left[1] - 10), text, fill="red")
+
+
 async def yolo_markup_processor(
     data: dict, publisher: Publisher, main_db_manager: MainDbManager, **kwargs
 ) -> None:
-    INTERVAL_THRESHOLD = 15
-    CONFIDENCE_THRESHOLD = 0.6
 
     # {'markup': '[(802, 305, 839, 336, 0, 0.7806294560432434)]', 'frame_id': 'a1425b2d-cfc5-4156-aaf9-a3d52662837e'}
     logger.info(f"Received from model: {data}")
@@ -126,27 +135,12 @@ async def yolo_markup_processor(
             session, [t[0].id for t in tags]
         )
         tag_id_to_confidence = {t[0].id: t[1] for t in tags}
-        print(label_to_verification_tag_mapping)
-        print(tags)
-
-
-        # frame_id_to_markups: defaultdict[UUID, list[FrameMarkupReadMassive]] = defaultdict(list)
-        # # TODO: ненужная логика. надо пересмотреть подход с verification_tag и лейблами
-        # for idx, frame in enumerate(frames):
-        #     for idx_markup, markup in enumerate(frame.markups):
-        #         if markup.label_id in label_to_verification_tag_mapping:
-        #             verification_tag_id = label_to_verification_tag_mapping[markup.label_id]
-        #             if verification_tag_id in tag_id_to_confidence and markup.confidence >= tag_id_to_confidence[
-        #                 verification_tag_id]:
-        #                 frame_id_to_markups[frame.id].append(FrameMarkupReadMassive(**markup.dict()))
-        # resp = [FramesWithMarkupRead(**fr.dict(), markups=frame_id_to_markups[fr.id]) for fr in frames]
 
         for markup in markups:
             if label_class_to_id[markup[4]] in label_to_verification_tag_mapping:
                 verification_tag_id = label_to_verification_tag_mapping[label_class_to_id[markup[4]]]
                 if verification_tag_id in tag_id_to_confidence and markup[5] >= tag_id_to_confidence[verification_tag_id]:
                     if content.notification_sent is False and project.msg_receiver is not None:
-                        print("\n\n\nINSIDE\n\n\n")
                         await main_db_manager.projects.set_notification_sent_status(session, content.id, status=True)
                         await session.flush()
                         application = Application.builder().token(settings.TELEGRAM_TOKEN).build()
@@ -160,27 +154,10 @@ async def yolo_markup_processor(
                         image = Image.open(image_path)
                         draw = ImageDraw.Draw(image)
 
-                        # Функция для добавления разметки
-                        def add_annotations(image: Image, annotations: list[dict]):
-                            draw = ImageDraw.Draw(image)
-                            for annotation in annotations:
-                                top_left = (annotation["coord_top_left_x"], annotation["coord_top_left_y"])
-                                bottom_right = (annotation["coord_bottom_right_x"], annotation["coord_bottom_right_y"])
-                                confidence = annotation.get("confidence", None)
-
-                                # Рисуем прямоугольник
-                                draw.rectangle([top_left, bottom_right], outline="red", width=2)
-
-                                # Добавляем текст с confidence, если он есть
-                                if confidence is not None:
-                                    label_name = label_by_id[annotation['label_id']].name
-                                    text = f"{label_name}: {confidence:.2f}"
-                                    draw.text((top_left[0], top_left[1] - 10), text, fill="red")
-
                         annotations = [fm.dict() for fm in frame_markup_items]
 
                         # Добавить разметку к изображению
-                        add_annotations(image, annotations)
+                        add_annotations(image, annotations, label_by_id)
 
                         with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp_file:
                             temp_image_path = tmp_file.name

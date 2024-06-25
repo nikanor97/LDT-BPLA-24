@@ -1,21 +1,16 @@
 import io
-import json
 import os
-import random
 import re
 import tempfile
 import uuid
 import zipfile
-from collections import Counter, defaultdict
+from collections import defaultdict
 from decimal import Decimal
-from io import BytesIO
-from os.path import isfile, join
 from typing import Optional, Annotated
 from datetime import datetime
 
 import aiofiles
 import ffmpeg  # type: ignore
-import pandas as pd
 from PIL import Image
 from loguru import logger
 
@@ -25,21 +20,16 @@ from sqlalchemy.exc import NoResultFound
 
 from common.rabbitmq.publisher import Publisher
 
-# from common.rabbitmq.client import RabbitClient
 from src.db.exceptions import ResourceAlreadyExists
 from src.db.main_db_manager import MainDbManager
 from src.db.projects.models import (
     Frame,
-    FrameBase,
     FrameMarkup,
     Label,
     LabelBase,
     Video,
-    RoleTypeOption,
     Project,
     ProjectBase,
-    UserRole,
-    UserRoleBase,
     VerificationTag,
     VerificationTagBase,
     VideoStatusOption,
@@ -51,25 +41,19 @@ from src.server.common import UnifiedResponse, exc_to_str
 from src.server.constants import tag_translation, colors, tag_translation_eng_rus, label_map, confidence_thresholds
 from src.server.projects.models import (
     FramesWithMarkupRead,
-    ContentMarkupCreate,
-    UserRoleWithProjectRead,
     ProjectCreate,
     ProjectRead,
-    GpsCoords,
-    ProjectsStats,
     ProjectWithUsers,
-    ProjectStats,
-    ScoreMapItem,
-    ScoreMapDecorationTypes,
-    ProjectScoredOneFloorStat,
-    ProjectScoresForFloor,
-    ProjectScores,
-    ScoreMapItemWithLabels, BplaProjectStats, Content, ContentTypeOption, ProjectContentTypeOption,
-    FramesWithMarkupCreate, MarkupListCreate, FrameMarkupReadMassive, VerificationTagWithConfidence,
-    ChangeMarkupsOnFrameNewMarkup, ChangeMarkupsOnFrame,
+    BplaProjectStats,
+    Content,
+    ContentTypeOption,
+    ProjectContentTypeOption,
+    FrameMarkupReadMassive,
+    VerificationTagWithConfidence,
+    ChangeMarkupsOnFrame,
 )
 from starlette.requests import Request
-from starlette.responses import Response, FileResponse, StreamingResponse
+from starlette.responses import Response, FileResponse
 from starlette.templating import Jinja2Templates
 
 from src.server.projects.video_utils import extract_frames
@@ -82,91 +66,6 @@ class ProjectsEndpoints:
     def __init__(self, main_db_manager: MainDbManager, publisher: Publisher) -> None:
         self._main_db_manager = main_db_manager
         self._publisher = publisher
-        # self._rabbit_client = RabbitClient()
-        # await self._rabbit_client.connect()
-
-    async def create_and_upload_video(
-        self,
-        name: str,
-        description: str,
-        file: UploadFile,
-        token: Annotated[str, Depends(oauth2_scheme)],
-        apartment_id: uuid.UUID,
-    ) -> UnifiedResponse[Video]:
-        owner_id = get_user_id_from_token(token)
-        async with self._main_db_manager.projects.make_autobegin_session() as session:
-            try:
-                apartment = await self._main_db_manager.projects.get_apartment(
-                    session, apartment_id
-                )
-            except NoResultFound as e:
-                return UnifiedResponse(error=exc_to_str(e), status_code=404)
-
-        video_id = uuid.uuid4()
-        if file.filename is not None:
-            video_name = f'{".".join(file.filename.split(".")[:-1])}_{video_id}.mp4'
-        else:
-            video_name = f"{video_id}.mp4"
-        video_path = settings.MEDIA_DIR / "video" / video_name
-        os.makedirs(settings.MEDIA_DIR / "video", exist_ok=True)
-
-        async with aiofiles.open(video_path, "wb") as f:
-            await f.write(await file.read())
-
-        try:
-            video_meta_raw = ffmpeg.probe(video_path)["streams"]
-            video_meta = None
-            for meta_part in video_meta_raw:
-                if meta_part["codec_type"] == "video":
-                    video_meta = meta_part
-                    break
-            assert video_meta is not None
-        except Exception as e:
-            raise ValueError(
-                "Provided file does not contain video or metadata for video is not available"
-            )
-
-        video_ = Video(
-            id=video_id,
-            name=name,
-            description=description,
-            owner_id=owner_id,
-            apartment_id=apartment_id,
-            length_sec=Decimal(video_meta["duration"]),
-            n_frames=video_meta["nb_frames"],
-            height=video_meta["height"],
-            width=video_meta["width"],
-            source_url=video_name,
-        )
-
-        try:
-            async with self._main_db_manager.projects.make_autobegin_session() as session:
-                video = await self._main_db_manager.projects.create_video(
-                    session, video_
-                )
-        except NoResultFound as e:
-            return UnifiedResponse(error=exc_to_str(e), status_code=404)
-
-        await self._get_clip_predictions(
-            video_name, video_id, video_, apartment.project_id
-        )
-
-        return UnifiedResponse(data=video)
-
-    async def create_frames_with_markups(
-        self, video_markup: ContentMarkupCreate
-    ) -> UnifiedResponse[list[FrameMarkup]]:
-        async with self._main_db_manager.projects.make_autobegin_session() as session:
-            try:
-                frames = (
-                    await self._main_db_manager.projects.create_frames_with_markups(
-                        session, video_markup
-                    )
-                )
-            except NoResultFound as e:
-                return UnifiedResponse(error=exc_to_str(e), status_code=404)
-
-        return UnifiedResponse(data=frames)
 
     async def create_labels(
         self, project_id: uuid.UUID, labels: list[LabelBase]
@@ -179,18 +78,6 @@ class ProjectsEndpoints:
                 return UnifiedResponse(data=new_labels)
             except ResourceAlreadyExists as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=409)
-            except NoResultFound as e:
-                return UnifiedResponse(error=exc_to_str(e), status_code=404)
-
-    async def get_labels_by_project(
-        self, project_id: uuid.UUID
-    ) -> UnifiedResponse[list[Label]]:
-        async with self._main_db_manager.projects.make_autobegin_session() as session:
-            try:
-                labels = await self._main_db_manager.projects.get_labels_by_project(
-                    session, project_id
-                )
-                return UnifiedResponse(data=labels)
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
@@ -209,17 +96,6 @@ class ProjectsEndpoints:
                 labels[idx].name = tag_translation_eng_rus[label.name]
         return UnifiedResponse(data=labels)
 
-
-    async def get_video(self, video_id: uuid.UUID) -> UnifiedResponse[Video]:
-        async with self._main_db_manager.projects.make_autobegin_session() as session:
-            try:
-                video = await self._main_db_manager.projects.get_video(
-                    session, video_id
-                )
-                return UnifiedResponse(data=video)
-            except NoResultFound as e:
-                return UnifiedResponse(error=exc_to_str(e), status_code=404)
-
     async def delete_project(self, project_id: uuid.UUID) -> UnifiedResponse[Project]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
@@ -229,104 +105,6 @@ class ProjectsEndpoints:
                 return UnifiedResponse(data=project)
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
-
-    async def get_videos_by_apartment(
-        self, apartment_id
-    ) -> UnifiedResponse[list[Video]]:
-        async with self._main_db_manager.projects.make_autobegin_session() as session:
-            try:
-                videos = await self._main_db_manager.projects.get_videos_by_apartment(
-                    session, apartment_id
-                )
-                return UnifiedResponse(data=videos)
-            except NoResultFound as e:
-                return UnifiedResponse(error=exc_to_str(e), status_code=404)
-
-    async def get_frame(self, frame_id: uuid.UUID) -> UnifiedResponse[Frame]:
-        async with self._main_db_manager.projects.make_autobegin_session() as session:
-            try:
-                frame = await self._main_db_manager.projects.get_frame(
-                    session, frame_id
-                )
-                return UnifiedResponse(data=frame)
-            except NoResultFound as e:
-                return UnifiedResponse(error=exc_to_str(e), status_code=404)
-
-    async def get_frames_by_video(
-        self, video_id: uuid.UUID
-    ) -> UnifiedResponse[list[Frame]]:
-        async with self._main_db_manager.projects.make_autobegin_session() as session:
-            try:
-                frames = await self._main_db_manager.projects.get_frames_by_video(
-                    session, video_id
-                )
-                return UnifiedResponse(data=frames)
-            except NoResultFound as e:
-                return UnifiedResponse(error=exc_to_str(e), status_code=404)
-
-    async def get_frame_markups(
-        self,
-        video_id: Optional[uuid.UUID] = None,
-        frame_offset: Optional[Decimal] = None,
-        frame_id: Optional[uuid.UUID] = None,
-    ) -> UnifiedResponse[list[FrameMarkup]]:
-        async with self._main_db_manager.projects.make_autobegin_session() as session:
-            try:
-                if video_id is not None and frame_offset is not None:
-                    frame_ = FrameBase(video_id=video_id, frame_offset=frame_offset)
-                else:
-                    frame_ = None
-                markups = await self._main_db_manager.projects.get_frame_markups(
-                    session, frame_=frame_, frame_id=frame_id
-                )
-                return UnifiedResponse(data=markups)
-            except (NoResultFound, AssertionError) as e:
-                return UnifiedResponse(error=exc_to_str(e), status_code=404)
-
-    async def stream_video(self, video_id: uuid.UUID, range: str = Header(None)):
-        # TODO: now works only for streaming from file-system
-
-        try:
-            async with self._main_db_manager.projects.make_autobegin_session() as session:
-                video_db = await self._main_db_manager.projects.get_video(
-                    session, video_id
-                )
-                # TODO: make source_url not None in models and remove type ignore bolow
-                video_src = settings.MEDIA_DIR / "video" / video_db.source_url  # type: ignore
-                os.makedirs(settings.MEDIA_DIR / "video", exist_ok=True)
-        except NoResultFound as e:
-            raise HTTPException(status_code=404, detail=e.args)
-
-        CHUNK_SIZE = 1024 * 1024 * 10
-
-        start_, end_ = range.replace("bytes=", "").split("-")
-        start = int(start_)
-        end = int(end_) if end_ else start + CHUNK_SIZE
-        with open(video_src, "rb") as video:
-            video.seek(start)
-            data = video.read(end - start)
-            filesize = str(video_src.stat().st_size)
-            headers = {
-                "Content-Range": f"bytes {str(start)}-{str(end)}/{filesize}",
-                "Accept-Ranges": "bytes",
-            }
-            return Response(
-                data, status_code=206, headers=headers, media_type="video/mp4"
-            )
-
-    # async def get_video_file(self, video_id: uuid.UUID):
-    #     try:
-    #         async with self._main_db_manager.projects.make_autobegin_session() as session:
-    #             video_db = await self._main_db_manager.projects.get_video(
-    #                 session, video_id
-    #             )
-    #             # TODO: make source_url not None in models and remove type ignore bolow
-    #             video_src = settings.MEDIA_DIR / "video" / video_db.source_url  # type: ignore
-    #             os.makedirs(settings.MEDIA_DIR / "video", exist_ok=True)
-    #     except NoResultFound as e:
-    #         raise HTTPException(status_code=404, detail=e.args)
-    #
-    #     return FileResponse(video_src, media_type="video/mp4")
 
     async def get_video_file(self, video_id: uuid.UUID, request: Request):
         try:
@@ -369,69 +147,6 @@ class ProjectsEndpoints:
         }
         return FileResponse(video_src, headers=headers)
 
-    async def streaming_example(self, video_id: uuid.UUID, request: Request):
-        try:
-            async with self._main_db_manager.projects.make_autobegin_session() as session:
-                await self._main_db_manager.projects.get_video(session, video_id)
-        except NoResultFound as e:
-            raise HTTPException(status_code=404, detail=e.args)
-        return templates.TemplateResponse(
-            "video_streaming_test.htm",
-            context={"request": request, "video_id": video_id},
-        )
-
-    async def get_user_roles(
-        self,
-        user_id: Optional[uuid.UUID] = None,
-        project_id: Optional[uuid.UUID] = None,
-        role_type: Optional[RoleTypeOption] = None,
-    ) -> UnifiedResponse[list[UserRoleWithProjectRead]]:
-        # Checking whether user with user_id exists
-        user = await self._get_user_or_error(user_id)
-        if isinstance(user, NoResultFound):
-            return UnifiedResponse(error=exc_to_str(user), status_code=404)
-
-        # Retrieving user roles
-        async with self._main_db_manager.projects.make_autobegin_session() as session:
-            try:
-                user_roles = await self._main_db_manager.projects.get_user_roles(
-                    session, user_id=user_id, project_id=project_id, role_type=role_type
-                )
-            except (NoResultFound, AssertionError) as e:
-                return UnifiedResponse(error=exc_to_str(e), status_code=404)
-
-        # Adding users to results
-        user_roles = [UserRoleWithProjectRead.parse_obj(ur) for ur in user_roles]
-        user_ids = {ur.user_id for ur in user_roles}
-        async with self._main_db_manager.users.make_autobegin_session() as session:
-            users = await self._main_db_manager.users.get_users(session, user_ids)
-        users_by_id: dict[uuid.UUID, User] = dict()
-        for usr in users:
-            users_by_id[usr.id] = usr
-        for ur in user_roles:
-            ur.user = users_by_id[ur.user_id]
-        resp = [UserRoleWithProjectRead.parse_obj(ur) for ur in user_roles]
-        return UnifiedResponse(data=resp)
-
-    async def create_user_role(
-        self, user_role: UserRoleBase
-    ) -> UnifiedResponse[UserRole]:
-        # Checking whether user with user_id exists
-        user = await self._get_user_or_error(user_role.user_id)
-        if isinstance(user, NoResultFound):
-            return UnifiedResponse(error=exc_to_str(user), status_code=404)
-
-        async with self._main_db_manager.projects.make_autobegin_session() as session:
-            try:
-                new_user_role = await self._main_db_manager.projects.create_user_role(
-                    session, user_role
-                )
-                return UnifiedResponse(data=new_user_role)
-            except ResourceAlreadyExists as e:
-                return UnifiedResponse(error=exc_to_str(e), status_code=409)
-            except NoResultFound as e:
-                return UnifiedResponse(error=exc_to_str(e), status_code=404)
-
     async def create_verification_tags(
         self, tags: list[VerificationTagBase]
     ) -> UnifiedResponse[list[VerificationTag]]:
@@ -462,18 +177,6 @@ class ProjectsEndpoints:
             ) for tag in tags]
         return UnifiedResponse(data=res)
 
-    async def write_gps(
-        self, video_id: uuid.UUID, gps_coords: GpsCoords
-    ) -> UnifiedResponse[Video]:
-        async with self._main_db_manager.projects.make_autobegin_session() as session:
-            try:
-                video = await self._main_db_manager.projects.write_gps_coords(
-                    session, video_id, gps_coords
-                )
-            except NoResultFound as e:
-                return UnifiedResponse(error=exc_to_str(e), status_code=404)
-        return UnifiedResponse(data=video)
-
     async def _get_user_or_error(self, user_id: uuid.UUID) -> User | NoResultFound:
         """
         Method should be used only inside endpoints class.
@@ -487,41 +190,6 @@ class ProjectsEndpoints:
                 return user
             except (NoResultFound, AssertionError) as e:
                 return e
-
-    async def _get_clip_predictions(
-        self, video_name: str, video_id: uuid.UUID, video: Video, project_id: uuid.UUID
-    ):
-        async with self._main_db_manager.projects.make_autobegin_session() as session:
-            labels = await self._main_db_manager.projects.get_labels_by_project(
-                session, project_id
-            )
-        # from pprint import pprint
-        #
-        # pprint(labels)
-
-        labels_names = [l.name for l in labels]
-        label_id_by_name = dict()
-        for label in labels:
-            label_id_by_name[label.name] = label.id
-
-        message = dict()
-        message["data"] = {
-            "video_name": video_name,
-            "labels_names": labels_names,
-            "project_id": str(project_id),
-            "video_id": str(video_id),
-        }
-        rabbit_message = await self._publisher.publish(
-            routing_key="data_for_models",
-            exchange_name="ToModels",
-            data=message,
-            ensure=False,
-        )
-        print(rabbit_message)
-
-# ----------------------------------------------
-# ----------------------------------------------
-# ----------------------------------------------
 
     async def get_frames_with_markups(
         self, content_id: uuid.UUID
@@ -761,7 +429,7 @@ class ProjectsEndpoints:
                 )
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
-        res = Content.from_video_or_photo(content, detected_count=0)  # TODO: проставлять РЕАЛЬНОЕ ЗНАЧЕНИЕ
+        res = Content.from_video_or_photo(content, detected_count=0)
         return UnifiedResponse(data=res)
 
     async def get_content_by_project(
@@ -776,7 +444,7 @@ class ProjectsEndpoints:
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
-        content_items: list[Content] = [Content.from_video_or_photo(item, detected_count=0) for item in items]  # TODO: проставлять РЕАЛЬНОЕ ЗНАЧЕНИЕ
+        content_items: list[Content] = [Content.from_video_or_photo(item, detected_count=0) for item in items]
         return UnifiedResponse(data=content_items)
 
     async def get_content_ids_by_project(
@@ -977,7 +645,7 @@ class ProjectsEndpoints:
                 except NoResultFound as e:
                     return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
-                content_items.append(Content.from_photo(photo, detected_count=0))  # TODO: проставлять РЕАЛЬНОЕ ЗНАЧЕНИЕ
+                content_items.append(Content.from_photo(photo, detected_count=0))
 
         return UnifiedResponse(data=content_items)
 

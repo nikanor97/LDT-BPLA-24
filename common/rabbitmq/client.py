@@ -31,15 +31,8 @@ class RabbitClient:
                 logger.info("Rabbit is not accessible yet. Waiting for 2 seconds")
                 await asyncio.sleep(2)
         self.channel = await self.connection.channel()
-        # self.callback_queue = await self.channel.declare_queue(exclusive=True)
-        # await self.callback_queue.consume(self.on_response, no_ack=True)
-        # return self
 
     async def publish(self, routing_key: str, body: bytes):
-        # routing_key = "test_queue"
-
-        # channel = await connection.channel()
-
         await self.channel.default_exchange.publish(
             aio_pika.Message(body=body), routing_key=routing_key,
         )
@@ -60,8 +53,3 @@ class RabbitClient:
         async with queue.iterator() as queue_iter:
             async for message in queue_iter:
                 await callback(await message, *callback_args, **callback_kwargs)
-                # async with message.process():
-                #     print(message.body)
-
-                    # if queue.name in message.body.decode():
-                    #     break

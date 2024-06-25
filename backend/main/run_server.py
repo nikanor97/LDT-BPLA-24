@@ -6,7 +6,6 @@ import uvloop
 
 from common.rabbitmq.consumer import Consumer, Subscription
 from common.rabbitmq.publisher import Publisher
-from scripts.init_db_prod import init_db
 from src.db.base_manager import run_migrations
 from src.db.main_db_manager import MainDbManager
 from common.rabbitmq.connection_pool import ConnectionPool as AmqpConnectionPool

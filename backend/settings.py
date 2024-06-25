@@ -49,14 +49,6 @@ REFRESH_TOKEN_EXPIRE_MINUTES = int(
     getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60 * 24 * 7 * 4)
 )
 
-CLIP_FRAME_STEP = int(getenv("CLIP_FRAME_STEP", 10))
-CLIP_PORT = int(getenv("CLIP_PORT", 8080))
-CLIP_HOST = getenv("CLIP_HOST", "clip")
-
-CLASSIFIER_PORT = int(getenv("CLASSIFIER_PORT", 8080))
-CLASSIFIER_HOST = getenv("CLASSIFIER_HOST", "classifier")
-
-
 RABBIT_LOGIN = getenv("RABBIT_LOGIN", "login")
 RABBIT_PASSWORD = getenv("RABBIT_PASSWORD", "password")
 RABBIT_SSL = getenv("RABBIT_SSL", "False").lower() in ("true", "1", "t")

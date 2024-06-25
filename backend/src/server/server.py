@@ -82,5 +82,4 @@ def make_server_app(
     app.add_exception_handler(ValidationError, validation_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
-
     return app

@@ -53,22 +53,15 @@ class UsersEndpoints:
     async def login_for_access_token(
         self, form_data: UserLogin
     ) -> UnifiedResponse[TokenWithExpiryData]:
-        # user = authenticate_user(fake_users_db, form_data.username, form_data.password)
         async with self._main_db_manager.users.make_autobegin_session() as session:
             try:
                 user = await self._main_db_manager.users.authenticate_user(
                     session, form_data.username, form_data.password
                 )
             except NoResultFound as e:
-                # raise HTTPException(status_code=404, detail=exc_to_str(e))
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
         if not user:
-            # raise HTTPException(
-            #     status_code=401,
-            #     detail="Incorrect username or password",
-            #     headers={"WWW-Authenticate": "Bearer"},
-            # )
             return UnifiedResponse(
                 error="Incorrect username or password", status_code=401
             )
@@ -80,11 +73,8 @@ class UsersEndpoints:
                     session, user_token_base
                 )
             except NoResultFound as e:
-                # raise HTTPException(status_code=404, detail=exc_to_str(e))
                 return UnifiedResponse(error=exc_to_str(e), status_code=500)
 
-        # return UnifiedResponse(data=user_token)
-        # return {"access_token": access_token, "token_type": "bearer"}
         token = TokenWithExpiryData(
             access_token=user_token.access_token,
             refresh_token=user_token.refresh_token,

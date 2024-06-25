@@ -1,4 +1,3 @@
-from typing import Optional
 from uuid import UUID
 
 from starlette.responses import FileResponse
@@ -9,22 +8,17 @@ from fastapi import APIRouter, Depends
 from common.rabbitmq.publisher import Publisher
 from src.db.main_db_manager import MainDbManager
 from src.db.projects.models import (
-    Frame,
-    FrameMarkup,
     Label,
     Video,
-    UserRole,
     Project,
-    VerificationTag, Photo,
+    Photo,
 )
 from src.server.auth import Auth
 from src.server.common import METHOD, UnifiedResponse
 from src.server.projects.endpoints import ProjectsEndpoints
 from src.server.projects.models import (
     FramesWithMarkupRead,
-    UserRoleWithProjectRead,
     ProjectRead,
-    ProjectsStats,
     ProjectWithUsers,
     BplaProjectStats,
     Content, VerificationTagWithConfidence,

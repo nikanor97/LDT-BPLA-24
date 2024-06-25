@@ -12,9 +12,6 @@ class Server:
     def __init__(
         self,
         publisher: Publisher = None,  # For responses
-        # message_processors: dict[
-        #     str, Callable[[dict[str, Any], Publisher | None, MainDbManager | None], Awaitable[Any]]
-        # ] = None,
         main_db_manager: Any = None,
         message_processors: dict = None,
         **kwargs,
@@ -37,26 +34,15 @@ class Server:
             local_logger.debug(f"Received message from {message.routing_key}")
 
             body = message.body.decode("utf-8")
-            # message_data = json.loads(body)["data"]
-            # message_header = json.loads(body)["header"]
             data = json.loads(body)["data"]
 
             local_logger.debug(
                 f"Exchange: {message.exchange}, "
                 f"Type: {message.routing_key}, "
-                # f"File ID: {message_header['file_id']}"
             )
 
             if message.routing_key in self._message_processors:
                 processor = self._message_processors[str(message.routing_key)]
-                # if str(message.routing_key) == "to_yolo_model":
-                #     await processor(
-                #         data,
-                #         publisher=self._publisher,
-                #         main_db_manager=self._main_db_manager,
-                #         detector=self._kwargs["detector"],
-                #     )
-                # else:
                 if self._kwargs['asyncronous_consumer']:
                     await processor(
                         data,
@@ -65,7 +51,7 @@ class Server:
                         **self._kwargs,
                     )
                 else:
-                    processor(  # TODO: ASSSSSSYYYYYYYYNNNNNNCCCC
+                    processor(
                         data,
                         publisher=self._publisher,
                         main_db_manager=self._main_db_manager,
