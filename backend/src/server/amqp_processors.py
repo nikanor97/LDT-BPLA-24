@@ -149,7 +149,7 @@ async def yolo_markup_processor(
                     if content.notification_sent is False and project.msg_receiver is not None:
                         await main_db_manager.projects.set_notification_sent_status(session, content.id, status=True)
                         await session.flush()
-                        application = Application.builder().token(settings.TELEGRAM_TOKEN).build()
+                        # application = Application.builder().token(settings.TELEGRAM_TOKEN).build()
                         if isinstance(content, Video):
                             image_path = settings.MEDIA_DIR / data["image_path"]
                         else:
