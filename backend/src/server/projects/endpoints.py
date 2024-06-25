@@ -566,9 +566,11 @@ class ProjectsEndpoints:
                     content_type=FrameContentTypeOption.video,
                     frame_offset=offset
                 ) for offset in range(len(filenames))]
+                logger.info("Frames constructed")
 
                 async with self._main_db_manager.projects.make_autobegin_session() as session:
                     session.add_all(frames)
+                logger.info("Frames created in DB")
 
                 for filename, frame in list(zip(frames_filenames, frames)):
                     data_to_send = {
