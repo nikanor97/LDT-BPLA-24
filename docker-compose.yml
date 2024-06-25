@@ -27,8 +27,8 @@ services:
     build:
       context: backend/
     hostname: backend
-#    command: bash -c "poetry run python main/run_server.py"
-    command: bash -c "poetry run gunicorn -w ${GUNICORN_WORKERS} -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${BACKEND_PORT} main.run_server_gunicorn:app"
+    command: bash -c "poetry run python main/run_server.py"
+#    command: bash -c "poetry run gunicorn -w ${GUNICORN_WORKERS} -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${BACKEND_PORT} main.run_server_gunicorn:app"
     volumes:
       - ./backend/src:/app/src
       - ./common:/app/common
