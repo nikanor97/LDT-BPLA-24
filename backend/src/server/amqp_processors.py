@@ -121,8 +121,9 @@ async def yolo_markup_processor(
         # content_frames_counter[content.id] += 1
         redis_client.incr(str(content.id))
 
-        print(redis_client.get(str(content.id)), frames_in_content)
-        if redis_client.get(str(content.id)).decode() == frames_in_content:
+        frames_counter = int(redis_client.get(str(content.id)).decode())
+        print(frames_counter, frames_in_content)
+        if frames_counter == frames_in_content:
             content.status = VideoStatusOption.extracted
         else:
             content.status = VideoStatusOption.in_progress
