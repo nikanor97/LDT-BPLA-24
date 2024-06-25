@@ -1,6 +1,7 @@
 import asyncio
 from collections import defaultdict
 
+import redis
 import uvicorn
 import uvloop
 
@@ -55,7 +56,7 @@ async def main(loop: asyncio.AbstractEventLoop) -> None:
     tags = await pe.create_verification_tags(tags_base)
 
     content_frames_counter: defaultdict = defaultdict(int)
-    redis = await aioredis.create_redis_pool('redis://localhost:6379')
+    redis_client = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
 
     amqp_server = AMQPServer(
         publisher=publisher,
@@ -64,7 +65,8 @@ async def main(loop: asyncio.AbstractEventLoop) -> None:
             "from_yolo_model": yolo_markup_processor,
         },
         asyncronous_consumer=True,
-        content_frames_counter=content_frames_counter
+        content_frames_counter=content_frames_counter,
+        redis_client=redis_client
     )
 
     subscriptions = [
