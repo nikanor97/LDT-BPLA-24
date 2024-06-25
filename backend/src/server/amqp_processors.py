@@ -181,6 +181,7 @@ async def yolo_markup_processor(
 
                             notification_success = await notify_user(application, project.msg_receiver, temp_image_path, caption)
                             # if notification_success:
+    async with main_db_manager.projects.make_autobegin_session() as session:
         await main_db_manager.projects.increase_content_detected_cnt(session, content.id, n_new_markups)
 
     if data["type"] == "video":

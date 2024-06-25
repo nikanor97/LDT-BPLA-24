@@ -3,6 +3,7 @@ from collections import defaultdict
 from decimal import Decimal
 from typing import Optional
 
+from sqlalchemy import update, case
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -420,10 +421,30 @@ class ProjectsDbManager(BaseDbManager):
         content_id: uuid.UUID,
         increase_by_number: int
     ) -> None:
-        content: Photo | Video = await self.get_content(session, content_id)
-        if content.detected_cnt is None:
-            content.detected_cnt = increase_by_number
-        else:
-            content.detected_cnt += increase_by_number
-        session.add(content)
-        await session.flush()
+        # content: Photo | Video = await self.get_content(session, content_id)
+        # if content.detected_cnt is None:
+        #     content.detected_cnt = increase_by_number
+        # else:
+        #     content.detected_cnt += increase_by_number
+        # session.add(content)
+        # await session.flush()
+
+        stmt = (
+            update(Photo)
+            .where(Photo.id == content_id)
+            .values(detected_cnt=case(
+                [(Photo.detected_cnt == None, increase_by_number)],
+                else_=Photo.detected_cnt + increase_by_number
+            ))
+        )
+        await session.execute(stmt)
+
+        stmt = (
+            update(Video)
+            .where(Video.id == content_id)
+            .values(detected_cnt=case(
+                [(Video.detected_cnt == None, increase_by_number)],
+                else_=Video.detected_cnt + increase_by_number
+            ))
+        )
+        await session.execute(stmt)
