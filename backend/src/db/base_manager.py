@@ -127,7 +127,7 @@ def init_db_manager_closure(
     def closure(
         database_name: str,
         db_manager_cls: Type[DbT],
-        pool_size: int = 5,
+        pool_size: int = 50,
     ) -> DbT:
         return db_manager_cls.from_params(
             user=user,
