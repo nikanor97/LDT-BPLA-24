@@ -11,6 +11,7 @@ from datetime import datetime
 
 import aiofiles
 import ffmpeg  # type: ignore
+import pika
 from PIL import Image
 from loguru import logger
 
@@ -19,6 +20,7 @@ from fastapi import Header, HTTPException, UploadFile, Depends
 from sqlalchemy.exc import NoResultFound
 
 from common.rabbitmq.publisher import Publisher
+from common.rabbitmq.sync_publisher import SyncPublisher
 
 from src.db.exceptions import ResourceAlreadyExists
 from src.db.main_db_manager import MainDbManager
@@ -491,6 +493,17 @@ class ProjectsEndpoints:
             )
         labels_ids = [l.id for l in labels]
 
+        # Настройка соединения с RabbitMQ
+        credentials = pika.PlainCredentials(settings.RABBIT_LOGIN, settings.RABBIT_PASSWORD)
+        connection = pika.BlockingConnection(pika.ConnectionParameters(
+            settings.RABBIT_HOST, settings.RABBIT_PORT, '/', credentials)
+        )
+        channel = connection.channel()
+        channel.confirm_delivery()
+        exchange_name = "ToModels"
+        channel.exchange_declare(exchange=exchange_name, exchange_type='direct', durable=True)
+        sync_publisher = SyncPublisher(channel, exchange_name)
+
         for file in files:
             content_type: ContentTypeOption | None = None
             if file.content_type in PHOTO_MIME_TYPES:
@@ -581,11 +594,17 @@ class ProjectsEndpoints:
                         "type": "video"
                     }
 
-                    await self._publisher.publish(
+                    # await self._publisher.publish(
+                    #     routing_key="to_yolo_model",
+                    #     exchange_name="ToModels",
+                    #     data={'data': data_to_send},
+                    #     ensure=False,
+                    # )
+                    sync_publisher.publish(
                         routing_key="to_yolo_model",
                         exchange_name="ToModels",
                         data={'data': data_to_send},
-                        ensure=False,
+                        mandatory=True  # Включаем mandatory для гарантии доставки
                     )
                 logger.info(f"Message for video {video.id} sent to detector")
 
