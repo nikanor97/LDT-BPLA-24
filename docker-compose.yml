@@ -48,6 +48,11 @@ services:
       - db
 #      - rabbit
 
+  redis:
+    image: "redis:latest"
+    ports:
+      - "${REDIS_PORT_ON_HOST}:${REDIS_PORT}"
+
   rabbit:
     image: rabbitmq:3.10.7-management
     hostname: rabbitmq

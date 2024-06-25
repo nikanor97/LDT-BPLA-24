@@ -74,6 +74,8 @@ async def yolo_markup_processor(
     frames_in_content = int(data["frames_in_content"])
     markups = ast.literal_eval(data['markup'])
 
+    redis_client = kwargs['redis_client']
+
     labels_names = set(label_map.keys())
     labels_to_create = [LabelBase(
         name=label_name,
@@ -115,10 +117,15 @@ async def yolo_markup_processor(
     async with main_db_manager.projects.make_autobegin_session() as session:
         content = await main_db_manager.projects.get_content_by_frame_id(session, frame_id)
 
-        content_frames_counter = kwargs['content_frames_counter']
-        content_frames_counter[content.id] += 1
+        # content_frames_counter = kwargs['content_frames_counter']
+        # content_frames_counter[content.id] += 1
+        frames_counter = redis_client.get(str(content.id))
+        if frames_counter is None:
+            redis_client.set(str(content.id), 1)
+        else:
+            redis_client.set(str(content.id), int(frames_counter) + 1)
 
-        if content_frames_counter[content.id] == frames_in_content:
+        if redis_client.get(str(content.id)) == frames_in_content:
             content.status = VideoStatusOption.extracted
         else:
             content.status = VideoStatusOption.in_progress

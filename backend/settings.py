@@ -53,6 +53,9 @@ RABBIT_LOGIN = getenv("RABBIT_LOGIN", "login")
 RABBIT_PASSWORD = getenv("RABBIT_PASSWORD", "password")
 RABBIT_SSL = getenv("RABBIT_SSL", "False").lower() in ("true", "1", "t")
 
+REDIS_HOST = getenv("REDIS_HOST", "redis")
+REDIS_PORT = int(getenv("REDIS_PORT", 6379))
+
 FRAME_STEP = int(getenv("FRAME_STEP", "5"))
 VIDEO_FRAMING_WORKERS = int(getenv("VIDEO_FRAMING_WORKERS", 4))
 
