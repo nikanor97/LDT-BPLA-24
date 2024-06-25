@@ -109,7 +109,7 @@ class ProjectsDbManager(BaseDbManager):
         photos = (await session.execute(stmt)).scalars().all()
         stmt = select(Video).where(Video.project_id == project_id).order_by(Video.name)
         videos = (await session.execute(stmt)).scalars().all()
-        return videos + photos
+        return photos + videos
 
     async def get_content_by_projects(
         self,
