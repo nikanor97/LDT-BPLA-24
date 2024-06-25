@@ -96,7 +96,7 @@ class BaseDbManager:
         host: str,
         port: int,
         database_name: str,
-        pool_size: int = 5,
+        pool_size: int = 50,
         json_serializer: Optional[Callable[..., str]] = None,
         json_deserializer: Optional[Callable[..., Any]] = None,
     ) -> DbT:
