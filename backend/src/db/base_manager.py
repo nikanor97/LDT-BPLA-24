@@ -82,7 +82,7 @@ class BaseDbManager:
             pool_size=pool_size,
             future=True,
             pool_pre_ping=True,
-            execution_options={"isolation_level": "SERIALIZABLE"},
+            execution_options={"isolation_level": "REPEATABLE_READ"},
             json_serializer=json_serializer or json.dumps,
             json_deserializer=json_deserializer or json.loads,
         )
