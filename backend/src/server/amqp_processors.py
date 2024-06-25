@@ -156,6 +156,9 @@ async def yolo_markup_processor(
                         image = Image.open(image_path)
                         draw = ImageDraw.Draw(image)
 
+                        if image.mode == 'RGBA':
+                            image = image.convert('RGB')
+
                         annotations = [fm.dict() for fm in frame_markup_items]
 
                         # Добавить разметку к изображению
