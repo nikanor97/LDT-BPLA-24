@@ -19,6 +19,21 @@ const ApproveBar = () => {
     const dispatch = useDispatch();
     if (!data) return null;
 
+    const goToNext  = ()  =>  {
+        if (nextId) {
+            dispatch(PageActions.getContentInfo({content_id: nextId}))
+            history.push(routes.lk.viewer(nextId))
+        }
+    };
+
+    const goToPrevious = ()  =>  {
+        if (previousId) {
+            dispatch(PageActions.getContentInfo({content_id: previousId}))
+            history.push(routes.lk.viewer(previousId))
+        }
+    }
+
+
     return (
         <div className={styles.wrapper}>
             <GridContainer>
@@ -32,7 +47,8 @@ const ApproveBar = () => {
                                     onClick={() => {
                                         dispatch(PageActions.changeContentStatus({
                                             content_id: data.content_id,
-                                            new_status: 'declined'
+                                            new_status: 'declined',
+                                            onSuccess: nextId ? goToNext : undefined
                                         }))
                                     }}
                                     danger>
@@ -42,7 +58,8 @@ const ApproveBar = () => {
                                     onClick={() => {
                                         dispatch(PageActions.changeContentStatus({
                                             content_id: data.content_id,
-                                            new_status: 'approved'
+                                            new_status: 'approved',
+                                            onSuccess: nextId ? goToNext : undefined
                                         }))
                                     }}
                                     loading={state.fetching}
@@ -54,24 +71,15 @@ const ApproveBar = () => {
                         <Button
                             disabled={!previousId}
                             className={styles.iconButton}
-                            onClick={() => {
-                                if (previousId) {
-                                    dispatch(PageActions.getContentInfo({content_id: previousId}))
-                                    history.push(routes.lk.viewer(previousId))
-                                }
-                            }}
+                            onClick={goToPrevious}
                         >
                             <Previous />
                         </Button>
                         <Button
                             disabled={!nextId}
                             className={styles.iconButton}
-                            onClick={() => {
-                                if (nextId) {
-                                    dispatch(PageActions.getContentInfo({content_id: nextId}))
-                                    history.push(routes.lk.viewer(nextId))
-                                }
-                            }}>
+                            onClick={goToNext}
+                        >
                             <Next />
                         </Button>
                     </Space>
