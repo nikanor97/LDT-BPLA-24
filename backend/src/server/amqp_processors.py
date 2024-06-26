@@ -168,7 +168,6 @@ async def yolo_markup_processor(
                         # Добавить разметку к изображению
                         add_annotations(image, annotations, label_by_id)
 
-
                         with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp_file:
                             temp_image_path = tmp_file.name
                             image.save(temp_image_path)
@@ -183,7 +182,7 @@ async def yolo_markup_processor(
                             # Убеждаемся, что отправка уведомления в телеграм произойдет
                             # строго один раз (а не в каждом воркере)
                             redis_client.incr(str(content.id) + "_notification_sent")
-                            if int(redis_client.get(str(content.id) + "_notification_sent")) == settings.GUNICORN_WORKERS:
+                            if int(redis_client.get(str(content.id) + "_notification_sent").decode()) == settings.GUNICORN_WORKERS:
                                 await notify_user(application, project.msg_receiver, temp_image_path, caption)
 
     async with main_db_manager.projects.make_autobegin_session() as session:
