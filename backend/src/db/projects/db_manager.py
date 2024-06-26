@@ -112,49 +112,6 @@ class ProjectsDbManager(BaseDbManager):
         videos = (await session.execute(stmt)).scalars().all()
         return photos + videos
 
-    # async def get_content_with_markups_count_by_project(
-    #     self,
-    #     session: AsyncSession,
-    #     project_id: uuid.UUID
-    # ) -> list[tuple[Video | Photo, int]]:
-    #
-    #     tags = await self.get_tags_by_project(
-    #         session, project_id
-    #     )
-    #     label_to_verification_tag_mapping: dict[
-    #         uuid.UUID, uuid.UUID] = await self.get_label_to_verification_tag_mapping(
-    #         session, [t[0].id for t in tags]
-    #     )
-    #
-    #     stmt = select(Photo).where(Photo.project_id == project_id).order_by(Photo.name)
-    #     photos: list[Photo] = (await session.execute(stmt)).scalars().all()
-    #     stmt = select(Video).where(Video.project_id == project_id).order_by(Video.name)
-    #     videos: list[Video] = (await session.execute(stmt)).scalars().all()
-    #     frames = await self.get_frames_with_markups_by_content_ids(
-    #         session,
-    #         [photo.id for photo in photos] + [video.id for video in videos]
-    #     )
-    #     frame_id_to_content_id = {frame.id: frame.content_id for frame in frames}
-    #
-    #     # frames = await self._main_db_manager.projects.get_frames_with_markups(
-    #     #     session, content_id
-    #     # )
-    #
-    #     tag_id_to_confidence = {t[0].id: t[1] for t in tags}
-    #     # frame_id_cnt_markups: defaultdict[uuid.UUID, int] = defaultdict(int)
-    #     content_id_cnt_markups: defaultdict[uuid.UUID, int] = defaultdict(int)
-    #     # TODO: ненужная логика. надо пересмотреть подход с verification_tag и лейблами
-    #     for idx, frame in enumerate(frames):
-    #         for idx_markup, markup in enumerate(frame.markups):
-    #             if markup.label_id in label_to_verification_tag_mapping:
-    #                 verification_tag_id = label_to_verification_tag_mapping[markup.label_id]
-    #                 if verification_tag_id in tag_id_to_confidence and markup.confidence >= tag_id_to_confidence[
-    #                     verification_tag_id]:
-    #                     # frame_id_cnt_markups[frame.id] += 1
-    #                     content_id_cnt_markups[frame_id_to_content_id[frame.id]] += 1
-    #     res = [(content, content_id_cnt_markups[content.id]) for content in photos + videos]
-    #     return res
-
     async def get_content_by_projects(
         self,
         session: AsyncSession,
@@ -421,14 +378,6 @@ class ProjectsDbManager(BaseDbManager):
         content_id: uuid.UUID,
         increase_by_number: int
     ) -> None:
-        # content: Photo | Video = await self.get_content(session, content_id)
-        # if content.detected_cnt is None:
-        #     content.detected_cnt = increase_by_number
-        # else:
-        #     content.detected_cnt += increase_by_number
-        # session.add(content)
-        # await session.flush()
-
         stmt = (
             update(Photo)
             .where(Photo.id == content_id)

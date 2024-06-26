@@ -149,7 +149,7 @@ async def yolo_markup_processor(
                     if content.notification_sent is False and project.msg_receiver is not None:
                         await main_db_manager.projects.set_notification_sent_status(session, content.id, status=True)
                         await session.flush()
-                        # application = Application.builder().token(settings.TELEGRAM_TOKEN).build()
+                        application = Application.builder().token(settings.TELEGRAM_TOKEN).build()
                         if isinstance(content, Video):
                             image_path = settings.MEDIA_DIR / data["image_path"]
                         else:
@@ -179,8 +179,8 @@ async def yolo_markup_processor(
                             for fm in frame_markup_items:
                                 caption += f"\n{tag_translation_eng_rus[label_by_id[fm.label_id].name]}: {fm.confidence:.2f}"
 
-                            # notification_success = await notify_user(application, project.msg_receiver, temp_image_path, caption)
-                            # if notification_success:
+                            notification_success = await notify_user(application, project.msg_receiver, temp_image_path, caption)
+
     async with main_db_manager.projects.make_autobegin_session() as session:
         await main_db_manager.projects.increase_content_detected_cnt(session, content.id, n_new_markups)
 

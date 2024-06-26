@@ -344,16 +344,12 @@ class ProjectsEndpoints:
         async with self._main_db_manager.users.make_autobegin_session() as session:
             users = await self._main_db_manager.users.get_users(session, users_ids)
 
-        # project_id_to_detected_count: dict[uuid.UUID, int] = dict()
         project_id_to_content_type: dict[uuid.UUID, ProjectContentTypeOption] = dict()
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             for pwu in projects_with_users_ids:
                 content = await self._main_db_manager.projects.get_content_by_project(
                     session, pwu.id
                 )
-                # project_id_to_detected_count[pwu.id] = len(
-                #     [c for c in content if c.status != VideoStatusOption.created]
-                # )
                 videos = [c for c in content if type(c) == Video]
                 photos = [c for c in content if type(c) == Photo]
                 if len(videos) > 0 and len(photos) > 0:
@@ -375,10 +371,6 @@ class ProjectsEndpoints:
                 author = users_by_ids[project_with_users_ids.author_id]
                 content_type = project_id_to_content_type[project_with_users_ids.id]
                 content = await self._main_db_manager.projects.get_content_by_project(session, project_with_users_ids.id)
-                # content_with_markups_count = await self._main_db_manager.projects.get_content_with_markups_count_by_project(
-                #     session, project_with_users_ids.id
-                # )
-                # total_markup_count = sum([c[1] for c in content_with_markups_count])
                 replace_none_with_zero = lambda x: 0 if x is None else x
                 project_with_users = ProjectWithUsers(
                     author=author,
