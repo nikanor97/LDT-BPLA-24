@@ -42,8 +42,10 @@ async def yolo_model_processor(data: dict, publisher: Publisher, main_db_manager
         )
     else:
         # Настройка соединения с RabbitMQ
-        credentials = pika.PlainCredentials('rmuser', 'rmpassword')
-        connection = pika.BlockingConnection(pika.ConnectionParameters('rabbit', 5672, '/', credentials))
+        credentials = pika.PlainCredentials(settings.RABBIT_LOGIN, settings.RABBIT_PASSWORD)
+        connection = pika.BlockingConnection(
+            pika.ConnectionParameters(settings.RABBIT_HOST, settings.RABBIT_PORT, '/', credentials)
+        )
         channel = connection.channel()
 
         # Включаем подтверждение доставки сообщений
