@@ -12,7 +12,7 @@ const useGetStatData = () => {
     }
 
     content.forEach(item  => {
-        if  (item.status === 'extracted') {
+        if  (item.status === 'extracted' || item.status === "approved" || item.status === "declined") {
             data.content_after_detection  +=  1
         }
         if  (item.status === "approved") {

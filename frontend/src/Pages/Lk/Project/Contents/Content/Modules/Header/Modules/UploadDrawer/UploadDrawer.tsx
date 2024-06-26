@@ -59,7 +59,7 @@ const UploadDrawer = () => {
                 <Dragger
                     name="documents"
                     beforeUpload={(file, fileList) => {
-                        setFiles(fileList);
+                        setFiles([...files, ...fileList]);
                         return false;
                     }}
                     fileList={files}

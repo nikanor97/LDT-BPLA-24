@@ -79,7 +79,8 @@ const ApproveBar = () => {
                                     onClick={() => {
                                         dispatch(PageActions.changeContentStatus({
                                             content_id: data.content_id,
-                                            new_status: 'declined'
+                                            new_status: 'declined',
+                                            onSuccess: nextId ? goToNext : undefined
                                         }))
                                     }}
                                     danger>
@@ -90,7 +91,7 @@ const ApproveBar = () => {
                                         dispatch(PageActions.changeContentStatus({
                                             content_id: data.content_id,
                                             new_status: 'approved',
-                                            onSuccess: goToNext
+                                            onSuccess: nextId ? goToNext : undefined
                                         }))
                                     }}
                                     loading={state.fetching}
