@@ -11,6 +11,7 @@ from datetime import datetime
 
 import aiofiles
 import ffmpeg  # type: ignore
+import pika
 from PIL import Image
 from loguru import logger
 
@@ -19,6 +20,7 @@ from fastapi import Header, HTTPException, UploadFile, Depends
 from sqlalchemy.exc import NoResultFound
 
 from common.rabbitmq.publisher import Publisher
+from common.rabbitmq.sync_publisher import SyncPublisher
 
 from src.db.exceptions import ResourceAlreadyExists
 from src.db.main_db_manager import MainDbManager
@@ -342,15 +344,11 @@ class ProjectsEndpoints:
         async with self._main_db_manager.users.make_autobegin_session() as session:
             users = await self._main_db_manager.users.get_users(session, users_ids)
 
-        project_id_to_detected_count: dict[uuid.UUID, int] = dict()
         project_id_to_content_type: dict[uuid.UUID, ProjectContentTypeOption] = dict()
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             for pwu in projects_with_users_ids:
                 content = await self._main_db_manager.projects.get_content_by_project(
                     session, pwu.id
-                )
-                project_id_to_detected_count[pwu.id] = len(
-                    [c for c in content if c.status != VideoStatusOption.created]
                 )
                 videos = [c for c in content if type(c) == Video]
                 photos = [c for c in content if type(c) == Photo]
@@ -367,17 +365,20 @@ class ProjectsEndpoints:
         for user in users:
             users_by_ids[user.id] = user
 
-        projects_with_users: list[ProjectWithUsers] = []
-        for project_with_users_ids in projects_with_users_ids:
-            author = users_by_ids[project_with_users_ids.author_id]
-            content_type = project_id_to_content_type[project_with_users_ids.id]
-            project_with_users = ProjectWithUsers(
-                author=author,
-                content_type=content_type,
-                detected_count=project_id_to_detected_count[project_with_users_ids.id],
-                **project_with_users_ids.dict(),
-            )
-            projects_with_users.append(project_with_users)
+        async with self._main_db_manager.projects.make_autobegin_session() as session:
+            projects_with_users: list[ProjectWithUsers] = []
+            for project_with_users_ids in projects_with_users_ids:
+                author = users_by_ids[project_with_users_ids.author_id]
+                content_type = project_id_to_content_type[project_with_users_ids.id]
+                content = await self._main_db_manager.projects.get_content_by_project(session, project_with_users_ids.id)
+                replace_none_with_zero = lambda x: 0 if x is None else x
+                project_with_users = ProjectWithUsers(
+                    author=author,
+                    content_type=content_type,
+                    detected_count=sum([replace_none_with_zero(c.detected_cnt) for c in content]),
+                    **project_with_users_ids.dict(),
+                )
+                projects_with_users.append(project_with_users)
 
         return UnifiedResponse(data=projects_with_users)
 
@@ -429,7 +430,8 @@ class ProjectsEndpoints:
                 )
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
-        res = Content.from_video_or_photo(content, detected_count=0)
+        detected_cnt = content.detected_cnt if content.detected_cnt is not None else 0
+        res = Content.from_video_or_photo(content, detected_count=detected_cnt)
         return UnifiedResponse(data=res)
 
     async def get_content_by_project(
@@ -438,13 +440,22 @@ class ProjectsEndpoints:
     ) -> UnifiedResponse[list[Content]]:
         async with self._main_db_manager.projects.make_autobegin_session() as session:
             try:
+                # items_with_cnt = await self._main_db_manager.projects.get_content_with_markups_count_by_project(
+                #     session, project_id
+                # )
                 items = await self._main_db_manager.projects.get_content_by_project(
                     session, project_id
                 )
             except NoResultFound as e:
                 return UnifiedResponse(error=exc_to_str(e), status_code=404)
 
-        content_items: list[Content] = [Content.from_video_or_photo(item, detected_count=0) for item in items]
+        replace_none_with_zero = lambda x: 0 if x is None else x
+        content_items: list[Content] = [
+            Content.from_video_or_photo(
+                item,
+                detected_count=replace_none_with_zero(item.detected_cnt)
+            ) for item in items
+        ]
         return UnifiedResponse(data=content_items)
 
     async def get_content_ids_by_project(
@@ -483,6 +494,17 @@ class ProjectsEndpoints:
                 session, project_id
             )
         labels_ids = [l.id for l in labels]
+
+        # Настройка соединения с RabbitMQ
+        # credentials = pika.PlainCredentials(settings.RABBIT_LOGIN, settings.RABBIT_PASSWORD)
+        # connection = pika.BlockingConnection(pika.ConnectionParameters(
+        #     settings.RABBIT_HOST, settings.RABBIT_PORT, '/', credentials)
+        # )
+        # channel = connection.channel()
+        # channel.confirm_delivery()
+        # exchange_name = "ToModels"
+        # channel.exchange_declare(exchange=exchange_name, exchange_type='direct', durable=True)
+        # sync_publisher = SyncPublisher(channel, exchange_name)
 
         for file in files:
             content_type: ContentTypeOption | None = None
@@ -559,9 +581,11 @@ class ProjectsEndpoints:
                     content_type=FrameContentTypeOption.video,
                     frame_offset=offset
                 ) for offset in range(len(filenames))]
+                logger.info("Frames constructed")
 
                 async with self._main_db_manager.projects.make_autobegin_session() as session:
                     session.add_all(frames)
+                logger.info("Frames created in DB")
 
                 for filename, frame in list(zip(frames_filenames, frames)):
                     data_to_send = {
@@ -578,6 +602,12 @@ class ProjectsEndpoints:
                         data={'data': data_to_send},
                         ensure=False,
                     )
+                    # sync_publisher.publish(
+                    #     routing_key="to_yolo_model",
+                    #     exchange_name="ToModels",
+                    #     data={'data': data_to_send},
+                    #     mandatory=True  # Включаем mandatory для гарантии доставки
+                    # )
                 logger.info(f"Message for video {video.id} sent to detector")
 
                 video_.status = VideoStatusOption.created

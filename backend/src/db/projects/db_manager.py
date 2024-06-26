@@ -3,6 +3,7 @@ from collections import defaultdict
 from decimal import Decimal
 from typing import Optional
 
+from sqlalchemy import update, case
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -105,11 +106,11 @@ class ProjectsDbManager(BaseDbManager):
         session: AsyncSession,
         project_id: uuid.UUID
     ) -> list[Video | Photo]:
-        stmt = select(Video).where(Video.project_id == project_id)
-        videos = (await session.execute(stmt)).scalars().all()
-        stmt = select(Photo).where(Photo.project_id == project_id)
+        stmt = select(Photo).where(Photo.project_id == project_id).order_by(Photo.name)
         photos = (await session.execute(stmt)).scalars().all()
-        return videos + photos
+        stmt = select(Video).where(Video.project_id == project_id).order_by(Video.name)
+        videos = (await session.execute(stmt)).scalars().all()
+        return photos + videos
 
     async def get_content_by_projects(
         self,
@@ -133,6 +134,17 @@ class ProjectsDbManager(BaseDbManager):
         stmt = (
             select(Frame)
             .where(Frame.content_id == content_id)
+            .options(selectinload(Frame.markups))
+        )
+        frames = (await session.execute(stmt)).scalars().all()
+        return frames
+
+    async def get_frames_with_markups_by_content_ids(
+        self, session: AsyncSession, content_ids: list[uuid.UUID]
+    ) -> list[Frame]:
+        stmt = (
+            select(Frame)
+            .where(col(Frame.content_id).in_(content_ids))
             .options(selectinload(Frame.markups))
         )
         frames = (await session.execute(stmt)).scalars().all()
@@ -359,3 +371,29 @@ class ProjectsDbManager(BaseDbManager):
         session.add_all(new_markups)
         await session.flush()
         return new_markups
+
+    async def increase_content_detected_cnt(
+        self,
+        session: AsyncSession,
+        content_id: uuid.UUID,
+        increase_by_number: int
+    ) -> None:
+        stmt = (
+            update(Photo)
+            .where(Photo.id == content_id)
+            .values(detected_cnt=case(
+                [(Photo.detected_cnt == None, increase_by_number)],
+                else_=Photo.detected_cnt + increase_by_number
+            ))
+        )
+        await session.execute(stmt)
+
+        stmt = (
+            update(Video)
+            .where(Video.id == content_id)
+            .values(detected_cnt=case(
+                [(Video.detected_cnt == None, increase_by_number)],
+                else_=Video.detected_cnt + increase_by_number
+            ))
+        )
+        await session.execute(stmt)

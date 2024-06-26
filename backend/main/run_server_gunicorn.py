@@ -4,6 +4,7 @@ from collections import defaultdict
 import redis
 import uvicorn
 import uvloop
+from fastapi import FastAPI
 
 from common.rabbitmq.consumer import Consumer, Subscription
 from common.rabbitmq.publisher import Publisher
@@ -21,7 +22,7 @@ from src.server.server import make_server_app
 from common.rabbitmq.amqp import Server as AMQPServer
 
 
-async def main(loop: asyncio.AbstractEventLoop) -> None:
+def main() -> FastAPI:
 
     run_migrations()
 
@@ -53,7 +54,7 @@ async def main(loop: asyncio.AbstractEventLoop) -> None:
                 groupname=groupname
             )
             tags_base.append(tag_base)
-    tags = await pe.create_verification_tags(tags_base)
+    # tags = await pe.create_verification_tags(tags_base)
 
     redis_client = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
 
@@ -91,18 +92,7 @@ async def main(loop: asyncio.AbstractEventLoop) -> None:
         publisher=publisher
     )
 
-    config = uvicorn.Config(server_app, host="0.0.0.0", port=settings.APP_PORT)
-
-    server = uvicorn.Server(config)
-
-    await server.serve()
+    return server_app
 
 
-if __name__ == "__main__":
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        app = loop.run_until_complete(main(loop))
-    finally:
-        loop.close()
+app = main()

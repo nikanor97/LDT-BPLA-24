@@ -169,6 +169,7 @@ class Video(VideoBase, TimeStampWithIdMixin, table=True):
     height: Optional[int] = Field(nullable=True)
     width: Optional[int] = Field(nullable=True)
     source_url: Optional[str] = Field(nullable=True)
+    detected_cnt: Optional[int] = Field(nullable=True, default=None)
 
 
 class PhotoBase(ProjectsDataSQLModel):
@@ -189,6 +190,7 @@ class Photo(PhotoBase, TimeStampWithIdMixin, table=True):
     height: Optional[int] = Field(nullable=True)
     width: Optional[int] = Field(nullable=True)
     source_url: Optional[str] = Field(nullable=True)
+    detected_cnt: Optional[int] = Field(nullable=True, default=None)
 
 
 class FrameContentTypeOption(str, enum.Enum):

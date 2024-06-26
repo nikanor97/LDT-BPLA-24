@@ -73,7 +73,7 @@ class BaseDbManager:
     def from_connect_str(
         cls: Type[DbT],
         connect_str: str,
-        pool_size: int = 5,
+        pool_size: int = 50,
         json_serializer: Optional[Callable[..., str]] = None,
         json_deserializer: Optional[Callable[..., Any]] = None,
     ) -> DbT:
@@ -82,7 +82,7 @@ class BaseDbManager:
             pool_size=pool_size,
             future=True,
             pool_pre_ping=True,
-            execution_options={"isolation_level": "AUTOCOMMIT"},
+            execution_options={"isolation_level": "READ_COMMITTED"},
             json_serializer=json_serializer or json.dumps,
             json_deserializer=json_deserializer or json.loads,
         )
@@ -96,7 +96,7 @@ class BaseDbManager:
         host: str,
         port: int,
         database_name: str,
-        pool_size: int = 5,
+        pool_size: int = 50,
         json_serializer: Optional[Callable[..., str]] = None,
         json_deserializer: Optional[Callable[..., Any]] = None,
     ) -> DbT:
@@ -127,7 +127,7 @@ def init_db_manager_closure(
     def closure(
         database_name: str,
         db_manager_cls: Type[DbT],
-        pool_size: int = 5,
+        pool_size: int = 50,
     ) -> DbT:
         return db_manager_cls.from_params(
             user=user,

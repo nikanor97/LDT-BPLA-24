@@ -1,9 +1,7 @@
 import ast
-import json
 import tempfile
-from collections import defaultdict
-from pathlib import Path
 from uuid import UUID
+import aiofiles.os
 
 from PIL import Image
 from PIL import ImageDraw
@@ -12,6 +10,7 @@ from telegram.ext import Application
 
 import settings
 from common.rabbitmq.publisher import Publisher
+from common.redis.lock_manager import RedisLockManager
 from src.db.exceptions import ResourceAlreadyExists
 from src.db.main_db_manager import MainDbManager
 from src.db.projects.models import FrameMarkup, VerificationTag, Label, LabelBase, VideoStatusOption, Video, Project
@@ -73,6 +72,8 @@ async def yolo_markup_processor(
     frames_in_content = int(data["frames_in_content"])
     markups = ast.literal_eval(data['markup'])
 
+    redis_client = kwargs['redis_client']
+
     labels_names = set(label_map.keys())
     labels_to_create = [LabelBase(
         name=label_name,
@@ -114,15 +115,16 @@ async def yolo_markup_processor(
     async with main_db_manager.projects.make_autobegin_session() as session:
         content = await main_db_manager.projects.get_content_by_frame_id(session, frame_id)
 
-        content_frames_counter = kwargs['content_frames_counter']
-        content_frames_counter[content.id] += 1
+        redis_client.incr(str(content.id))
 
-        if content_frames_counter[content.id] == frames_in_content:
+        frames_counter = int(redis_client.get(str(content.id)).decode())
+        if frames_counter == frames_in_content:
             content.status = VideoStatusOption.extracted
         else:
             content.status = VideoStatusOption.in_progress
 
         session.add_all(frame_markup_items)
+        # тут обновлять еще счетчик маркапов в объектах контента
 
         content = await main_db_manager.projects.get_content_by_frame_id(session, frame_id)
         project = await Project.by_id(session, project_id)
@@ -136,10 +138,12 @@ async def yolo_markup_processor(
         )
         tag_id_to_confidence = {t[0].id: t[1] for t in tags}
 
+        n_new_markups = 0
         for markup in markups:
             if label_class_to_id[markup[4]] in label_to_verification_tag_mapping:
                 verification_tag_id = label_to_verification_tag_mapping[label_class_to_id[markup[4]]]
                 if verification_tag_id in tag_id_to_confidence and markup[5] >= tag_id_to_confidence[verification_tag_id]:
+                    n_new_markups += 1
                     if content.notification_sent is False and project.msg_receiver is not None:
                         await main_db_manager.projects.set_notification_sent_status(session, content.id, status=True)
                         await session.flush()
@@ -153,6 +157,9 @@ async def yolo_markup_processor(
                         # Открыть изображение
                         image = Image.open(image_path)
                         draw = ImageDraw.Draw(image)
+
+                        if image.mode == 'RGBA':
+                            image = image.convert('RGB')
 
                         annotations = [fm.dict() for fm in frame_markup_items]
 
@@ -170,11 +177,26 @@ async def yolo_markup_processor(
                             for fm in frame_markup_items:
                                 caption += f"\n{tag_translation_eng_rus[label_by_id[fm.label_id].name]}: {fm.confidence:.2f}"
 
-                            notification_success = await notify_user(application, project.msg_receiver, temp_image_path, caption)
-                            # if notification_success:
+                            # Убеждаемся, что отправка уведомления в телеграм произойдет
+                            # строго один раз (а не в каждом воркере)
+                            lock_name = str(content.id) + "_notification_sent"
+                            lock_timeout = 10000  # 10 секунд
+                            try:
+                                logger.info(f"Trying to acquire lock for Redis for notification sending (lock name: {lock_name})")
+                                with RedisLockManager(redis_client, lock_name, lock_timeout) as lock:
+                                    redis_client.incr(str(content.id) + "_notification_sent")
+                                    if int(redis_client.get(str(content.id) + "_notification_sent").decode()) == 1:
+                                        await notify_user(application, project.msg_receiver, temp_image_path, caption)
+                            except RuntimeError:
+                                logger.info(f"Cannot acquire lock for Redis for notification sending (lock name: {lock_name})")
+
+    async with main_db_manager.projects.make_autobegin_session() as session:
+        await main_db_manager.projects.increase_content_detected_cnt(session, content.id, n_new_markups)
 
     if data["type"] == "video":
-        Path(settings.MEDIA_DIR / data["image_path"]).unlink()
-    Path(settings.MEDIA_DIR / (".".join(data["image_path"].split('.')[:-1]) + ".txt")).unlink()
+        # Path(settings.MEDIA_DIR / data["image_path"]).unlink()
+        await aiofiles.os.remove(settings.MEDIA_DIR / data["image_path"])
+    # Path(settings.MEDIA_DIR / (".".join(data["image_path"].split('.')[:-1]) + ".txt")).unlink()
+    await aiofiles.os.remove(settings.MEDIA_DIR / (".".join(data["image_path"].split('.')[:-1]) + ".txt"))
 
     logger.info(f"New {len(frame_markup_items)} frame markup items created")
